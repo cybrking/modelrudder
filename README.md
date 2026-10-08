@@ -1,3 +1,7 @@
+![ModelRudder: Right-size your AI. Smart model routing for Codex.](docs/images/modelrudder-repo-thumbnail.png)
+
+![ModelRudder article thumbnail: Hitting usage limits?](docs/images/modelrudder-article-thumbnail.png)
+
 # ModelRudder
 
 Spend your strongest model on the tasks that need it. ModelRudder adds experimental model routing to the native Codex terminal experience, while Codex retains its tools, approvals and workspace permissions.
