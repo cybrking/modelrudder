@@ -22,12 +22,12 @@ Download the installer and `SHA256SUMS` from [Releases](https://github.com/cybrk
 
 ```sh
 shasum -a 256 -c SHA256SUMS
-node ./smart-codex-RELEASE_ID-install.mjs
+node -- ./smart-codex-RELEASE_ID-install.mjs
 ```
 
 Replace `RELEASE_ID` with the actual release ID in the downloaded filename. Obtain both files from this project's trusted release page; a checksum alone does not authenticate a publisher. The installer needs no checkout or npm download and includes the ws dependency and license. On macOS/Linux, it installs versioned runtime files under `~/.local/share/smart-codex` and a launcher under `~/.local/bin`; add that bin directory to PATH. It does not replace plain `codex` or an unmanaged launcher.
 
-On Windows, use PowerShell's `Get-FileHash -Algorithm SHA256` and compare the installer hash to its exact filename in `SHA256SUMS`, then run `node .\smart-codex-RELEASE_ID-install.mjs`. The default runtime, launcher and configuration are under `%LOCALAPPDATA%\ModelRudder\runtime`, `\bin` and `\config\env`, respectively. Use the paths printed by the installer and add its launcher directory to your **user** PATH. Agent-assisted installation instructions are in [AGENT_INSTALL.md](docs/AGENT_INSTALL.md).
+On Windows, use PowerShell's `Get-FileHash -Algorithm SHA256` and compare the installer hash to its exact filename in `SHA256SUMS`, then run `node -- .\smart-codex-RELEASE_ID-install.mjs`. The default runtime, launcher and configuration are under `%LOCALAPPDATA%\ModelRudder\runtime`, `\bin` and `\config\env`, respectively. Use the paths printed by the installer and add its launcher directory to your **user** PATH. Agent-assisted installation instructions are in [AGENT_INSTALL.md](docs/AGENT_INSTALL.md).
 
 Alternatively, build from a trusted source checkout:
 
@@ -95,12 +95,12 @@ Outcome markers are your own assessment, not independent validation. Cleanup is 
 For source users, upgrade by pulling an approved release, running `npm ci --ignore-scripts`, and rerunning `npm run install-cli`. Standalone users can install the next trusted release installer. Restart active launchers after an upgrade. Use the installed maintenance command:
 
 ```sh
-node ~/.local/share/smart-codex/current/src/install-cli.ts --list
-node ~/.local/share/smart-codex/current/src/install-cli.ts --rollback RELEASE_ID
-node ~/.local/share/smart-codex/current/src/install-cli.ts --uninstall
+node -- ~/.local/share/smart-codex/current/src/install-cli.ts --list
+node -- ~/.local/share/smart-codex/current/src/install-cli.ts --rollback RELEASE_ID
+node -- ~/.local/share/smart-codex/current/src/install-cli.ts --uninstall
 ```
 
-On Windows, retain the verified installer and use `node .\smart-codex-RELEASE_ID-install.mjs --list`, `--rollback RELEASE_ID` or `--uninstall` instead. Repeat any custom install-path flags used originally.
+On Windows, retain the verified installer and use `node -- .\smart-codex-RELEASE_ID-install.mjs --list`, `--rollback RELEASE_ID` or `--uninstall` instead. Repeat any custom install-path flags used originally.
 
 Uninstall retains your private configuration and local state. Remove those manually if you intend to discard them.
 
@@ -117,6 +117,6 @@ npm run typecheck
 npm run package:pilot -- dist/delivery
 ```
 
-Client CI runs offline fixtures; check the [workflow](.github/workflows/client.yml) and individual results for the operating systems tested. It makes no paid inference calls. `npm run test:native-protocol` is an optional installed-Codex check; it submits no model turn and does not certify the TUI, including on Windows.
+Client CI runs offline fixtures and a no-inference native Codex protocol probe on Windows, Linux and macOS with Node 24 and 26; check the [workflow](.github/workflows/client.yml) and individual results for the operating systems tested. It makes no paid inference calls. `npm run test:native-protocol` is an optional installed-Codex check; it submits no model turn and does not certify the TUI, including on Windows.
 
 Read [contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md). Licensed under [MIT](LICENSE); ws retains its [upstream MIT notice](THIRD_PARTY_NOTICES/ws-LICENSE).

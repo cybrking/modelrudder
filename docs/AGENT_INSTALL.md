@@ -42,7 +42,7 @@ On macOS:
 
 ```sh
 shasum -a 256 -c SHA256SUMS
-node ./smart-codex-RELEASE_ID-install.mjs
+node -- ./smart-codex-RELEASE_ID-install.mjs
 ```
 
 On Linux/WSL, use `sha256sum -c SHA256SUMS` before the same `node` command. On Windows PowerShell:
@@ -51,7 +51,7 @@ On Linux/WSL, use `sha256sum -c SHA256SUMS` before the same `node` command. On W
 Get-FileHash .\smart-codex-RELEASE_ID-install.mjs -Algorithm SHA256
 Get-Content .\SHA256SUMS
 # Compare the hash to the line for the exact installer filename before continuing.
-node .\smart-codex-RELEASE_ID-install.mjs
+node -- .\smart-codex-RELEASE_ID-install.mjs
 ```
 
 Do not run the installer if the checksum differs, the filename has no matching checksum entry, or the origin is untrusted. A checksum downloaded beside a file protects integrity, not publisher identity by itself.
@@ -107,4 +107,4 @@ Observe mode calls Jev for recommendations while Sol executes the task. It can c
 
 Report the OS, Node/Codex versions, release ID, checksum result, installed paths, PATH readiness and doctor findings. Report whether private setup remains for the user without inspecting its contents. State which interactive checks remain unperformed. Do not include secrets or claim Windows TUI validation from another platform.
 
-On macOS/Linux, run the installed `current/src/install-cli.ts` with Node using the runtime root printed during installation. On Windows, retain and reuse the verified downloaded installer, for example `node .\smart-codex-RELEASE_ID-install.mjs --list`; Windows `current` is a pointer file, not a directory. Both maintenance paths support `--list`, `--rollback RELEASE_ID` and `--uninstall`. Repeat any custom install-path flags originally used. Upgrades, rollback and uninstall preserve private configuration and local state; deleting those is a separate explicit user choice. Restart active launchers after changing releases.
+On macOS/Linux, run the installed `current/src/install-cli.ts` with Node using the runtime root printed during installation. On Windows, retain and reuse the verified downloaded installer, for example `node -- .\smart-codex-RELEASE_ID-install.mjs --list`; Windows `current` is a pointer file, not a directory. Both maintenance paths support `--list`, `--rollback RELEASE_ID` and `--uninstall`. Repeat any custom install-path flags originally used. Upgrades, rollback and uninstall preserve private configuration and local state; deleting those is a separate explicit user choice. Restart active launchers after changing releases.
