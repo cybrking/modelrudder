@@ -352,6 +352,8 @@ if (import.meta.main) {
       'Access token', 'Account status requires', 'Account status is unavailable',
       'Unsupported Codex CLI version', 'smart-codex requires', 'Configure ALLOW_', 'ChatGPT subscription', 'Invalid --routing', 'Invalid --effort-mode',
       'Model must', 'Use plain codex', 'Provider/authentication',
+      'Setup accepts', 'Existing configuration must', 'Configuration directory must',
+      'Could not start editor', 'Codex executable not found', 'Unable to enforce private Windows',
     ].some(prefix => error.message.startsWith(prefix)) ? error.message : 'Could not launch smart-codex; check Codex installation, options, and directory.';
     process.stderr.write(`${message}\n`); process.exitCode = 1;
   }
