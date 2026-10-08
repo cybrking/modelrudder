@@ -48,7 +48,7 @@ export function protectPrivatePathSync(path: string, directory = false): void {
   try {
     aclCommand(protectAcl, path);
     if (aclCommand(checkAcl, path) !== 'true') throw new Error('Verification failed');
-  } catch { throw new Error('Unable to enforce private Windows storage permissions.'); }
+  } catch (cause) { throw new Error('Unable to enforce private Windows storage permissions.', { cause }); }
 }
 /** Always reads permissions again; failures, unrecognized identities and reparse points fail closed. */
 export function isPrivatePathSync(path: string, directory = false): boolean {
