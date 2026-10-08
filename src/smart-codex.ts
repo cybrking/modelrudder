@@ -132,8 +132,8 @@ export function nativeRemoteTuiArgs(tui: string[], endpoint: string, model: stri
 const subscriptionConfig = ['-c', 'forced_login_method="chatgpt"', '-c', 'model_provider="openai"',
   '-c', 'model_reasoning_effort="medium"'];
 
-// The socket's parent directory is mode 0700. No TCP listener or credential
-// handoff is needed; the official child retains ownership of Codex login.
+// Unix sockets use a mode-0700 parent; Windows uses authenticated loopback TCP.
+// The official child retains ownership of Codex login.
 export async function startSmartRelay(options: {
   socketPath?: string; localToken?: string; cwd: string; env: NodeJS.ProcessEnv; serverArgs?: string[];
   mode: RoutingMode; model: string; classifier?: Classifier; binary?: string;
