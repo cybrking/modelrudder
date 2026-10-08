@@ -50,7 +50,7 @@ This creates a commented template if absent and prints the configuration path. A
 smart-codex setup
 ```
 
-The user enters credentials in their local editor. If the editor cannot open, give the user the printed path so they can open it manually; do not read the file into agent context. The template includes these disabled settings:
+Setup requests an editor and catches immediate startup failures. If no window appears, open the printed configuration path manually; a successful launch request does not establish that an editor window opened. The user enters credentials in their local editor. If the editor cannot open, give the user the printed path so they can open it manually; do not read the file into agent context. The template includes these disabled settings:
 
 ```dotenv
 # Jev account signup/login and API keys: https://console.typesafe.ai/keys
@@ -80,6 +80,8 @@ smart-codex --routing observe --effort-mode fixed
 ```
 
 Observe mode calls Jev for recommendations while Sol executes the task. It can consume both providers' allowances and is therefore a **user-run** test. Have the user inspect tools/approvals, interruption and normal task completion before considering experimental auto mode. Leaving Jev disabled allows `smart-codex --routing pinned --model gpt-6.1-sol`; submitting a pinned task still uses the user's OpenAI allowance.
+
+Resume an existing thread with `smart-codex resume THREAD_ID`. Codex 0.160.1 rejects permission overrides such as `--sandbox` and `--ask-for-approval` when resuming a remote task; use the thread’s retained permissions. An automatically upgraded, unsupported Codex version is rejected; explain this before changing the user’s CLI.
 
 ## 5. Report and retain recovery options
 

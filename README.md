@@ -12,7 +12,7 @@ Copy this entire prompt into Codex. It will install ModelRudder and open the loc
 
 ```text
 Install ModelRudder on this computer so I can use model routing in Codex.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.2
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.3
 Read the README and docs/AGENT_INSTALL.md at that release tag and follow them.
 
 Detect my OS and check Node.js and Codex. Install missing prerequisites using
@@ -41,7 +41,7 @@ If an editor cannot open, Codex can give you the file path to open manually. [De
 
 - Node.js 24 or newer, installed separately. The installer does not bundle Node or Codex.
 - macOS, Linux/WSL, or Windows 11 with PowerShell. Native Windows support is a preview; ModelRudder's full Windows TUI has not been validated. WSL is an alternative if your native setup fails; install and sign in separately inside WSL. See [OpenAI's Windows guidance](https://learn.chatgpt.com/docs/windows/windows-sandbox).
-- An independently installed Codex CLI. Exactly versions **0.159.3 and 0.160.1** have recorded protocol evidence and are accepted by this preview. Full interactive TUI compatibility is not certified; other versions are rejected.
+- An independently installed Codex CLI. Exactly versions **0.159.3 and 0.160.1** have recorded protocol evidence and are accepted by this preview. Full interactive TUI compatibility is not certified; other versions are rejected. See the [release-readiness results](docs/RELEASE_READINESS.md) for completed checks and remaining gaps.
 - Native ChatGPT login through `codex login`.
 - Your own TypeSafe Jev API key for observe/auto modes. Pinned mode works without classification.
 

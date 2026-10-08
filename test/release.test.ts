@@ -33,6 +33,14 @@ test('standalone pilot installer needs no checkout or downloads and supports ins
       '--env-file', options.envFile], { cwd: temp });
     const help = await installedRun(options, ['--help'], temp);
     assert.match(help.stdout, /smart-codex account/);
+    if (isWindows) {
+      const script = '& $env:MODEL_RUDDER_TEST_LAUNCHER --help; exit $LASTEXITCODE';
+      const nativeHelp = await run('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive',
+        '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], {
+        cwd: temp, env: { ...process.env, MODEL_RUDDER_TEST_LAUNCHER: target(options) },
+      });
+      assert.match(nativeHelp.stdout, /smart-codex account/);
+    }
     const list = await run(process.execPath, ['--', join(output, filename), '--list', '--root', options.root,
       '--bin-dir', options.binDirectory, '--env-file', options.envFile], { cwd: temp });
     assert.match(list.stdout, /Current: releases\//);
