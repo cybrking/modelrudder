@@ -1,5 +1,3 @@
-![ModelRudder: Right-size your AI. Smart model routing for Codex.](docs/images/modelrudder-repo-thumbnail.png)
-
 ![ModelRudder article thumbnail: Hitting usage limits?](docs/images/modelrudder-article-thumbnail.png)
 
 # ModelRudder
