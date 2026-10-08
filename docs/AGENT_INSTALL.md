@@ -1,31 +1,6 @@
 # Install ModelRudder with a coding agent
 
-Give your local coding agent this prompt. It describes installation, not permission to run billable model tasks or change an existing Codex login.
-
-```text
-Install ModelRudder on this computer so I can use model routing in Codex.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.2
-Read the README and docs/AGENT_INSTALL.md at that release tag and follow them.
-
-Detect my OS and check Node.js and Codex. Install missing prerequisites using
-the official instructions; ModelRudder requires Node 24+ and a supported Codex
-version. Preserve existing credentials and configuration, and explain any
-incompatible Codex version before changing it.
-
-Download the release installer and SHA256SUMS, verify the checksum, install
-for my user account, and add its launcher directory to my user PATH without
-removing existing entries. Verify smart-codex --help.
-
-Run smart-codex setup to open my private Jev configuration in a local editor.
-Show me https://console.typesafe.ai/keys so I can sign up and get my own key.
-Never read or print the key file or ask me to paste a key into chat. Leave new
-settings commented out until I enter the key and explicitly enable them.
-
-Check my Codex login without replacing it. If login is needed, guide me through
-the official codex login flow. Run smart-codex doctor, explain anything still
-needed, and give me the command to start in a fresh terminal. Do not submit
-paid model tasks automatically.
-```
+Use the single copy-and-paste Codex prompt in the [README](../README.md#install-with-codex). This guide is the detailed reference for checking prerequisites, installing and configuring ModelRudder, authentication, troubleshooting and removal.
 
 ## 1. Inspect the machine
 
