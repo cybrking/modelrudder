@@ -20,7 +20,7 @@ export function doctorChildEnv(source: Record<string, string | undefined>) {
 const probeCodex: Probe = async args => {
   const env = doctorChildEnv(process.env);
   const command = await codexCommand(env);
-  return new Promise((resolve, reject) => execFile(command.file, [...command.args, ...args], { env, timeout: 10_000, maxBuffer: 64 * 1024 }, (error, stdout, stderr) => {
+  return new Promise((resolve, reject) => execFile(command.file, [...command.args, ...args], { env, timeout: 15_000, maxBuffer: 64 * 1024 }, (error, stdout, stderr) => {
     if (error) reject(new Error('Codex diagnostic failed'));
     else resolve({ stdout, stderr });
   }));

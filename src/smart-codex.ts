@@ -273,7 +273,7 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
   }
   const command = await codexCommand(smartCodexChildEnv(env));
   await new Promise<void>((done, reject) => {
-    execFile(command.file, [...command.args, '--version'], { env: smartCodexChildEnv(env), timeout: 5000, maxBuffer: 16_384 }, (error, stdout) => {
+    execFile(command.file, [...command.args, '--version'], { env: smartCodexChildEnv(env), timeout: 15_000, maxBuffer: 16_384 }, (error, stdout) => {
       if (error || !codexCompatibility(stdout).protocolTested) reject(new Error(`Unsupported Codex CLI version; use a protocol-tested build (${protocolTestedCodexVersions.join(', ')}). Native TUI certification is pending.`));
       else done();
     });

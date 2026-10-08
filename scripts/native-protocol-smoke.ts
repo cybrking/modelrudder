@@ -16,7 +16,7 @@ let stage = 'version';
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 try {
   const command = await codexCommand(env);
-  const { stdout } = await promisify(execFile)(command.file, [...command.args, '--version'], { env, timeout: 5000, maxBuffer: 16_384 });
+  const { stdout } = await promisify(execFile)(command.file, [...command.args, '--version'], { env, timeout: 15_000, maxBuffer: 16_384 });
   const compatibility = codexCompatibility(stdout);
   if (!compatibility.version) throw new Error('Unrecognized native version');
   stage = 'backend-start';
