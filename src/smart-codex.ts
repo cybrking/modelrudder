@@ -53,13 +53,16 @@ Use --help for this help; other interactive Codex options pass through.
 Usage appears on exit; monitor shows live metadata in a second terminal.
 `;
 
-export function smartCodexChildEnv(source: NodeJS.ProcessEnv) {
+export function smartCodexChildEnv(source: NodeJS.ProcessEnv, platform: NodeJS.Platform = process.platform) {
   const env = { ...source };
-  for (const key of ['TYPESAFE_API_KEY', 'ALLOW_JEV_CLASSIFICATION', 'ROUTER_MODE',
+  const withheld = new Set(['TYPESAFE_API_KEY', 'ALLOW_JEV_CLASSIFICATION', 'ROUTER_MODE',
     'SMART_CODEX_CLASSIFIER', 'SMART_CODEX_GATEWAY_URL', 'SMART_CODEX_GATEWAY_TOKEN',
     'SMART_CODEX_ADMIN_TOKEN', 'SMART_CODEX_AUTH_CLIENT_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET',
     'SMART_CODEX_CUSTOMERS', 'SMART_CODEX_QUOTA_URL', 'SMART_CODEX_QUOTA_TOKEN', 'SMART_CODEX_QUOTA_NAMESPACE',
-    'OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_ORG_ID', 'OPENAI_PROJECT_ID', 'MODEL_RUDDER_RELAY_TOKEN']) delete env[key];
+    'OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_ORG_ID', 'OPENAI_PROJECT_ID', 'MODEL_RUDDER_RELAY_TOKEN']);
+  for (const key of Object.keys(env)) {
+    if (withheld.has(platform === 'win32' ? key.toUpperCase() : key)) delete env[key];
+  }
   return env;
 }
 

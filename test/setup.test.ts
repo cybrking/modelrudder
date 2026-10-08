@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { runSetup, setupTemplate } from '../src/setup.ts';
+import { runSetup, setupTemplate, startEditor } from '../src/setup.ts';
 import { isPrivatePathSync, protectPrivatePathSync } from '../src/private-files.ts';
 import { readLiveConfig } from '../src/live-config.ts';
 
@@ -38,4 +38,14 @@ test('setup rejects unknown options before writing configuration', async () => {
     await assert.rejects(runSetup(['--print-key'], { SMART_CODEX_ENV_FILE: file }), /only --no-open/);
     await assert.rejects(readFile(file), { code: 'ENOENT' });
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+
+test('editor launch rejects a process that starts but exits unsuccessfully', async () => {
+  await assert.rejects(startEditor(process.execPath, ['-e', 'process.exit(23)']), /Could not start editor/);
+});
+
+test('editor launch accepts successful handoff and missing executables fail safely', async () => {
+  await startEditor(process.execPath, ['-e', 'process.exit(0)']);
+  await assert.rejects(startEditor('missing-editor-for-fixture', []), /Could not start editor/);
 });

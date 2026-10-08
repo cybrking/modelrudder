@@ -6,14 +6,28 @@ import { isPrivatePathSync, protectPrivatePathSync } from './private-files.ts';
 
 export const setupTemplate = "# Run smart-codex setup to create/open your private installed configuration.\n# All settings below are disabled until you explicitly uncomment them.\n# Jev account signup/login and API keys: https://console.typesafe.ai/keys\n# Official instructions: https://docs.typesafe.ai/introduction/quickstart\n# Provider fees are separate from this free software and your Codex subscription.\n# Enter your own key in this local file; never paste it into agent chat or commit it.\n# TYPESAFE_API_KEY=\n# Observe/auto classification sends your task text and bounded earlier excerpts to TypeSafe.\n# Uncomment the consent setting only after reviewing the README data flow.\n# ALLOW_JEV_CLASSIFICATION=true\n# SMART_CODEX_CLASSIFIER=direct\n";
 
+// Catch immediate launcher failures without waiting for a GUI editor to close.
+export async function startEditor(command: string, args: string[]): Promise<void> {
+  await new Promise<void>((done, reject) => {
+    const child = spawn(command, args, { detached: true, stdio: 'ignore', shell: false });
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const finish = (failed: boolean) => {
+      if (settled) return;
+      settled = true; clearTimeout(timer); child.unref();
+      if (failed) reject(new Error('Could not start editor; open the configuration path manually.'));
+      else done();
+    };
+    child.once('error', () => finish(true));
+    child.once('exit', (code, signal) => finish(code !== 0 || signal !== null));
+    child.once('spawn', () => { timer = setTimeout(() => finish(false), 2000); });
+  });
+}
+
 async function openEditor(path: string): Promise<void> {
   const command = process.platform === 'win32' ? 'notepad.exe' : process.platform === 'darwin' ? 'open' : 'xdg-open';
   const args = process.platform === 'darwin' ? ['-t', path] : [path];
-  await new Promise<void>((done, reject) => {
-    const child = spawn(command, args, { detached: true, stdio: 'ignore', shell: false });
-    child.once('error', () => reject(new Error('Could not start editor; open the configuration path manually.')));
-    child.once('spawn', () => { child.unref(); done(); });
-  });
+  await startEditor(command, args);
 }
 
 export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.env,
@@ -36,6 +50,6 @@ export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.
   out('Local configuration: ' + file + '\nJev signup and API keys: https://console.typesafe.ai/keys\n');
   out(existing ? 'Existing configuration preserved.\n' : 'Created a fully commented template; classification remains disabled.\n');
   out('Enter your key only in this file, then explicitly uncomment the consent and provider settings. Never paste the key into agent chat.\n');
-  if (!args.includes('--no-open')) { await editor(file); out('Started the editor for your local configuration.\n'); }
+  if (!args.includes('--no-open')) { await editor(file); out('Requested the local editor. If no window opens, open the configuration path manually.\n'); }
   return 0;
 }

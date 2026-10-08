@@ -263,3 +263,14 @@ rl.on('line', line => { const message = JSON.parse(line);
     await large; assert.equal(received.at(-1).result.metadata.length, 5 * 1024 * 1024);
   } finally { ws?.terminate(); await server?.close(); await rm(directory, { recursive: true, force: true }); }
 });
+
+
+test('Windows child environment strips every case variant without removing tool authentication', () => {
+  const source = { typesafe_api_key: 'fixture', Typesafe_Api_Key: 'fixture', openai_api_key: 'fixture',
+    model_rudder_relay_token: 'fixture', Smart_Codex_Gateway_Token: 'fixture', Openai_Base_Url: 'http://fixture',
+    Github_Token: 'tool-auth', Path: '/tools' };
+  const child = smartCodexChildEnv(source, 'win32');
+  assert.deepEqual(child, { Github_Token: 'tool-auth', Path: '/tools' });
+  assert.equal(source.typesafe_api_key, 'fixture');
+  assert.equal(smartCodexChildEnv(source, 'linux').typesafe_api_key, 'fixture');
+});
