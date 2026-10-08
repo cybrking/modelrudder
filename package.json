@@ -1,0 +1,34 @@
+{
+  "name": "modelrudder",
+  "version": "0.1.0-preview.1",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Experimental local model routing for native Codex",
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cybrking/modelrudder.git"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "install-cli": "node src/install-cli.ts",
+    "smart-codex": "node --env-file-if-exists=.env.local src/smart-codex.ts",
+    "doctor": "node --env-file-if-exists=.env.local src/doctor.ts",
+    "report": "node src/usage-report.ts",
+    "package:release": "node scripts/release.ts",
+    "package:pilot": "node scripts/package-pilot.ts",
+    "test:native-protocol": "node scripts/native-protocol-smoke.ts"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.0",
+    "@types/ws": "8.18.2",
+    "typescript": "7.0.2"
+  }
+}
