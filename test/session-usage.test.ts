@@ -1,4 +1,4 @@
-import { isPrivatePathSync } from '../src/private-files.ts';
+import { isPrivatePathSync, protectPrivatePathSync } from '../src/private-files.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, appendFileSync, statSync, rmSync, symlinkSync } from 'node:fs';
@@ -101,6 +101,7 @@ test('compaction completion is deduplicated and snapshots exclude supplied conte
 
 test('private usage logs preserve final summary and ignore incomplete writes', () => {
   const directory = mkdtempSync(join(tmpdir(), 'usage-test-'));
+  protectPrivatePathSync(directory, true);
   try {
     const log = createUsageLog(directory); const u = createSessionUsage(); start(u); usage(u);
     log.write(u.snapshot()); u.finish(); log.write(u.snapshot()); log.close();

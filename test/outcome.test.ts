@@ -1,4 +1,4 @@
-import { isPrivatePathSync } from '../src/private-files.ts';
+import { isPrivatePathSync, protectPrivatePathSync } from '../src/private-files.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, statSync, existsSync, utimesSync, symlinkSync, writeFileSync, chmodSync } from 'node:fs';
@@ -29,6 +29,7 @@ test('decision IDs are independent of native identifiers; snapshots and exported
 
 test('outcomes correlate to the latest decision, corrections append, and export never invents aggregate quality', () => {
   const directory = mkdtempSync(join(tmpdir(), 'router-outcome-'));
+  protectPrivatePathSync(directory, true);
   try {
     const usage = createSessionUsage(), log = createUsageLog(directory);
     usage.route({ model: 'gpt-6-luna', reason: 'pinned' }); log.write(usage.snapshot());
@@ -52,6 +53,7 @@ test('outcomes correlate to the latest decision, corrections append, and export 
 
 test('outcome writer rejects unsafe options and symlink destinations without modifying targets', () => {
   const directory = mkdtempSync(join(tmpdir(), 'router-outcome-'));
+  protectPrivatePathSync(directory, true);
   try {
     const usage = createSessionUsage(), log = createUsageLog(directory);
     usage.route({ model: 'gpt-6.1-sol', reason: 'pinned' }); log.write(usage.snapshot()); log.close();
@@ -74,6 +76,7 @@ test('outcome writer rejects unsafe options and symlink destinations without mod
 
 test('cleanup previews and deletes only expired completed regular logs and their outcomes', () => {
   const directory = mkdtempSync(join(tmpdir(), 'router-retention-'));
+  protectPrivatePathSync(directory, true);
   try {
     const completed = createUsageLog(directory), active = createUsageLog(directory), recent = createUsageLog(directory);
     const usage = createSessionUsage(); active.write(usage.snapshot()); active.close();

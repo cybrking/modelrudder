@@ -1,4 +1,4 @@
-import { isPrivatePathSync } from '../src/private-files.ts';
+import { isPrivatePathSync, protectPrivatePathSync } from '../src/private-files.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, statSync, rmSync } from 'node:fs';
@@ -71,6 +71,7 @@ test('malformed, inconsistent and unsupported snapshots are rejected rather than
 
 test('CLI selects latest log, writes private JSON and refuses overwrite without leaking paths', () => {
   const directory = mkdtempSync(join(tmpdir(), 'router-report-'));
+  protectPrivatePathSync(directory, true);
   try {
     const log = createUsageLog(directory); log.write(snapshot()); log.close();
     const output = join(directory, 'PRIVATE_REPORT.json'); let errors = '', stdout = '';
@@ -87,6 +88,7 @@ test('CLI selects latest log, writes private JSON and refuses overwrite without 
 
 test('CLI rejects bad flags, empty directories and duplicate options without provider calls', () => {
   const directory = mkdtempSync(join(tmpdir(), 'router-report-'));
+  protectPrivatePathSync(directory, true);
   try {
     for (const args of [[], ['--format', 'html'], ['--format'], ['--secret', 'PRIVATE'],
       ['--file', 'PRIVATE', '--file', 'PRIVATE']]) {
@@ -101,6 +103,7 @@ test('CLI rejects bad flags, empty directories and duplicate options without pro
 
 test('longitudinal report retains all recorded decisions and labels without private snapshot fields', () => {
   const directory = mkdtempSync(join(tmpdir(), 'router-decisions-'));
+  protectPrivatePathSync(directory, true);
   try {
     const log = createUsageLog(directory), usage = createSessionUsage();
     usage.route({ model: 'gpt-6-luna', proposed: 'FAST', reason: 'experimental_route', reportedConfidence: .99 });
