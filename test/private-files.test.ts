@@ -41,7 +41,7 @@ test('Windows private storage rejects explicit access for Everyone and repairs i
     const file = join(root, 'env');
     writeFileSync(file, 'TEST=fixture\n');
     protectPrivatePathSync(file);
-    const script = `$ErrorActionPreference = 'Stop'; $path = $env:MODEL_RUDDER_ACL_PATH; $acl = Get-Acl -LiteralPath $path; $sid = [Security.Principal.SecurityIdentifier]::new('S-1-1-0'); $rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::Read, [Security.AccessControl.AccessControlType]::Allow); $acl.AddAccessRule($rule); Set-Acl -LiteralPath $path -AclObject $acl`;
+    const script = `$ErrorActionPreference = 'Stop'; Import-Module (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Security') -ErrorAction Stop; $path = $env:MODEL_RUDDER_ACL_PATH; $acl = Get-Acl -LiteralPath $path; $sid = [Security.Principal.SecurityIdentifier]::new('S-1-1-0'); $rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::Read, [Security.AccessControl.AccessControlType]::Allow); $acl.AddAccessRule($rule); Set-Acl -LiteralPath $path -AclObject $acl`;
     execFileSync('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], { env: { ...process.env, MODEL_RUDDER_ACL_PATH: file }, stdio: 'pipe', timeout: 15_000, windowsHide: true });
     assert.equal(isPrivatePathSync(file), false);
     protectPrivatePathSync(file);

@@ -4,6 +4,7 @@ import { chmodSync, lstatSync } from 'node:fs';
 // Paths travel through an environment variable, never PowerShell source or a shell command.
 const aclPrelude = `
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Security') -ErrorAction Stop
 $path = $env:MODEL_RUDDER_ACL_PATH
 $item = Get-Item -LiteralPath $path -Force
 if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Reparse point' }
@@ -12,7 +13,7 @@ $acl = Get-Acl -LiteralPath $path
 `;
 const protectAcl = `${aclPrelude}
 $acl.SetAccessRuleProtection($true, $false)
-foreach ($rule in @($acl.Access)) { [void]$acl.RemoveAccessRuleSpecific($rule) }
+foreach ($rule in $acl.GetAccessRules($true, $false, [Security.Principal.SecurityIdentifier])) { [void]$acl.RemoveAccessRuleSpecific($rule) }
 $inheritance = [Security.AccessControl.InheritanceFlags]::None
 if ($item.PSIsContainer) { $inheritance = [Security.AccessControl.InheritanceFlags]'ContainerInherit,ObjectInherit' }
 $rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::FullControl, $inheritance, [Security.AccessControl.PropagationFlags]::None, [Security.AccessControl.AccessControlType]::Allow)
@@ -23,7 +24,7 @@ Set-Acl -LiteralPath $path -AclObject $acl
 const checkAcl = `${aclPrelude}
 $allowed = @($sid.Value, 'S-1-5-18', 'S-1-5-32-544')
 if ($acl.GetOwner([Security.Principal.SecurityIdentifier]).Value -ne $sid.Value) { Write-Output 'false'; exit }
-foreach ($rule in $acl.Access) {
+foreach ($rule in $acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
   if ($rule.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow) {
     $ruleSid = $rule.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value
     if ($allowed -notcontains $ruleSid) { Write-Output 'false'; exit }
