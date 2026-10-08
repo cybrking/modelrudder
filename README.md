@@ -6,6 +6,37 @@ Spend your strongest model on the tasks that need it. ModelRudder adds experimen
 
 Use your own Codex/ChatGPT account and your own TypeSafe Jev API key. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef and Claude support are not included.
 
+## Install with Codex
+
+Copy this entire prompt into Codex. It will install ModelRudder and open the local configuration file; you enter your Jev key privately in the editor.
+
+```text
+Install ModelRudder on this computer so I can use model routing in Codex.
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.2
+Read the README and docs/AGENT_INSTALL.md at that release tag and follow them.
+
+Detect my OS and check Node.js and Codex. Install missing prerequisites using
+the official instructions; ModelRudder requires Node 24+ and a supported Codex
+version. Preserve existing credentials and configuration, and explain any
+incompatible Codex version before changing it.
+
+Download the release installer and SHA256SUMS, verify the checksum, install
+for my user account, and add its launcher directory to my user PATH without
+removing existing entries. Verify smart-codex --help.
+
+Run smart-codex setup to open my private Jev configuration in a local editor.
+Show me https://console.typesafe.ai/keys so I can sign up and get my own key.
+Never read or print the key file or ask me to paste a key into chat. Leave new
+settings commented out until I enter the key and explicitly enable them.
+
+Check my Codex login without replacing it. If login is needed, guide me through
+the official codex login flow. Run smart-codex doctor, explain anything still
+needed, and give me the command to start in a fresh terminal. Do not submit
+paid model tasks automatically.
+```
+
+If an editor cannot open, Codex can give you the file path to open manually. [Detailed agent instructions](docs/AGENT_INSTALL.md) cover Windows, Linux/WSL and macOS.
+
 ## Requirements
 
 - Node.js 24 or newer, installed separately. The installer does not bundle Node or Codex.

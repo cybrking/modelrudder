@@ -3,25 +3,28 @@
 Give your local coding agent this prompt. It describes installation, not permission to run billable model tasks or change an existing Codex login.
 
 ```text
-Install the free ModelRudder community preview from https://github.com/cybrking/modelrudder.
-Read its README and docs/AGENT_INSTALL.md from the trusted release revision first.
-Inspect my operating system, terminal, Node and Codex versions. Use the matching
-installation steps, verify the release checksum, and preserve existing launchers,
-Codex credentials, ModelRudder configuration and local state. Use only user-level
-PATH changes. Do not run paid API/model checks automatically.
+Install ModelRudder on this computer so I can use model routing in Codex.
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.2
+Read the README and docs/AGENT_INSTALL.md at that release tag and follow them.
 
-Run smart-codex setup --no-open to prepare the commented local Jev template.
-When I am ready to enter my own key, run smart-codex setup to open that file
-in a local editor. Give me the official https://console.typesafe.ai/keys link
-if I need to sign up or create a key. Never ask me to paste a key into chat,
-read or print its contents, put it in command arguments, or transmit it elsewhere.
-Leave classification disabled until I personally uncomment the key, consent
-and direct-provider settings after reviewing the README data flow.
+Detect my OS and check Node.js and Codex. Install missing prerequisites using
+the official instructions; ModelRudder requires Node 24+ and a supported Codex
+version. Preserve existing credentials and configuration, and explain any
+incompatible Codex version before changing it.
 
-Help me use the official native codex login flow if needed without replacing
-an existing login. Run smart-codex doctor, report readiness and any remaining
-issues, and give me the observe-mode command to run myself in a real terminal.
-Do not claim full Windows TUI certification from offline tests or doctor output.
+Download the release installer and SHA256SUMS, verify the checksum, install
+for my user account, and add its launcher directory to my user PATH without
+removing existing entries. Verify smart-codex --help.
+
+Run smart-codex setup to open my private Jev configuration in a local editor.
+Show me https://console.typesafe.ai/keys so I can sign up and get my own key.
+Never read or print the key file or ask me to paste a key into chat. Leave new
+settings commented out until I enter the key and explicitly enable them.
+
+Check my Codex login without replacing it. If login is needed, guide me through
+the official codex login flow. Run smart-codex doctor, explain anything still
+needed, and give me the command to start in a fresh terminal. Do not submit
+paid model tasks automatically.
 ```
 
 ## 1. Inspect the machine
