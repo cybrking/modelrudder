@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { once } from 'node:events';
 import { WebSocket } from 'ws';
 import { createTurnRelay } from '../src/turn-relay.ts';
@@ -188,7 +188,7 @@ test('disconnect prevents pending classification from starting a turn; failed st
 
 test('launcher defaults auto, preserves native resume/options, and makes explicit model pinned', () => {
   const args = parseSmartCodexArgs(['resume', '--last', '-C', '../target', '-a', 'on-request', '--no-alt-screen'], '/repo');
-  assert.equal(args.mode, 'auto'); assert.equal(args.directory, '/target');
+  assert.equal(args.mode, 'auto'); assert.equal(args.directory, resolve('/target'));
   assert.deepEqual(args.tui, ['resume', '--last', '-C', '../target', '-a', 'on-request', '--no-alt-screen']);
   assert.equal(parseSmartCodexArgs(['--model=gpt-6-luna'], '/repo').mode, 'pinned');
   assert.equal(parseSmartCodexArgs(['-m', 'gpt-6-luna', '--routing', 'observe'], '/repo').mode, 'observe');
@@ -224,10 +224,10 @@ test('help and version text after the prompt separator cannot short-circuit argu
   }
 });
 
-test('Unix WebSocket transport forwards bidirectional RPC, strips keys, and cleans up its child', { timeout: 10_000 }, async () => {
+test('private WebSocket transport forwards bidirectional RPC, strips keys, and cleans up its child', { timeout: 30_000 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'smart-relay-test-'));
-  const socketPath = join(directory, 'relay.sock'); const binary = join(directory, 'fake-codex');
-  await writeFile(binary, `#!/usr/bin/env node
+  const socketPath = join(directory, 'relay.sock'); const binary = join(directory, 'fake-codex.cjs');
+  await writeFile(binary, `
 const rl = require('node:readline').createInterface({ input: process.stdin });
 rl.on('line', line => { const message = JSON.parse(line);
  console.log(JSON.stringify({ id: message.id, result: { message, thread: message.method === 'thread/start' ? { id: 'thread' } : undefined,
@@ -239,11 +239,13 @@ rl.on('line', line => { const message = JSON.parse(line);
   let server: Awaited<ReturnType<typeof startSmartRelay>> | undefined; let ws: WebSocket | undefined;
   const observedClient: any[] = []; const observedServer: any[] = [];
   try {
-    server = await startSmartRelay({ socketPath, cwd: directory, env: { ...process.env, TYPESAFE_API_KEY: 'hidden', OPENAI_API_KEY: 'hidden' },
-      binary, mode: 'auto', model: 'gpt-6.1-sol', classifier: async () => ({ profile: 'FAST', confidence: .99 }),
+    const token = 'a'.repeat(64);
+    server = await startSmartRelay({ ...(process.platform === 'win32' ? { localToken: token } : { socketPath }), cwd: directory, env: { ...process.env, TYPESAFE_API_KEY: 'hidden', OPENAI_API_KEY: 'hidden' },
+      command: { file: process.execPath, args: ['--', binary] }, mode: 'auto', model: 'gpt-6.1-sol', classifier: async () => ({ profile: 'FAST', confidence: .99 }),
       onClient: m => observedClient.push(m), onServer: m => observedServer.push(m) });
-    assert.equal((await stat(socketPath)).mode & 0o777, 0o600);
-    ws = new WebSocket(`ws+unix://${socketPath}:/`); await once(ws, 'open');
+    if (process.platform !== 'win32') assert.equal((await stat(socketPath)).mode & 0o777, 0o600);
+    ws = process.platform === 'win32' ? new WebSocket(server.endpoint, { headers: { Authorization: `Bearer ${token}` } }) : new WebSocket(`ws+unix://${socketPath}:/`);
+    await once(ws, 'open');
     const received: any[] = []; ws.on('message', data => received.push(JSON.parse(data.toString())));
     const fresh = once(ws, 'message'); ws.send(JSON.stringify({ id: 'bootstrap', method: 'thread/start', params: {} })); await fresh;
     received.length = 0; observedClient.length = 0; observedServer.length = 0;

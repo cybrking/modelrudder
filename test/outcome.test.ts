@@ -1,3 +1,4 @@
+import { isPrivatePathSync } from '../src/private-files.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, statSync, existsSync, utimesSync, symlinkSync, writeFileSync, chmodSync } from 'node:fs';
@@ -35,7 +36,7 @@ test('outcomes correlate to the latest decision, corrections append, and export 
     const args = ['--file', log.path!, '--decision', id, '--result', 'accepted', '--review-minutes', '2.5'];
     assert.equal(runOutcomeCommand(args, directory, () => {}, () => {}), 0);
     assert.equal(readLatestOutcome(log.path!, id)!.reviewMinutes, 2.5);
-    assert.equal(statSync(`${log.path}.outcomes.jsonl`).mode & 0o777, 0o600);
+    assert.equal(isPrivatePathSync(`${log.path}.outcomes.jsonl`), true);
     assert.equal(runOutcomeCommand(['--file', log.path!, '--result', 'rejected'], directory, () => {}, () => {}), 0);
     let output = '';
     assert.equal(runUsageReport(['--file', log.path!, '--format', 'json'], directory, s => { output += s; }), 0);
@@ -61,11 +62,13 @@ test('outcome writer rejects unsafe options and symlink destinations without mod
       assert.ok(!error.includes('PRIVATE'));
     }
     const target = join(directory, 'target'); writeFileSync(target, 'untouched', { mode: 0o600 });
-    symlinkSync(target, `${log.path}.outcomes.jsonl`);
+    symlinkSync(target, `${log.path}.outcomes.jsonl`, 'file');
     assert.equal(runOutcomeCommand(['--file', log.path!, '--result', 'accepted'], directory, () => {}, () => {}), 1);
     assert.equal(readFileSync(target, 'utf8'), 'untouched');
-    chmodSync(log.path!, 0o644);
-    assert.equal(runOutcomeCommand(['--file', log.path!, '--result', 'accepted'], directory, () => {}, () => {}), 1);
+    if (process.platform !== 'win32') {
+      chmodSync(log.path!, 0o644);
+      assert.equal(runOutcomeCommand(['--file', log.path!, '--result', 'accepted'], directory, () => {}, () => {}), 1);
+    }
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 

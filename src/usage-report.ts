@@ -1,5 +1,6 @@
 import { routingQualification } from './compatibility.ts';
 import { closeSync, constants, fstatSync, openSync, readSync, readdirSync, writeFileSync } from 'node:fs';
+import { isPrivatePathSync, protectPrivatePathSync } from './private-files.ts';
 import { join } from 'node:path';
 import { readUsageTail, usageDirectory } from './usage-log.ts';
 import { profiles, effortModes, effortReasons, routingReasons } from './types.ts';
@@ -114,11 +115,12 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
 // Reconstruct all recorded decisions from snapshots, never infer per-turn usage.
 // Bounds and strict allowlists also apply to this longitudinal export.
 export function readDecisionReport(path: string) {
+  if (!isPrivatePathSync(path)) throw new Error('Invalid decision log');
   const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   let text: string;
   try {
     const info = fstatSync(fd);
-    if (!info.isFile() || info.size > 16 * 1024 * 1024 || (info.mode & 0o077)) throw new Error('Invalid decision log');
+    if (!info.isFile() || info.size > 16 * 1024 * 1024 || (process.platform !== 'win32' && (info.mode & 0o077))) throw new Error('Invalid decision log');
     const buffer = Buffer.alloc(info.size);
     const bytes = readSync(fd, buffer, 0, buffer.length, 0);
     text = buffer.subarray(0, bytes).toString('utf8');
@@ -211,7 +213,10 @@ export function runUsageReport(args: string[], directory = usageDirectory,
     const snapshot = decisions ? undefined : readUsageTail(file);
     const report = decisions ? readDecisionReport(file) : createUsageReport(snapshot, readLatestOutcome(file, snapshot?.latestRoute?.decisionId));
     const text = format === 'json' ? `${JSON.stringify(report, null, 2)}\n` : formatUsageReport(report as UsageReport);
-    if (output) writeFileSync(output, text, { flag: 'wx', mode: 0o600 });
+    if (output) {
+      writeFileSync(output, text, { flag: 'wx', mode: 0o600 });
+      if (process.platform === 'win32') protectPrivatePathSync(output);
+    }
     else out(text);
     return 0;
   } catch {

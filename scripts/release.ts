@@ -10,6 +10,7 @@ export const releaseFiles = [
   'src/runtime-policy.ts', 'src/compatibility.ts', 'src/routing-decision.ts', 'src/classifier-lifecycle.ts', 'src/outcome.ts', 'src/doctor.ts', 'src/live-config.ts', 'src/types.ts', 'src/turn-relay.ts',
   'src/classifier.ts', 'src/classifier-contract.ts', 'src/adapters/hosted.ts',
   'src/account-status.ts',
+  'src/native-command.ts', 'src/private-files.ts', 'src/setup.ts',
   'src/session-usage.ts', 'src/usage-log.ts', 'src/usage-report.ts', 'src/adapters/jev.ts',
   'node_modules/ws/LICENSE', 'node_modules/ws/package.json', 'node_modules/ws/index.js',
   'node_modules/ws/browser.js', 'node_modules/ws/wrapper.mjs',

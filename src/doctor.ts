@@ -4,6 +4,7 @@ import { readLiveConfig } from './live-config.ts';
 import { readClassifierConfig } from './classifier.ts';
 import { createRuntimePolicy, routerVersion } from './runtime-policy.ts';
 import type { RuntimePolicy } from './runtime-policy.ts';
+import { codexCommand } from './native-command.ts';
 
 type Probe = (args: string[]) => Promise<{ stdout: string; stderr: string }>;
 
@@ -16,13 +17,14 @@ export function doctorChildEnv(source: Record<string, string | undefined>) {
   return env;
 }
 
-const probeCodex: Probe = args => new Promise((resolve, reject) => {
+const probeCodex: Probe = async args => {
   const env = doctorChildEnv(process.env);
-  execFile('codex', args, { env, timeout: 10_000, maxBuffer: 64 * 1024 }, (error, stdout, stderr) => {
+  const command = await codexCommand(env);
+  return new Promise((resolve, reject) => execFile(command.file, [...command.args, ...args], { env, timeout: 10_000, maxBuffer: 64 * 1024 }, (error, stdout, stderr) => {
     if (error) reject(new Error('Codex diagnostic failed'));
     else resolve({ stdout, stderr });
-  });
-});
+  }));
+};
 
 export async function runDoctor(env: Record<string, string | undefined>, probe: Probe = probeCodex,
   runtimePolicy: RuntimePolicy = createRuntimePolicy()) {

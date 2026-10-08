@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { once } from 'node:events';
 import { doctorChildEnv } from '../src/doctor.ts';
 import { codexCompatibility } from '../src/compatibility.ts';
+import { codexCommand } from '../src/native-command.ts';
 
 // Explicit local compatibility check. Never submits a turn or calls a classifier.
 const directory = await mkdtemp(join(tmpdir(), 'smart-native-protocol-'));
@@ -14,11 +15,12 @@ let child: ReturnType<typeof spawn> | undefined;
 let stage = 'version';
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 try {
-  const { stdout } = await promisify(execFile)('codex', ['--version'], { env, timeout: 5000, maxBuffer: 16_384 });
+  const command = await codexCommand(env);
+  const { stdout } = await promisify(execFile)(command.file, [...command.args, '--version'], { env, timeout: 5000, maxBuffer: 16_384 });
   const compatibility = codexCompatibility(stdout);
   if (!compatibility.version) throw new Error('Unrecognized native version');
   stage = 'backend-start';
-  child = spawn('codex', ['app-server', '--stdio', '--disable', 'apps', '--disable', 'hooks', '--disable', 'multi_agent',
+  child = spawn(command.file, [...command.args, 'app-server', '--stdio', '--disable', 'apps', '--disable', 'hooks', '--disable', 'multi_agent',
     '-c', 'model_provider="openai"'], { cwd: directory, env, stdio: ['pipe', 'pipe', 'ignore'] });
   const waiting = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
   let buffer = '', sequence = 0;

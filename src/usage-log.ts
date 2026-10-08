@@ -1,4 +1,5 @@
 import { appendFileSync, closeSync, constants, fchmodSync, fstatSync, lstatSync, mkdirSync, openSync, readSync, readdirSync, unlinkSync } from 'node:fs';
+import { isPrivatePathSync, protectPrivatePathSync } from './private-files.ts';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -48,12 +49,14 @@ export function runLogCleanup(args: string[], directory = usageDirectory, out = 
 export function createUsageLog(directory = usageDirectory) {
   let path: string | undefined, fd: number | undefined, failed = false;
   try {
-    mkdirSync(directory, { recursive: true, mode: 0o700 });
+    const created = mkdirSync(directory, { recursive: true, mode: 0o700 });
+    if (process.platform === 'win32' && created) protectPrivatePathSync(directory, true);
     const info = lstatSync(directory);
-    if (!info.isDirectory() || info.isSymbolicLink() || (info.mode & 0o077)) throw new Error('Private directory required');
+    if (!info.isDirectory() || info.isSymbolicLink() || !isPrivatePathSync(directory, true)) throw new Error('Private directory required');
     path = join(directory, `${Date.now()}-${randomUUID()}.jsonl`);
     fd = openSync(path, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
     fchmodSync(fd, 0o600);
+    if (process.platform === 'win32') protectPrivatePathSync(path);
   } catch { failed = true; if (fd !== undefined) closeSync(fd); fd = undefined; path = undefined; }
   return {
     get path() { return path; }, get failed() { return failed; },
@@ -67,10 +70,11 @@ export function createUsageLog(directory = usageDirectory) {
 }
 
 export function readUsageTail(path: string): UsageSnapshot | undefined {
+  if (!isPrivatePathSync(path)) throw new Error('Private regular usage file required');
   const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
     const info = fstatSync(fd);
-    if (!info.isFile() || (info.mode & 0o077)) throw new Error('Private regular usage file required');
+    if (!info.isFile() || (process.platform !== 'win32' && (info.mode & 0o077))) throw new Error('Private regular usage file required');
     const size = info.size;
     const start = Math.max(0, size - 32 * 1024);
     const buffer = Buffer.alloc(size - start);

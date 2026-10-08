@@ -1,3 +1,4 @@
+import { isPrivatePathSync } from '../src/private-files.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, appendFileSync, statSync, rmSync, symlinkSync } from 'node:fs';
@@ -103,12 +104,12 @@ test('private usage logs preserve final summary and ignore incomplete writes', (
   try {
     const log = createUsageLog(directory); const u = createSessionUsage(); start(u); usage(u);
     log.write(u.snapshot()); u.finish(); log.write(u.snapshot()); log.close();
-    assert.equal(statSync(log.path!).mode & 0o777, 0o600);
+    assert.equal(isPrivatePathSync(log.path!), true);
     assert.equal(readUsageTail(log.path!)!.ended, true);
     appendFileSync(log.path!, '{"incomplete":');
     assert.equal(readUsageTail(log.path!)!.tokens.input, 100);
     assert.ok(!readFileSync(log.path!, 'utf8').includes('SECRET'));
-    symlinkSync(directory, join(directory, 'symlink'));
+    symlinkSync(directory, join(directory, 'symlink'), process.platform === 'win32' ? 'junction' : 'dir');
     assert.equal(createUsageLog(join(directory, 'symlink')).failed, true);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });

@@ -1,4 +1,5 @@
-import { appendFileSync, closeSync, constants, fchmodSync, fstatSync, openSync, readFileSync } from 'node:fs';
+import { appendFileSync, closeSync, constants, fchmodSync, fstatSync, openSync, readFileSync, lstatSync } from 'node:fs';
+import { isPrivatePathSync, protectPrivatePathSync } from './private-files.ts';
 import { latestUsageFile, readUsageTail, usageDirectory } from './usage-log.ts';
 
 export const decisionIdPattern = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
@@ -16,14 +17,21 @@ export function parseReportedOutcome(value: unknown): ReportedOutcome {
   return { version: 1, decisionId: v.decisionId, result: v.result as 'accepted' | 'rejected',
     reviewMinutes: v.reviewMinutes as number | null, source: 'user-reported', recordedAt: v.recordedAt };
 }
+function pathExists(path: string): boolean {
+  try { lstatSync(path); return true; }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; }
+}
 function readRecords(fd: number): ReportedOutcome[] {
   const info = fstatSync(fd);
-  if (!info.isFile() || info.size > 1024 * 1024 || (info.mode & 0o077)) throw new Error('Invalid outcome file');
+  if (!info.isFile() || info.size > 1024 * 1024 || (process.platform !== 'win32' && (info.mode & 0o077))) throw new Error('Invalid outcome file');
   const text = readFileSync(fd, 'utf8');
   if (text && !text.endsWith('\n')) throw new Error('Incomplete outcome file');
   return text.split('\n').filter(Boolean).map(line => parseReportedOutcome(JSON.parse(line)));
 }
 export function readOutcomeEvents(logPath: string): ReportedOutcome[] {
+  const path = `${logPath}.outcomes.jsonl`;
+  if (!pathExists(path)) return [];
+  if (!isPrivatePathSync(path)) throw new Error('Invalid outcome file');
   let fd: number;
   try { fd = openSync(`${logPath}.outcomes.jsonl`, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
@@ -56,8 +64,12 @@ export function runOutcomeCommand(args: string[], directory = usageDirectory,
     if (!decisionId || (values.has('--decision') && values.get('--decision') !== decisionId)) throw new Error();
     const outcome = parseReportedOutcome({ version: 1, decisionId, result: values.get('--result'),
       reviewMinutes: minutes === undefined ? null : Number(minutes), source: 'user-reported', recordedAt: new Date().toISOString() });
-    const fd = openSync(`${logPath}.outcomes.jsonl`, constants.O_CREAT | constants.O_APPEND | constants.O_RDWR | constants.O_NOFOLLOW, 0o600);
+    const path = `${logPath}.outcomes.jsonl`;
+    const existed = pathExists(path);
+    if (existed && !isPrivatePathSync(path)) throw new Error('Invalid outcome file');
+    const fd = openSync(path, constants.O_CREAT | constants.O_APPEND | constants.O_RDWR | constants.O_NOFOLLOW, 0o600);
     try {
+      if (process.platform === 'win32' && !existed) protectPrivatePathSync(path);
       readRecords(fd); fchmodSync(fd, 0o600);
       const line = `${JSON.stringify(outcome)}\n`;
       if (fstatSync(fd).size + Buffer.byteLength(line) > 1024 * 1024) throw new Error('Outcome file limit');

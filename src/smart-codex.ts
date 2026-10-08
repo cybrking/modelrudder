@@ -1,6 +1,7 @@
 import { codexCompatibility, protocolTestedCodexVersions } from './compatibility.ts';
 import { spawn, execFile } from 'node:child_process';
 import { createServer } from 'node:http';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { chmod, mkdtemp, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -20,12 +21,16 @@ import type { RuntimePolicy } from './runtime-policy.ts';
 import { runDoctor } from './doctor.ts';
 import { accountStatus } from './account-status.ts';
 import { runOutcomeCommand } from './outcome.ts';
+import { codexCommand } from './native-command.ts';
+import type { NativeCommand } from './native-command.ts';
+import { runSetup } from './setup.ts';
 
 export const smartCodexHelp = `Usage: smart-codex [--routing auto|observe|pinned] [--effort-mode fixed|observe|auto] [Codex options] [PROMPT]
        smart-codex resume --last
        smart-codex monitor
        smart-codex report [--format markdown|json] [--decisions] [--output FILE]
        smart-codex doctor
+       smart-codex setup [--no-open]
        smart-codex account
        smart-codex outcome --result accepted|rejected [--review-minutes N] [--file SESSION.jsonl]
        smart-codex logs cleanup --older-than-days DAYS [--apply]
@@ -54,7 +59,7 @@ export function smartCodexChildEnv(source: NodeJS.ProcessEnv) {
     'SMART_CODEX_CLASSIFIER', 'SMART_CODEX_GATEWAY_URL', 'SMART_CODEX_GATEWAY_TOKEN',
     'SMART_CODEX_ADMIN_TOKEN', 'SMART_CODEX_AUTH_CLIENT_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET',
     'SMART_CODEX_CUSTOMERS', 'SMART_CODEX_QUOTA_URL', 'SMART_CODEX_QUOTA_TOKEN', 'SMART_CODEX_QUOTA_NAMESPACE',
-    'OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_ORG_ID', 'OPENAI_PROJECT_ID']) delete env[key];
+    'OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_ORG_ID', 'OPENAI_PROJECT_ID', 'MODEL_RUDDER_RELAY_TOKEN']) delete env[key];
   return env;
 }
 
@@ -114,9 +119,13 @@ export function parseSmartCodexArgs(args: string[], cwd: string) {
 }
 
 export function nativeTuiArgs(tui: string[], socketPath: string, model: string) {
+  return nativeRemoteTuiArgs(tui, `unix://${socketPath}`, model);
+}
+
+export function nativeRemoteTuiArgs(tui: string[], endpoint: string, model: string, authEnv?: string) {
   const boundary = tui.indexOf('--');
   const index = boundary === -1 ? tui.length : boundary;
-  return [...tui.slice(0, index), '--remote', `unix://${socketPath}`, ...subscriptionConfig,
+  return [...tui.slice(0, index), '--remote', endpoint, ...(authEnv ? ['--remote-auth-token-env', authEnv] : []), ...subscriptionConfig,
     '-c', `model=${JSON.stringify(model)}`, ...tui.slice(index)];
 }
 
@@ -126,15 +135,18 @@ const subscriptionConfig = ['-c', 'forced_login_method="chatgpt"', '-c', 'model_
 // The socket's parent directory is mode 0700. No TCP listener or credential
 // handoff is needed; the official child retains ownership of Codex login.
 export async function startSmartRelay(options: {
-  socketPath: string; cwd: string; env: NodeJS.ProcessEnv; serverArgs?: string[];
+  socketPath?: string; localToken?: string; cwd: string; env: NodeJS.ProcessEnv; serverArgs?: string[];
   mode: RoutingMode; model: string; classifier?: Classifier; binary?: string;
-  runtimePolicy?: RuntimePolicy;
+  runtimePolicy?: RuntimePolicy; command?: NativeCommand;
   onRoute?: (metadata: Record<string, unknown>) => void;
   onFailure?: (reason: string) => void;
   onThread?: (id: string) => void;
   onClient?: (message: Record<string, any>) => void;
   onServer?: (message: Record<string, any>) => void;
 }) {
+  if (Boolean(options.socketPath) === Boolean(options.localToken)) throw new Error('Select one private relay transport.');
+  if (options.localToken && !/^[a-f0-9]{64}$/.test(options.localToken)) throw new Error('Invalid local relay token.');
+  const command = options.command ?? (options.binary ? { file: options.binary, args: [] } : await codexCommand(options.env));
   const runtimePolicy = createRuntimePolicy(options.runtimePolicy ?? { mode: options.mode, model: options.model });
   const http = createServer((_request, response) => { response.writeHead(404).end(); });
   const maxFrameBytes = 64 * 1024 * 1024;
@@ -143,10 +155,17 @@ export async function startSmartRelay(options: {
   let closing = false;
   http.on('upgrade', (request, socket, head) => {
     if (closing || request.headers.origin || sessions.size > 0) { socket.destroy(); return; }
+    if (options.localToken) {
+      const supplied = Buffer.from(request.headers.authorization ?? '');
+      const expected = Buffer.from(`Bearer ${options.localToken}`);
+      if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected) || request.url !== '/') {
+        socket.destroy(); return;
+      }
+    }
     wss.handleUpgrade(request, socket, head, ws => wss.emit('connection', ws));
   });
   wss.on('connection', ws => {
-    const child = spawn(options.binary ?? 'codex', ['app-server', '--stdio', ...(options.serverArgs ?? []),
+    const child = spawn(command.file, [...command.args, 'app-server', '--stdio', ...(options.serverArgs ?? []),
       ...subscriptionConfig, '-c', `model=${JSON.stringify(runtimePolicy.model)}`],
     { cwd: options.cwd, env: smartCodexChildEnv(options.env), stdio: ['pipe', 'pipe', 'ignore'] });
     let stopped = false;
@@ -203,12 +222,19 @@ export async function startSmartRelay(options: {
     ws.on('error', () => { void stop('client_socket'); });
   });
   try {
-    await new Promise<void>((done, reject) => { http.once('error', reject); http.listen(options.socketPath, done); });
-    await chmod(options.socketPath, 0o600);
+    await new Promise<void>((done, reject) => {
+      http.once('error', reject);
+      if (options.socketPath) http.listen(options.socketPath, done);
+      else http.listen(0, '127.0.0.1', done);
+    });
+    if (options.socketPath) await chmod(options.socketPath, 0o600);
   } catch (error) {
     http.close(); wss.close(); throw error;
   }
-  return { async close() {
+  const address = http.address();
+  const endpoint = options.socketPath ? `unix://${options.socketPath}` :
+    address && typeof address !== 'string' ? `ws://127.0.0.1:${address.port}` : '';
+  return { endpoint, async close() {
     closing = true;
     await Promise.all([...sessions].map(stop => stop()));
     wss.close();
@@ -217,6 +243,7 @@ export async function startSmartRelay(options: {
 }
 
 export async function launchSmartCodex(args: string[], env = process.env): Promise<number> {
+  if (args[0] === 'setup') return runSetup(args.slice(1), env);
   if (args[0] === 'logs' && args[1] === 'cleanup') return runLogCleanup(args.slice(2));
   if (args[0] === 'outcome') return runOutcomeCommand(args.slice(1));
   if (args[0] === 'account') {
@@ -244,14 +271,15 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
     if (env.ALLOW_JEV_CLASSIFICATION !== 'true') throw new Error('Configure ALLOW_JEV_CLASSIFICATION=true and classifier credentials in the selected environment file, or use --routing pinned');
     readClassifierConfig(env);
   }
+  const command = await codexCommand(smartCodexChildEnv(env));
   await new Promise<void>((done, reject) => {
-    execFile('codex', ['--version'], { env: smartCodexChildEnv(env), timeout: 5000, maxBuffer: 16_384 }, (error, stdout) => {
+    execFile(command.file, [...command.args, '--version'], { env: smartCodexChildEnv(env), timeout: 5000, maxBuffer: 16_384 }, (error, stdout) => {
       if (error || !codexCompatibility(stdout).protocolTested) reject(new Error(`Unsupported Codex CLI version; use a protocol-tested build (${protocolTestedCodexVersions.join(', ')}). Native TUI certification is pending.`));
       else done();
     });
   });
   await new Promise<void>((done, reject) => {
-    execFile('codex', ['login', 'status'],
+    execFile(command.file, [...command.args, 'login', 'status'],
       { env: smartCodexChildEnv(env), timeout: 10_000, maxBuffer: 64 * 1024 }, (error, stdout, stderr) => {
         if (error || !`${stdout}\n${stderr}`.includes('Logged in using ChatGPT')) reject(new Error('ChatGPT subscription login required; run codex login'));
         else done();
@@ -277,7 +305,8 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
   try {
     await chmod(directory, 0o700);
     const socketPath = join(directory, 'relay.sock');
-    relay = await startSmartRelay({ socketPath, cwd: parsed.directory, env, serverArgs: parsed.server,
+    const localToken = process.platform === 'win32' ? randomBytes(32).toString('hex') : undefined;
+    relay = await startSmartRelay({ ...(localToken ? { localToken } : { socketPath }), command, cwd: parsed.directory, env, serverArgs: parsed.server,
       mode: parsed.mode, model: parsed.model, runtimePolicy: parsed.runtimePolicy,
       onClient: message => { if (usage.client(message)) publish(); },
       onServer: message => { if (usage.server(message)) publish(); },
@@ -290,8 +319,9 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
     if (log.path) process.stderr.write(`Live usage in another terminal: smart-codex monitor ${log.path}\n`);
     if (parsed.mode !== 'pinned') process.stderr.write(`Jev receives user tasks and up to two earlier task excerpts${env.SMART_CODEX_CLASSIFIER === 'hosted' ? ' through your configured gateway' : ''}. Auto routing is experimental.\n`);
     return await new Promise<number>(done => {
-      const child = spawn('codex', nativeTuiArgs(parsed.tui, socketPath, parsed.model),
-        { cwd: process.cwd(), env: smartCodexChildEnv(env), stdio: 'inherit' });
+      const child = spawn(command.file, [...command.args, ...nativeRemoteTuiArgs(parsed.tui, relay!.endpoint, parsed.model,
+        localToken ? 'MODEL_RUDDER_RELAY_TOKEN' : undefined)],
+        { cwd: process.cwd(), env: { ...smartCodexChildEnv(env), ...(localToken ? { MODEL_RUDDER_RELAY_TOKEN: localToken } : {}) }, stdio: 'inherit' });
       const signals = ['SIGINT', 'SIGTERM', 'SIGHUP'] as const;
       const handlers = signals.map(signal => () => { child.kill(signal); });
       signals.forEach((signal, i) => process.on(signal, handlers[i]));

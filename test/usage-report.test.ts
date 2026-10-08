@@ -1,3 +1,4 @@
+import { isPrivatePathSync } from '../src/private-files.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, statSync, rmSync } from 'node:fs';
@@ -75,7 +76,7 @@ test('CLI selects latest log, writes private JSON and refuses overwrite without 
     const output = join(directory, 'PRIVATE_REPORT.json'); let errors = '', stdout = '';
     const out = (s: string) => { stdout += s; }, err = (s: string) => { errors += s; };
     assert.equal(runUsageReport(['--format', 'json', '--output', output], directory, out, err), 0);
-    assert.equal(statSync(output).mode & 0o777, 0o600);
+    assert.equal(isPrivatePathSync(output), true);
     assert.equal(JSON.parse(readFileSync(output, 'utf8')).schema, 'smart-router-session-report');
     assert.equal(runUsageReport(['--format', 'json', '--output', output], directory, out, err), 1);
     assert.ok(!errors.includes('PRIVATE'));
