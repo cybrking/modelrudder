@@ -30,9 +30,11 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 - An independently installed official Claude Code CLI, 2.1.293+ within the 2.1.x line. Mods itself began in 2.1.287; the default Haiku 5.5 route needs 2.1.293+
 - A native `claude.ai` login; use `claude auth login` yourself if needed
 - Your own direct Jev credentials and explicit `ALLOW_JEV_CLASSIFICATION=true` for observe/auto
-- The official `v0.1.0-preview.4` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
+- The official `v0.1.0-preview.5` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
 
-For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.4 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
+For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.5 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
+
+Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.5 release containing the issue #2 patch.
 
 Already installed? See [upgrade and rollback instructions](UPGRADE.md), including how to try the unreleased issue #2 patch.
 
