@@ -151,6 +151,28 @@ Auto maps FAST to Haiku, BALANCED/DEEP to Sonnet, and MAX to Opus. Native effort
 
 Run `smart-codex setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described below. Then check readiness and start with recommendations while Sol executes:
 
+### Claude Code
+
+Check readiness, then start with recommendations while Claude begins on Sonnet:
+
+```sh
+smart-claude doctor
+smart-claude --routing observe
+```
+
+Inspect your results before trying automatic routing, or choose a pinned model without sending tasks to Jev:
+
+```sh
+smart-claude --routing auto
+smart-claude --model sonnet
+```
+
+Auto maps FAST to Haiku, BALANCED/DEEP to Sonnet, and MAX to Opus. Native effort is preserved. Observe respects subsequent native model choices; auto makes a new decision for each eligible turn. Media, references, resumed history and other opaque context retain the native model. Native model changes and fallback during a tool loop take precedence. See [Claude commands and eligibility](docs/CLAUDE_CODE.md#commands).
+
+### Codex
+
+Check readiness, then start with recommendations while Sol executes:
+
 ```sh
 smart-codex doctor
 smart-codex --routing observe --effort-mode fixed

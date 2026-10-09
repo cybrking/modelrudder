@@ -36,6 +36,8 @@ For agent-assisted setup, use [Install with Claude Code](../README.md#install-wi
 
 Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.5 release containing the issue #2 patch.
 
+Already installed? See [upgrade and rollback instructions](UPGRADE.md), including how to try the unreleased issue #2 patch.
+
 Then prepare your private configuration and check readiness:
 
 ```sh
