@@ -1,6 +1,6 @@
 import { expect, test, mock } from 'claude-code/testing';
 
-function setup(on, captured, mode = 'auto', count = 0) {
+function setup(on, captured, mode = 'auto', count = 0, consumePrompt = null) {
   mock.clock(on);
   mock.env(on, {
     MODEL_RUDDER_CLAUDE_ENDPOINT: 'http://127.0.0.1:32123',
@@ -13,7 +13,10 @@ function setup(on, captured, mode = 'auto', count = 0) {
   on('ui.log', () => ({ value: undefined }));
   on('session.start', () => ({ cwd: '/work' }));
   on('session.end', () => ({ sessionId: 'session_native_test' }));
-  on('prompt.submit', ($, e) => ({ text: e.text }));
+  on('prompt.submit', async ($, e) => {
+    if (consumePrompt) await consumePrompt(e);
+    return { text: consumePrompt ? '' : e.text };
+  });
   on('turn.start', ($, e) => ({ turnId: e.turnId }));
   on('turn.complete', () => ({ text: '' }));
   on('http.fetch', ($, e) => {
@@ -83,4 +86,18 @@ test('native loader honors explicit pinned mode without sending prompt text', as
   setup(on, captured, 'pinned'); await start($); await prompt($, 'turn_1', 'PRIVATE PINNED TASK'); await step($, 'turn_1');
   expect(captured.requests.find((r) => r.url.endsWith('/route')).request.task).toBe('');
   expect(captured.models).toEqual(['claude-opus-5-5']);
+});
+
+test('native loader routes successive turns after a consumed prompt receipt changes', async ($, on) => {
+  const captured = { requests: [], models: [] };
+  setup(on, captured, 'auto', 0, (e) => $.turn.start({ turnId: e.text, text: e.text }));
+  await start($);
+  for (const id of ['turn_1', 'turn_2', 'turn_3']) {
+    await $.prompt.submit({ text: id, origin: { kind: 'composer' }, wait: false });
+    await step($, id);
+    await $.turn.complete({ turnId: id, isAborted: false });
+  }
+  expect(captured.requests.filter((r) => r.url.endsWith('/route')).map((r) => r.request.task))
+    .toEqual(['turn_1', 'turn_2', 'turn_3']);
+  expect(captured.models).toEqual(['claude-haiku-5-5', 'claude-haiku-5-5', 'claude-haiku-5-5']);
 });
