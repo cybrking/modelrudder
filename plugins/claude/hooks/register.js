@@ -301,9 +301,11 @@ export function register(on) {
   });
 
   on('prompt.attachment', async ($, e, next) => {
-    // Observe the kind only, never read or forward the attached text. Ordinary
-    // tool/status reminders do not erase an otherwise eligible user prompt.
-    if (e.agentId === undefined && ['file', 'queued_command', 'instructions', 'nested_memory'].includes(e.type)) {
+    // Native project instructions are part of Claude's normal environment,
+    // like its system prompt. Only the typed tasks go to the classifier.
+    // Files, queued input and non-native instructions still invalidate routing.
+    const nativeInstructions = e.origin?.kind === 'engine' && ['instructions', 'nested_memory'].includes(e.type);
+    if (e.agentId === undefined && !nativeInstructions && ['file', 'queued_command', 'instructions', 'nested_memory'].includes(e.type)) {
       makeOpaque(e.type === 'file' ? 'reference_context_baseline' : 'unclassified_context_baseline');
     }
     return next(e);

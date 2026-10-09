@@ -101,3 +101,26 @@ test('native loader routes successive turns after a consumed prompt receipt chan
     .toEqual(['turn_1', 'turn_2', 'turn_3']);
   expect(captured.models).toEqual(['claude-haiku-5-5', 'claude-haiku-5-5', 'claude-haiku-5-5']);
 });
+
+test('native loader preserves successive routes through project instruction announcements', async ($, on) => {
+  const captured = { requests: [], models: [] };
+  setup(on, captured);
+  on('prompt.attachment', ($, e) => ({ text: e.text }));
+  await start($);
+  for (const id of ['turn_1', 'turn_2', 'turn_3']) {
+    await prompt($, id, id);
+    if (id === 'turn_1') {
+      await $.prompt.attachment({ type: 'instructions', origin: { kind: 'engine' }, text: 'PRIVATE PROJECT RULES' });
+    }
+    await step($, id);
+    if (id === 'turn_1') {
+      await $.prompt.attachment({ type: 'nested_memory', origin: { kind: 'engine' }, text: 'PRIVATE NESTED RULES' });
+      await step($, id, { index: 1 });
+    }
+    await $.turn.complete({ turnId: id, answer: 'ok', durationMs: 1, isAborted: false, usage: null });
+  }
+  expect(captured.requests.filter((r) => r.url.endsWith('/route')).map((r) => r.request.task))
+    .toEqual(['turn_1', 'turn_2', 'turn_3']);
+  expect(captured.models).toEqual(['claude-haiku-5-5', 'claude-haiku-5-5', 'claude-haiku-5-5', 'claude-haiku-5-5']);
+  expect(JSON.stringify(captured.requests).includes('PRIVATE')).toBe(false);
+});
