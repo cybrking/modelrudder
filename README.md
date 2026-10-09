@@ -122,7 +122,7 @@ Alternatively, build from a trusted source checkout:
 npm ci --ignore-scripts
 npm test
 npm run typecheck
-npm run install-cli
+node -- src/install-cli.ts
 ```
 
 ## Configure and start
@@ -221,11 +221,13 @@ git clone https://github.com/cybrking/modelrudder.git modelrudder-upgrade
 cd modelrudder-upgrade
 git checkout --detach 74e43165f543351dc8d87bda91f865577e20427e
 npm ci --ignore-scripts
-npm run install-cli -- --list
-npm run install-cli
+node -- src/install-cli.ts --list
+node -- src/install-cli.ts
 ```
 
 This pins the [merged source snapshot](https://github.com/cybrking/modelrudder/commit/74e43165f543351dc8d87bda91f865577e20427e), including the routing fix and both-provider setup/upgrade guides. Choose a different new folder name if `modelrudder-upgrade` already exists. **Save the previous release ID printed by `--list` before running the final install command.** If you used custom installation paths, append the same `--root`, `--bin-dir` and `--env-file` flags to both installer commands.
+
+Use the `node -- src/install-cli.ts` form shown above for this pinned build. Its older npm installer script can let Node consume the installer's `--env-file` option and fail before installation; the explicit `--` keeps installer options separate from Node options.
 
 Open a fresh terminal and run the check for your tool:
 
@@ -238,7 +240,7 @@ smart-codex doctor
 The package version remains `0.1.0-preview.4`; use the installer's content-based release ID to distinguish this build from the published installer. To roll back from this checkout, replace the placeholder with your saved previous ID and repeat any custom path flags:
 
 ```sh
-npm run install-cli -- --rollback PREVIOUS_RELEASE_ID
+node -- src/install-cli.ts --rollback PREVIOUS_RELEASE_ID
 ```
 
 Restart launchers after rollback. ModelRudder installation does not update your native Claude or Codex CLI. These changes remain an experimental preview; doctor checks prerequisites, not task quality.
@@ -251,8 +253,8 @@ For standalone installations, download the newer installer and `SHA256SUMS` from
 git fetch --tags origin
 git checkout --detach APPROVED_RELEASE_TAG
 npm ci --ignore-scripts
-npm run install-cli -- --list
-npm run install-cli
+node -- src/install-cli.ts --list
+node -- src/install-cli.ts
 ```
 
 Replace `APPROVED_RELEASE_TAG` with the release you reviewed. Pulling source alone does not update an installed runtime. Repeat any original `--root`, `--bin-dir` and `--env-file` flags on installer/maintenance commands. See the [upgrade guide](docs/UPGRADE.md) for exact platform steps and the unreleased issue #2 patch; reinstalling the existing preview.4 download does not include that patch.

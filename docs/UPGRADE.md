@@ -39,11 +39,13 @@ For a clean source checkout, select an approved release tag, then install:
 git fetch --tags origin
 git checkout --detach APPROVED_RELEASE_TAG
 npm ci --ignore-scripts
-npm run install-cli -- --list
-npm run install-cli
+node -- src/install-cli.ts --list
+node -- src/install-cli.ts
 ```
 
 Replace `APPROVED_RELEASE_TAG` with the release you reviewed. Before installing, record the current release ID printed by `--list` for rollback. Pulling source alone does not update the managed runtime.
+
+The explicit `node -- src/install-cli.ts` command works with older source builds whose npm installer script lacks the `--` boundary. Without it, Node can consume a custom `--env-file` option and report that the file was not found before the installer runs. The installer only needs that path to configure the launchers; it does not need to load the key file during installation.
 
 ## Automatic updates and notifications
 
@@ -64,8 +66,8 @@ git clone --single-branch --branch main https://github.com/cybrking/modelrudder.
 cd modelrudder-issue2
 git checkout --detach a27a893
 npm ci --ignore-scripts
-npm run install-cli -- --list
-npm run install-cli
+node -- src/install-cli.ts --list
+node -- src/install-cli.ts
 ```
 
 `a27a893` pins the tested runtime patch instead of installing whichever later changes land on the branch. Save the previous release ID from `--list` before the final command. This installs a versioned copy of both launchers; pulling source alone does not update an existing managed installation.
@@ -107,7 +109,7 @@ Inspect the routing notices and run `smart-claude report` after exiting. Each el
 From the source checkout, use the previous release ID you saved:
 
 ```sh
-npm run install-cli -- --rollback PREVIOUS_RELEASE_ID
+node -- src/install-cli.ts --rollback PREVIOUS_RELEASE_ID
 ```
 
 Replace `PREVIOUS_RELEASE_ID` with the exact ID printed by `--list`, and repeat any custom installation flags. Restart active launchers afterward. Rollback preserves configuration and state.
