@@ -136,6 +136,21 @@ test('packager and artifact installer CLI work offline and never overwrite an ar
   } finally { await rm(temp, { recursive: true, force: true }); }
 });
 
+test('npm installer command passes a custom env-file to the installer without loading it in Node', async () => {
+  const { temp, options } = await fixture();
+  try {
+    // Exercise the command actually declared by npm, including its Node flags.
+    const pkg = JSON.parse(await readFile(join(project, 'package.json'), 'utf8'));
+    const [command, ...args] = pkg.scripts['install-cli'].split(/\s+/);
+    assert.equal(command, 'node');
+    const result = await run(process.execPath, [...args, '--list', '--root', options.root,
+      '--bin-dir', options.binDirectory, '--env-file', options.envFile], { cwd: project });
+    assert.match(result.stdout, /Current: none/);
+    await assert.rejects(stat(options.envFile), { code: 'ENOENT' });
+    await assert.rejects(stat(options.root), { code: 'ENOENT' });
+  } finally { await rm(temp, { recursive: true, force: true }); }
+});
+
 test('installer refuses configuration inside release storage including aliases before mutation', async () => {
   const { temp, options } = await fixture();
   try {

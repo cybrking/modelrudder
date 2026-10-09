@@ -16,7 +16,7 @@
     "test": "node --test test/*.test.ts",
     "eval:routing": "node --test test/claude-mod.test.ts test/claude-routing.test.ts test/context-eligibility.test.ts test/turn-lifecycle.test.ts test/effort-routing.test.ts",
     "typecheck": "tsc --noEmit",
-    "install-cli": "node src/install-cli.ts",
+    "install-cli": "node -- src/install-cli.ts",
     "smart-codex": "node --env-file-if-exists=.env.local src/smart-codex.ts",
     "smart-claude": "node --env-file-if-exists=.env.local src/smart-claude.ts",
     "doctor:claude": "node --env-file-if-exists=.env.local src/smart-claude.ts doctor",
