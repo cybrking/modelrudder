@@ -10,7 +10,7 @@ If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same
 
 ## Normal release upgrade
 
-Download the **preview.5** standalone installer and `SHA256SUMS` from the [release page](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.5). The exact cross-platform commands are in the [README](../README.md#upgrade-to-preview5). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
+Download the **preview.6** standalone installer and `SHA256SUMS` from the [release page](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.6). The exact cross-platform commands are in the [README](../README.md#upgrade-to-preview6). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
 
 The installer filename still begins with `smart-codex`, but preview.4 and newer dual-launcher artifacts update both `smart-claude` and `smart-codex`. You do not need to install each separately. Keep a verified installer and record the current ID before installing the new one.
 
@@ -57,11 +57,11 @@ To receive ModelRudder release notifications, open the [repository](https://gith
 
 Native Claude/Codex updates are separate. A newer native CLI can exceed the launcher's supported range or recorded evidence; run the matching ModelRudder doctor after either component changes. Automated compatibility discovery is not automatic approval of a release.
 
-## Claude routing patch in preview.5
+## Claude routing fixes in preview.6
 
-Preview.5 includes the consumed-prompt-receipt fix merged in [PR #3](https://github.com/cybrking/modelrudder/pull/3) and the source installer's argument-boundary fix. Upgrading with the preview.5 standalone installer installs those fixes; reinstalling the older preview.4 installer does not.
+Preview.6 includes the native-instruction fix from [PR #10](https://github.com/cybrking/modelrudder/pull/10). In preview.5, Claude's own project-instruction or nested-memory announcements could mark the chat unclassified and stop routing later requests. Preview.6 preserves routing for those engine-authored announcements without transmitting their contents to the classifier. It retains the earlier consumed-prompt-receipt fix and source installer's argument-boundary fix. Reinstalling preview.5 does not install this new patch.
 
-The issue reporter's exact interactive trigger still needs a retest. Media, resumed history and other ineligible context intentionally retain the native model. The package now reports `0.1.0-preview.5`; the full content-based release ID is available through the installer's `--list` command.
+The issue reporter's exact interactive trigger still needs a retest. Media, resumed history and other ineligible context intentionally retain the native model. The package now reports `0.1.0-preview.6`; the full content-based release ID is available through the installer's `--list` command.
 
 ## Verify the upgrade
 
@@ -79,7 +79,7 @@ smart-codex doctor
 
 Doctor checks prerequisites without submitting a model task. For builds with the same package version, use the content-based release ID from `--list` to identify the installed runtime.
 
-### Retest the Claude issue #2 patch
+### Retest the Claude multi-turn fixes
 
 Open a fresh terminal, then run:
 
