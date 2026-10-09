@@ -63,13 +63,13 @@ Detect my OS and check Node.js and Claude Code. Install missing prerequisites
 using official instructions; ModelRudder requires Node 24+ and Claude Code
 2.1.293 or newer within the 2.1.x line. Preserve existing credentials,
 configuration and permissions. Explain any incompatible version or login
-before changing it. Codex is not required to use smart-claude.
+before changing it. Only the native Claude CLI is required for smart-claude.
 
 Download the release installer and SHA256SUMS, verify the checksum, install
 for my user account, and add its launcher directory to my user PATH without
-removing existing entries. The smart-codex-named preview.4 installer bundles
-both smart-codex and smart-claude; no source build is needed. Verify
-smart-claude --help. Do not replace plain claude or an unmanaged launcher.
+removing existing entries. Use the exact installer filename from the release;
+it includes smart-claude, so no source build is needed. Verify smart-claude
+--help. Do not replace plain claude or an unmanaged launcher.
 
 Run smart-claude setup to open my private Jev configuration in a local editor.
 Show me https://console.typesafe.ai/keys so I can sign up and get my own key.
@@ -127,31 +127,11 @@ npm run install-cli
 
 ## Configure and start
 
-Run setup with the launcher you plan to use; either opens the same private Jev configuration:
-
-```sh
-# Claude Code
-smart-claude setup
-
-# Codex
-smart-codex setup
-```
-
-You only need to run one setup command. Setup preserves an existing file. Add `--no-open` to either command to create the template and print its path without opening an editor. The configuration starts with three editable settings and classification disabled:
-
-```dotenv
-TYPESAFE_API_KEY=
-ALLOW_JEV_CLASSIFICATION=false
-SMART_CODEX_CLASSIFIER=direct
-```
-
-`SMART_CODEX_CLASSIFIER`, `SMART_CODEX_ENV_FILE` and the macOS/Linux `~/.config/smart-codex/env` path are shared legacy names used by **both** launchers. Keep these names as written; Claude currently requires `SMART_CODEX_CLASSIFIER=direct`.
-
-If needed, sign up and create your key at the [official TypeSafe dashboard](https://console.typesafe.ai/keys), linked by the [Jev quickstart](https://docs.typesafe.ai/introduction/quickstart). Enter your key privately in the local editor and change `ALLOW_JEV_CLASSIFICATION` from `false` to `true` after reviewing the data flow below. Keep credentials out of agent chat, command arguments and source control. Existing exported environment variables take precedence over the configuration file. Leaving `ALLOW_JEV_CLASSIFICATION=false` keeps Jev disabled; pinned mode remains available.
+Follow the section for your native tool. Both launchers use the [shared Jev configuration](#shared-jev-configuration) below.
 
 ### Claude Code
 
-Check readiness, then start with recommendations while Claude begins on Sonnet:
+Run `smart-claude setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described below. Then check readiness and start with recommendations while Claude begins on Sonnet:
 
 ```sh
 smart-claude doctor
@@ -169,7 +149,7 @@ Auto maps FAST to Haiku, BALANCED/DEEP to Sonnet, and MAX to Opus. Native effort
 
 ### Codex
 
-Check readiness, then start with recommendations while Sol executes:
+Run `smart-codex setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described below. Then check readiness and start with recommendations while Sol executes:
 
 ```sh
 smart-codex doctor
@@ -189,6 +169,20 @@ To use a pinned model without sending tasks to Jev:
 ```sh
 smart-codex --routing pinned --model gpt-6.1-sol
 ```
+
+### Shared Jev configuration
+
+Setup preserves an existing file. Add `--no-open` to either command to create the template and print its path without opening an editor. The configuration starts with three editable settings and classification disabled:
+
+```dotenv
+TYPESAFE_API_KEY=
+ALLOW_JEV_CLASSIFICATION=false
+SMART_CODEX_CLASSIFIER=direct
+```
+
+`SMART_CODEX_CLASSIFIER`, `SMART_CODEX_ENV_FILE` and the macOS/Linux `~/.config/smart-codex/env` path are shared legacy names used by **both** launchers. Keep these names as written; Claude currently requires `SMART_CODEX_CLASSIFIER=direct`.
+
+If needed, sign up and create your key at the [official TypeSafe dashboard](https://console.typesafe.ai/keys), linked by the [Jev quickstart](https://docs.typesafe.ai/introduction/quickstart). Enter your key privately in the local editor and change `ALLOW_JEV_CLASSIFICATION` from `false` to `true` after reviewing the data flow below. Keep credentials out of agent chat, command arguments and source control. Existing exported environment variables take precedence over the configuration file. Leaving `ALLOW_JEV_CLASSIFICATION=false` keeps Jev disabled; pinned mode remains available.
 
 ## Data and privacy
 

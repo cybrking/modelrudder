@@ -55,12 +55,12 @@ Native Claude/Codex updates are separate. A newer native CLI can exceed the laun
 
 ## Try the issue #2 fix before release
 
-The fix is currently in [draft PR #3](https://github.com/cybrking/modelrudder/pull/3), not a published release. Reinstalling the existing preview.4 download will not add this fix. Its exact reported interactive trigger still needs a retest; media, resumed history, and other ineligible context intentionally retain the native model.
+The fix was merged in [PR #3](https://github.com/cybrking/modelrudder/pull/3), but is not yet included in a published release. Reinstalling the existing preview.4 download will not add this fix. Its exact reported interactive trigger still needs a retest; media, resumed history, and other ineligible context intentionally retain the native model.
 
 Review the PR before installing its code. Use a new checkout folder so you do not disturb an existing working tree. These commands work in macOS/Linux shells and Windows PowerShell with Git, npm, and Node.js 24+ installed:
 
 ```sh
-git clone --single-branch --branch fix/claude-consumed-prompts https://github.com/cybrking/modelrudder.git modelrudder-issue2
+git clone --single-branch --branch main https://github.com/cybrking/modelrudder.git modelrudder-issue2
 cd modelrudder-issue2
 git checkout --detach a27a893
 npm ci --ignore-scripts
