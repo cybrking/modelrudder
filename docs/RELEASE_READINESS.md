@@ -16,6 +16,18 @@ Acceptance criteria established before this evaluation:
 
 Full production readiness requires all applicable criteria. An unperformed or unavailable check is not a pass. Windows CI exercises a Windows runner; it does not certify a normal Windows 11 desktop session. Synthetic classifier tests are separated from real Jev calls.
 
+## Preview.6 — October 9, 2026
+
+This release adds the native-instruction Claude multi-turn fix from [PR #10](https://github.com/cybrking/modelrudder/pull/10). Engine-authored project instruction and nested-memory announcements no longer mark eligible user-task history opaque. Referenced files, queued input, non-native instructions, resumed history and compaction remain conservative. Project instruction contents are not sent to the classifier. Native CLI version gates are unchanged.
+
+The local full suite passed 170 tests with one Windows-only skip; type checking, seven native Claude 2.1.295 plugin fixtures and the production dependency audit passed. Before the patch, the new native-loader fixture classified the first task and sent empty tasks for requests two and three; afterward it classified all three. Integration regressions also verify Haiku → Opus → Haiku across three tasks, task history and attachment privacy.
+
+The checksum-verified preview.5 installer and actual preview.6 standalone artifact were exercised in disposable custom runtime, bin and configuration paths. The installed preview.5 adapter failed both native-instruction regressions; the upgraded preview.6 adapter passed. Both launchers reported preview.6 after upgrade and preview.5 after rollback. Configuration and local state survived byte-for-byte. No real keys, account requests or paid inference were used.
+
+Preview.6 runtime ID: `0.1.0-preview.6-aa6ad8c8ac9b9110`. Standalone installer SHA-256: `1cf985a67cd011421a1c5187c660d74190214b63cb2ecae56fedac8abe93c778`. The README and agent-assisted upgrade prompt use the new release. Inspect this release commit's CI for macOS, Ubuntu and Windows results with Node 24/26.
+
+The reported failure occurred on another computer already running preview.5. Its exact native Claude version and triggering event remain unconfirmed; a fresh authenticated retest on that computer is still required. This is an experimental preview, not full production qualification.
+
 ## Preview.5 — October 9, 2026
 
 This release packages the consumed-prompt Claude routing fix, the source npm installer's Node argument boundary, and the both-provider setup/upgrade guides. It remains an experimental preview with unchanged native CLI version gates.

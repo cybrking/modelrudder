@@ -30,13 +30,11 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 - An independently installed official Claude Code CLI, 2.1.293+ within the 2.1.x line. Mods itself began in 2.1.287; the default Haiku 5.5 route needs 2.1.293+
 - A native `claude.ai` login; use `claude auth login` yourself if needed
 - Your own direct Jev credentials and explicit `ALLOW_JEV_CLASSIFICATION=true` for observe/auto
-- The official `v0.1.0-preview.5` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
+- The official `v0.1.0-preview.6` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
 
-For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.5 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
+For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.6 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
 
-Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.5 release containing the issue #2 patch.
-
-Already installed? See [upgrade and rollback instructions](UPGRADE.md), including how to try the unreleased issue #2 patch.
+Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.6 release containing both Claude multi-turn fixes.
 
 Then prepare your private configuration and check readiness:
 
@@ -86,7 +84,7 @@ Media, @-references, additional prompt context, ambiguous/dropped/rewritten prom
 
 Routing is not intentionally limited to the first prompt. Each eligible new user turn is classified once, and its decision is held through its tool loop. `unclassified_context_baseline` means the adapter could not establish eligible context, for example after resume, compaction, or an unmatched prompt. Once `turn.start` has matched an observed prompt, a change to the returned `prompt.submit` receipt does not invalidate that input or disable later turns; actual dropped or unmatched prompts still retain the native model.
 
-Preview.5 still marked engine-authored project instruction announcements as opaque. An announcement during the first turn could therefore leave requests two and three displaying "Native model retained (unclassified context)." The instruction-origin patch fixes this separate path; the preview.5 published installer does not include it. A native-loader regression reproduces the first classified task followed by two empty tasks before the patch, and verifies three classified tasks afterward. Retesting on the affected computer is still required to confirm its exact trigger.
+Preview.5 still marked engine-authored project instruction announcements as opaque. An announcement during the first turn could therefore leave requests two and three displaying "Native model retained (unclassified context)." Preview.6 includes the instruction-origin patch for this separate path; the preview.5 published installer does not include it. A native-loader regression reproduces the first classified task followed by two empty tasks before the patch, and verifies three classified tasks afterward. Retesting on the affected computer is still required to confirm its exact trigger.
 
 The Node launcher holds the Jev key. The Claude child receives only an ephemeral capability for an authenticated local bridge. Claude's own credential storage, refresh, requests and usage limits stay native. Other privileged code already running as the same user can reach process environment/local services; this is a local boundary, not a sandbox against malicious same-user software.
 
