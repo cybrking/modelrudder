@@ -34,6 +34,8 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 
 For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.4 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
 
+Already installed? See [upgrade and rollback instructions](UPGRADE.md), including how to try the unreleased issue #2 patch.
+
 Then prepare your private configuration and check readiness:
 
 ```sh
@@ -93,8 +95,10 @@ Logs are private metadata files in the installed state directory's `claude-logs`
 - Node regression fixtures cover classification, confidence gating, privacy, cancellation, duplicate routing, context bounds, HTTP authentication, argument handling and separate usage records.
 - The actual official Claude Code **2.1.295** binary passed static plugin validation and the plugin's no-inference test suite in an isolated, unsigned-in environment.
 - An isolated native-provider wire probe verified that full-ID rewrites reach the synthetic local provider, while a Sonnet-only native model allowlist overrides disallowed Haiku/Opus rewrites. This used a fake key and entirely synthetic responses, not real Anthropic inference. Family aliases alone failed this check and are not used on `turn.step`.
-- Dual-launcher release/install/rollback/uninstall tests pass, including Windows bootstrap fixtures on Linux. Native Windows/macOS interactive execution has not been tested here.
-- The full suite has one environment-blocked pre-existing Codex Unix-socket test (`listen EPERM`). The same failure was reproduced on unmodified base commit `cc1653f`; the existing Codex implementation is unchanged.
+- Dual-launcher release/install/rollback/uninstall tests pass, including Windows bootstrap fixtures. Full authenticated Claude terminal journeys remain unqualified.
+- On October 9, 2026, the full suite passed on macOS with Node 24 and 26: 165 passed, one Windows-only skip. The earlier Codex Unix-socket `listen EPERM` was a sandbox restriction; the local run passed with socket access.
+- Normal PR CI now includes pinned Claude 2.1.295 Mods fixtures and the synthetic provider-wire probe on macOS, Ubuntu and Windows with Node 24/26. Scheduled upstream checks already exercised Claude; the added checks close the ordinary PR coverage gap. Check the actual run associated with the source revision before treating platform results as passed.
+- `npm run eval:routing` runs 74 synthetic lifecycle checks for both adapters. Its [predefined criteria](../.codex/evals/routing.md) distinguish routing regressions from live task-quality evaluation.
 - Authenticated live Claude conversations, model availability, actual plan allowance impact, quality outcomes and full TUI behavior remain **unverified**. No user credentials, real provider inference, paid tests, publication or account changes were used for these checks.
 - Newer/older supported-line builds may differ; only 2.1.295 has the recorded module/wire checks. Full-ID defaults will need review when models change, and other trusted mods or managed policy can replace a requested route. Observe and validate before using auto on important work. Model-switch-hook interactions are not certified; this adapter rewrites a request and does not run `/model` or change the saved session default.
 

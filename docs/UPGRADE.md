@@ -1,0 +1,115 @@
+# Upgrading ModelRudder
+
+Stop active `smart-codex` and `smart-claude` sessions before changing releases, then start fresh sessions afterward. An already running launcher keeps its loaded code.
+
+Upgrades preserve the existing private key file and local state. You do not need to enter your Jev key again. ModelRudder and the native provider CLIs are separate installations; upgrading ModelRudder does not upgrade Claude or Codex.
+
+If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same flags on every installer and maintenance command below. Use your installation's existing paths, rather than creating a second default installation.
+
+## Normal release upgrade
+
+Download the newer release's standalone installer and `SHA256SUMS` from the [official releases page](https://github.com/cybrking/modelrudder/releases). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
+
+The installer filename still begins with `smart-codex`, but preview.4 and newer dual-launcher artifacts update both `smart-claude` and `smart-codex`. You do not need to install each separately. Keep a verified installer and record the current ID before installing the new one.
+
+On macOS/Linux, list the existing installation, then verify and install the downloaded release:
+
+```sh
+node -- ~/.local/share/smart-codex/current/src/install-cli.ts --list
+shasum -a 256 -c SHA256SUMS
+node -- ./smart-codex-RELEASE_ID-install.mjs
+```
+
+Run the last two commands in the download directory. Replace `RELEASE_ID` with the actual downloaded filename. If your installation root is custom, use its existing `current/src/install-cli.ts` path for the first command and repeat all original install-path flags.
+
+On Windows PowerShell, use your retained verified installer to list the current installation. Verify the new download's hash against its exact entry in `SHA256SUMS`, then run it:
+
+```powershell
+node -- .\smart-codex-PREVIOUS_RELEASE_ID-install.mjs --list
+Get-FileHash .\smart-codex-RELEASE_ID-install.mjs -Algorithm SHA256
+Get-Content .\SHA256SUMS
+node -- .\smart-codex-RELEASE_ID-install.mjs
+```
+
+Replace both filename placeholders with your actual files. The old and new files may be in different download directories; use their full paths if needed. Stop if the new installer hash does not match.
+
+For a clean source checkout, select an approved release tag, then install:
+
+```sh
+git fetch --tags origin
+git checkout --detach APPROVED_RELEASE_TAG
+npm ci --ignore-scripts
+npm run install-cli -- --list
+npm run install-cli
+```
+
+Replace `APPROVED_RELEASE_TAG` with the release you reviewed. Before installing, record the current release ID printed by `--list` for rollback. Pulling source alone does not update the managed runtime.
+
+## Automatic updates and notifications
+
+ModelRudder has no local self-updater or `upgrade` command in this preview. The [daily upstream workflow](UPSTREAM_UPDATES.md) discovers and tests new Claude/Codex versions on GitHub runners; it does not update your ModelRudder installation or native CLIs.
+
+To receive ModelRudder release notifications, open the [repository](https://github.com/cybrking/modelrudder), choose **Watch → Custom**, and select **Releases**. Follow the reviewed release's upgrade steps when notified. See [GitHub's notification instructions](https://docs.github.com/en/subscriptions-and-notifications/get-started/configuring-notifications).
+
+Native Claude/Codex updates are separate. A newer native CLI can exceed the launcher's supported range or recorded evidence; run the matching ModelRudder doctor after either component changes. Automated compatibility discovery is not automatic approval of a release.
+
+## Try the issue #2 fix before release
+
+The fix was merged in [PR #3](https://github.com/cybrking/modelrudder/pull/3), but is not yet included in a published release. Reinstalling the existing preview.4 download will not add this fix. Its exact reported interactive trigger still needs a retest; media, resumed history, and other ineligible context intentionally retain the native model.
+
+Review the PR before installing its code. Use a new checkout folder so you do not disturb an existing working tree. These commands work in macOS/Linux shells and Windows PowerShell with Git, npm, and Node.js 24+ installed:
+
+```sh
+git clone --single-branch --branch main https://github.com/cybrking/modelrudder.git modelrudder-issue2
+cd modelrudder-issue2
+git checkout --detach a27a893
+npm ci --ignore-scripts
+npm run install-cli -- --list
+npm run install-cli
+```
+
+`a27a893` pins the tested runtime patch instead of installing whichever later changes land on the branch. Save the previous release ID from `--list` before the final command. This installs a versioned copy of both launchers; pulling source alone does not update an existing managed installation.
+
+The package version remains `0.1.0-preview.4`, but the installer prints a different content-based release ID. Use that ID and `--list` to distinguish the patched build from the original preview.4 build.
+
+## Verify the upgrade
+
+Open a fresh terminal and check the launcher you use:
+
+```sh
+# Claude Code
+smart-claude --version
+smart-claude doctor
+
+# Codex
+smart-codex --version
+smart-codex doctor
+```
+
+Doctor checks prerequisites without submitting a model task. For builds with the same package version, use the content-based release ID from `--list` to identify the installed runtime.
+
+### Retest the Claude issue #2 patch
+
+Open a fresh terminal, then run:
+
+```sh
+smart-claude --help
+smart-claude doctor
+smart-claude --routing auto
+```
+
+Doctor checks prerequisites, not routing outcomes. In the new Claude session, submit three unrelated plain-text prompts, waiting for each answer before sending the next. Avoid attachments, @-references, slash commands, resume, and compaction for this test. Actual tasks consume native provider and Jev usage.
+
+Inspect the routing notices and run `smart-claude report` after exiting. Each eligible new prompt should produce one classification, with the decision held through its tool loop. An uncertain classification can still use Sonnet. If classification stops after the first prompt, report the installed release ID, Claude version, classification count, and route reasons on [issue #2](https://github.com/cybrking/modelrudder/issues/2). Do not share API keys or private transcripts.
+
+## Roll back
+
+From the source checkout, use the previous release ID you saved:
+
+```sh
+npm run install-cli -- --rollback PREVIOUS_RELEASE_ID
+```
+
+Replace `PREVIOUS_RELEASE_ID` with the exact ID printed by `--list`, and repeat any custom installation flags. Restart active launchers afterward. Rollback preserves configuration and state.
+
+Standalone users can use the retained verified installer with `--list` and `--rollback PREVIOUS_RELEASE_ID`, as described in [recovery instructions](AGENT_INSTALL.md#5-report-and-retain-recovery-options).
