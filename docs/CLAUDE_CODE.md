@@ -30,11 +30,11 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 - An independently installed official Claude Code CLI, 2.1.293+ within the 2.1.x line. Mods itself began in 2.1.287; the default Haiku 5.5 route needs 2.1.293+
 - A native `claude.ai` login; use `claude auth login` yourself if needed
 - Your own direct Jev credentials and explicit `ALLOW_JEV_CLASSIFICATION=true` for observe/auto
-- The official `v0.1.0-preview.6` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
+- The official `v0.1.0-preview.7` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
 
-For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.6 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
+For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.7 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
 
-Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.6 release containing both Claude multi-turn fixes.
+Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.7 release containing both Claude multi-turn fixes.
 
 Then prepare your private configuration and check readiness:
 
@@ -119,3 +119,7 @@ The optional `npm run test:claude-native -- /path/to/claude` check runs the inst
 - [Public declaration snapshot](https://github.com/anthropics/claude-code/blob/main/mods/types/claude-code.d.ts), which can lag installed types
 
 The Agent SDK has separate authentication terms. This integration runs native Claude Code and uses its documented plugin surface; it does not export subscription credentials for a custom SDK/API service.
+
+## Routing notices
+
+Notices display the configured model ID as a readable name and version, for example `Claude Sonnet 5.5`. Dated IDs also show the snapshot date; custom IDs retain the exact ID. “Uncertain classification; using fallback” means the classifier score is missing or below the 0.80 threshold, so auto uses Sonnet. It does not disable later classification. See the [copyable routing tests and reason explanation](../README.md#three-routing-tests-for-claude-code).

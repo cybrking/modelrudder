@@ -362,10 +362,22 @@ test('hidden context arriving during classification prevents a late downgrade', 
   assert.equal((await h.step('a')).seen.model, 'claude-sonnet-5-5');
 });
 
+test('routing notices use the configured model name and version and explain uncertainty', async () => {
+  const h = harness({ route: () => ({ model: 'sonnet', reason: 'uncertain_classification' }) });
+  await h.start(); await h.begin('a', 'Task');
+  assert.equal(h.logs.at(-1), 'Routing this turn to Claude Sonnet 5.5 (Uncertain classification; using fallback).');
+  const dated = harness({ modelIds: { MODEL_RUDDER_CLAUDE_HAIKU_MODEL: 'claude-haiku-4-5-20251001' } });
+  await dated.start(); await dated.begin('a', 'Task');
+  assert.equal(dated.logs.at(-1), 'Routing this turn to Claude Haiku 4.5 (20251001) (Experimental route).');
+  const custom = harness({ modelIds: { MODEL_RUDDER_CLAUDE_HAIKU_MODEL: 'claude-haiku-custom' } });
+  await custom.start(); await custom.begin('a', 'Task');
+  assert.match(custom.logs.at(-1)!, /Claude Haiku \[claude-haiku-custom\]/);
+});
+
 test('observe notices show only validated proposed profiles and never arbitrary provider text', async () => {
   const h = harness({ mode: 'observe', route: () => ({ model: 'sonnet', proposed: 'FAST', reason: 'PRIVATE TEXT' }) });
   await h.start(); await h.begin('a', 'Task');
-  assert.match(h.logs.join('\n'), /Suggested haiku/); assert.doesNotMatch(h.logs.join('\n'), /PRIVATE/);
+  assert.match(h.logs.join('\n'), /Suggested Claude Haiku 5\.5/); assert.doesNotMatch(h.logs.join('\n'), /PRIVATE/);
 });
 
 test('turn.step uses validated same-family full IDs, never CLI family aliases', async () => {

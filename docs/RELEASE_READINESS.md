@@ -16,6 +16,18 @@ Acceptance criteria established before this evaluation:
 
 Full production readiness requires all applicable criteria. An unperformed or unavailable check is not a pass. Windows CI exercises a Windows runner; it does not certify a normal Windows 11 desktop session. Synthetic classifier tests are separated from real Jev calls.
 
+## Preview.7 — October 9, 2026
+
+This release accepts exactly Codex 0.162.0 after its local zero-inference protocol probe passed initialization, fresh read-only thread creation, model selection and permissions. The platform CI probe is pinned to 0.162.0; older qualified builds remain accepted and unknown, modified and prerelease builds remain rejected. Full native TUI certification remains incomplete.
+
+Claude routing and observe notices now show capitalized names and the configured model version. Dated snapshots show their date; custom IDs remain visible verbatim. Low or missing classifier confidence is described as “Uncertain classification; using fallback.” The README includes three copyable task prompts for each native tool with expected routes, fallback explanations and the distinction from unclassified native context. These prompts are manual examples, not live classifier outcome evidence.
+
+The local full suite passed 171 tests with one Windows-only skip; type checking, seven Claude 2.1.295 native plugin fixtures, six synthetic native provider-wire checks and production dependency audit passed. The notice and Codex compatibility regressions failed before their fixes. No paid inference was used.
+
+The checksum-verified actual preview.6 and preview.7 installers were exercised in disposable custom paths. Both launchers reported preview.7 after upgrade and preview.6 after rollback. The upgraded installed adapter passed the routing-notice regressions; configuration and state were preserved byte-for-byte.
+
+Preview.7 runtime ID: `0.1.0-preview.7-c359bcec384ae8f0`. Standalone installer SHA-256: `e53c9c919fada519aceb9a19111d53ec0533e70c2ca557a5de5458c279f01221`. Inspect this release commit's CI for macOS, Ubuntu and Windows results with Node 24/26. The preview retains the limitations and earlier multi-turn fixes documented below.
+
 ## Preview.6 — October 9, 2026
 
 This release adds the native-instruction Claude multi-turn fix from [PR #10](https://github.com/cybrking/modelrudder/pull/10). Engine-authored project instruction and nested-memory announcements no longer mark eligible user-task history opaque. Referenced files, queued input, non-native instructions, resumed history and compaction remain conservative. Project instruction contents are not sent to the classifier. Native CLI version gates are unchanged.
