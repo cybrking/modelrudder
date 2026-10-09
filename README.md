@@ -210,6 +210,36 @@ Outcome markers and cleanup are Codex-specific commands. Outcome markers are you
 
 ## Upgrade and rollback
 
+### Upgrade with Claude Code or Codex
+
+Copy this prompt into **Claude Code or Codex**. Your coding agent can handle the upgrade; you do not need to copy individual terminal commands. Use a separate native agent session and close active ModelRudder sessions before installation.
+
+```text
+Upgrade my existing ModelRudder installation to v0.1.0-preview.5.
+Use this official release:
+https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.5
+Read its README and upgrade guide, then handle the upgrade for me.
+
+Detect my OS, check Node 24+, and identify my existing installation paths.
+Download the standalone installer and SHA256SUMS into a new folder.
+Verify the checksum before running it; stop if it does not match.
+Record my current release ID for rollback, then upgrade both launchers
+using my existing runtime, bin and configuration paths.
+
+Preserve my keys, configuration, local state and PATH. Do not read or print
+my key file, replace my native CLI or change my login. Verify both launchers
+report 0.1.0-preview.5 and run doctor for the native tool I am using.
+Explain any prerequisite or compatibility problem instead of claiming success.
+Do not submit model tasks or classifier requests to test the upgrade.
+
+Tell me the result, the command to start a fresh session, and the exact
+rollback command using my saved release ID and installation paths.
+```
+
+The installer updates both launchers and retains your existing Jev key. The agent should report any remaining native Claude/Codex version requirements. For manual commands, follow [Upgrade to preview.5](#upgrade-to-preview5) below.
+
+### Manual upgrade
+
 One ModelRudder upgrade updates both launchers and preserves your existing key/configuration and local state. Stop active sessions first, record your current release ID with `--list`, then install the newer verified release using the same installation paths. Restart in a fresh terminal and run `smart-claude doctor` or `smart-codex doctor` for the tool you use.
 
 ### Upgrade to preview.5

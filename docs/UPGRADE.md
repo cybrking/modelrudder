@@ -1,5 +1,7 @@
 # Upgrading ModelRudder
 
+For an agent-assisted upgrade, [copy the natural-language prompt](../README.md#upgrade-with-claude-code-or-codex) into Claude Code or Codex. It asks the agent to download and verify the release, preserve your installation paths and configuration, upgrade, check the result, and provide rollback instructions. The manual steps below remain available.
+
 Stop active `smart-codex` and `smart-claude` sessions before changing releases, then start fresh sessions afterward. An already running launcher keeps its loaded code.
 
 Upgrades preserve the existing private key file and local state. You do not need to enter your Jev key again. ModelRudder and the native provider CLIs are separate installations; upgrading ModelRudder does not upgrade Claude or Codex.
