@@ -8,7 +8,7 @@ const MAX_PENDING_PROMPTS = 16;
 const MAX_TASK_CHARS = 64000;
 const PROPOSED_MODELS = { FAST: 'haiku', BALANCED: 'sonnet', DEEP: 'sonnet', MAX: 'opus' };
 const REASON_LABELS = {
-  experimental_route: 'experimental route', uncertain_classification: 'uncertain classification',
+  experimental_route: 'experimental route', uncertain_classification: 'uncertain classification; using fallback',
   classification_disabled: 'classification disabled', classifier_failed: 'classifier unavailable',
   classifier_access_denied: 'classifier access denied', classifier_quota_exceeded: 'classifier quota reached',
   classifier_circuit_open: 'classifier cooldown', bridge_failure: 'classifier unavailable',
@@ -23,6 +23,19 @@ function isModel(value) {
 
 function isModelId(value, family) {
   return typeof value === 'string' && new RegExp('^claude-' + family + '-[a-z0-9][a-z0-9.-]{0,80}$').test(value);
+}
+
+function modelLabel(family, id) {
+  const name = 'Claude ' + family[0].toUpperCase() + family.slice(1);
+  const version = id.slice(('claude-' + family + '-').length).match(/^(\d+)-(\d+)(?:-(\d{8}))?$/);
+  return version
+    ? name + ' ' + version[1] + '.' + version[2] + (version[3] ? ' (' + version[3] + ')' : '')
+    : name + ' [' + id + ']';
+}
+
+function reasonLabel(reason) {
+  const label = REASON_LABELS[reason];
+  return label[0].toUpperCase() + label.slice(1);
 }
 
 function safeId(value) {
@@ -250,10 +263,10 @@ export function register(on) {
       decision.reason = opaqueReason;
     }
     await notice($, decision.passthrough
-      ? 'Native model retained (' + REASON_LABELS[decision.reason] + ').'
+      ? 'Native model retained (' + reasonLabel(decision.reason) + ').'
       : mode === 'observe'
-      ? (decision.proposed ? 'Suggested ' + decision.proposed + '; ' : '') + 'native model unchanged (observe).'
-      : 'Routing this turn to ' + decision.model + ' (' + REASON_LABELS[decision.reason] + ').');
+      ? (decision.proposed ? 'Suggested ' + modelLabel(decision.proposed, modelIds[decision.proposed]) + '; ' : '') + 'native model unchanged (observe).'
+      : 'Routing this turn to ' + modelLabel(decision.model, modelIds[decision.model]) + ' (' + reasonLabel(decision.reason) + ').');
     return next(e);
   });
 
