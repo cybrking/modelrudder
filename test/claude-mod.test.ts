@@ -84,6 +84,34 @@ test('Claude mod chooses once per turn and preserves prompts, efforts, stream ch
   await h.complete('a'); assert.equal((await h.step('a')).seen.model, 'claude-sonnet-5-5');
 });
 
+test('consumed prompt results cannot disable classification of later user turns', async () => {
+  const inputs: any[] = [];
+  const router = createClaudeRouter({ mode: 'auto', model: 'sonnet', classifier: async ({ input }) => {
+    const parsed = JSON.parse(input); inputs.push(parsed);
+    return { profile: parsed.currentTask === 'Design a distributed scheduler' ? 'MAX' : 'FAST', confidence: 0.96 };
+  } });
+  const h = harness({ route: (body) => router.route(body), complete: (body) => router.complete(body) });
+  await h.start();
+  const tasks = ['Explain a loop', 'Design a distributed scheduler', 'Fix a typo'];
+  for (const [index, text] of tasks.entries()) {
+    const turnId = `turn_${index}`;
+    await h.event('prompt.submit', { text, origin: { kind: 'composer' }, wait: false }, async (e) => {
+      await h.event('turn.start', { turnId, text: e.text });
+      // A downstream hook can change the returned receipt after the prompt
+      // entered. That result does not change the text observed by turn.start.
+      return { text: '' };
+    });
+    const expected = index === 1 ? 'claude-opus-5-5' : 'claude-haiku-5-5';
+    assert.equal((await h.step(turnId)).seen.model, expected);
+    assert.equal((await h.step(turnId, 'claude-sonnet-5-5', { index: 1 })).seen.model, expected);
+    await h.complete(turnId);
+  }
+  assert.deepEqual(inputs.map(input => input.currentTask), tasks);
+  assert.deepEqual(inputs[2].previousUserTasks, tasks.slice(0, 2));
+  assert.equal(h.routes().length, 3);
+  router.close();
+});
+
 test('context attached after routing but before the first step blocks a pending downgrade', async () => {
   const h = harness(); await h.start(); await h.begin('late_context', 'Edit the label');
   await h.event('prompt.attachment', { type: 'file', text: 'PRIVATE file contents' });

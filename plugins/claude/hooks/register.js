@@ -173,7 +173,9 @@ export function register(on) {
     try {
       const result = await next(e);
       if (candidate.generation !== generation) return result;
-      if (result?.drop || result?.text !== e.text) {
+      // Once turn.start matched the exact text, the prompt has entered.
+      // A changed return receipt cannot rewrite that already observed input.
+      if (result?.drop || (!candidate.consumed && result?.text !== e.text)) {
         removePending(candidate);
         makeOpaque('unclassified_context_baseline');
       }
