@@ -7,6 +7,7 @@ import { createClaudeRouter, parseClaudeTask, startClaudeBridge, claudeRoutes, r
 import { claudeJevInput, createClaudeClassifier } from '../src/claude-classifier.ts';
 import { createJevClassifier, jevInput } from '../src/adapters/jev.ts';
 import { createClaudeUsage, runClaudeReport } from '../src/claude-usage.ts';
+import { protectPrivatePathSync } from '../src/private-files.ts';
 
 const task = (turnId = 'turn1', text = 'Fix the typo', sessionId = 'session1') => ({ turnId, sessionId, task: text, contextReason: null });
 const result = (profile = 'FAST', score = 0.95) => ({ profile, confidence: null, reportedConfidence: score });
@@ -159,6 +160,7 @@ test('local bridge authenticates, rejects browser origins/malformed input, never
 test('private Claude usage contains metadata only and reports native token fields without savings claims', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'claude-usage-'));
   try {
+    protectPrivatePathSync(directory, true);
     const log = createClaudeUsage(directory);
     const router = createClaudeRouter({ mode: 'auto', model: 'sonnet', classifier: async () => ({ ...result(), usage: { inputTokens: 7, outputTokens: 1 } }), onRoute: log.route, onComplete: log.complete });
     await router.route(task('turn1', 'PRIVATE TASK'));
