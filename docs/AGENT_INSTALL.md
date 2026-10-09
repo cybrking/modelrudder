@@ -22,7 +22,7 @@ The remaining guide covers the Codex release installation and prerequisites.
 
 ## 1. Inspect the machine
 
-Run `node --version` and `codex --version`. ModelRudder requires **Node.js 24 or newer** and an independently installed native Codex CLI. Protocol-qualified builds are exactly **0.159.3** and **0.160.1**; an unknown/newer build is rejected rather than assumed compatible. Node, native Codex and ModelRudder are separate installations.
+Run `node --version` and `codex --version`. ModelRudder requires **Node.js 24 or newer** and an independently installed native Codex CLI. Protocol-qualified builds are exactly **0.159.3**, **0.160.1** and **0.161.0**; an unknown/newer build is rejected rather than assumed compatible. Node, native Codex and ModelRudder are separate installations.
 
 On macOS/Linux, inspect executable locations with `command -v node` and `command -v codex`. On Windows PowerShell, use `Get-Command node,codex` and identify the native executable. Install missing prerequisites from [Node.js](https://nodejs.org/en/download) and [OpenAI's official Codex installation instructions](https://github.com/openai/codex#quickstart). Select an accepted Codex version rather than blindly upgrading an existing installation. If an existing build is incompatible, report the conflict and preserve it until the user chooses a separate installation or replacement.
 

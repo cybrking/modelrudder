@@ -20,7 +20,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm test
-      - run: npm install --global @openai/codex@0.160.1
+      - run: npm install --global @openai/codex@0.161.0
       - run: npm run test:native-protocol
       - run: npm audit --omit=dev
       - run: npm run package:release -- dist-release.json

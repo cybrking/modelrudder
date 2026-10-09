@@ -1,6 +1,6 @@
 # Claude Code native routing preview
 
-This is an **unreleased source feature**, not a claim about the existing `v0.1.0-preview.3` release. It adds `smart-claude` beside `smart-codex` and does not replace either provider's plain CLI.
+This is an **experimental preview feature**, bundled starting with `v0.1.0-preview.4`; the older `v0.1.0-preview.3` installer remains Codex-only. It adds `smart-claude` beside `smart-codex` and does not replace either provider's plain CLI.
 
 ## What was carried across
 

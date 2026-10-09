@@ -8,7 +8,7 @@ Spend your strongest model on the tasks that need it. ModelRudder adds experimen
 
 Use your own native provider account and your own TypeSafe Jev API key. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef support is not included.
 
-**Unreleased source preview:** Claude Code now has a native Mods adapter for per-user-turn Haiku/Sonnet/Opus routing, with one decision held through each tool loop. The published `v0.1.0-preview.3` installer below remains Codex-only. Build the current source to try `smart-claude`; read [Claude support, installation and verification limits](docs/CLAUDE_CODE.md) first. Native Claude effort, model availability and safety fallback remain authoritative. No subscription limit is bypassed, and savings are not guaranteed.
+**Experimental Claude preview:** Claude Code now has a native Mods adapter for per-user-turn Haiku/Sonnet/Opus routing, with one decision held through each tool loop. The preview.4 installer bundles `smart-claude` alongside `smart-codex`; read [Claude support, installation and verification limits](docs/CLAUDE_CODE.md) first. Native Claude effort, model availability and safety fallback remain authoritative. No subscription limit is bypassed, and savings are not guaranteed.
 
 ## Claude Code source preview
 
@@ -32,7 +32,7 @@ Copy this entire prompt into Codex. It will install ModelRudder and open the loc
 
 ```text
 Install ModelRudder on this computer so I can use model routing in Codex.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.3
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.4
 Read the README and docs/AGENT_INSTALL.md at that release tag and follow them.
 
 Detect my OS and check Node.js and Codex. Install missing prerequisites using
@@ -61,7 +61,7 @@ If an editor cannot open, Codex can give you the file path to open manually. [De
 
 - Node.js 24 or newer, installed separately. The installer does not bundle Node or Codex.
 - macOS, Linux/WSL, or Windows 11 with PowerShell. Native Windows support is a preview; ModelRudder's full Windows TUI has not been validated. WSL is an alternative if your native setup fails; install and sign in separately inside WSL. See [OpenAI's Windows guidance](https://learn.chatgpt.com/docs/windows/windows-sandbox).
-- For `smart-codex`, an independently installed Codex CLI. Exactly versions **0.159.3 and 0.160.1** have recorded protocol evidence and are accepted by this preview. Full interactive TUI compatibility is not certified; other versions are rejected. See the [release-readiness results](docs/RELEASE_READINESS.md) for completed checks and remaining gaps. Claude's separate requirements are in [CLAUDE_CODE.md](docs/CLAUDE_CODE.md).
+- For `smart-codex`, an independently installed Codex CLI. Exactly versions **0.159.3, 0.160.1 and 0.161.0** have recorded protocol evidence and are accepted by this preview. Full interactive TUI compatibility is not certified; other versions are rejected. See the [release-readiness results](docs/RELEASE_READINESS.md) for completed checks and remaining gaps. Claude's separate requirements are in [CLAUDE_CODE.md](docs/CLAUDE_CODE.md).
 - Native ChatGPT login through `codex login`.
 - Your own TypeSafe Jev API key for observe/auto modes. Pinned mode works without classification.
 

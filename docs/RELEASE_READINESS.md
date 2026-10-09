@@ -16,9 +16,15 @@ Acceptance criteria established before this evaluation:
 
 Full production readiness requires all applicable criteria. An unperformed or unavailable check is not a pass. Windows CI exercises a Windows runner; it does not certify a normal Windows 11 desktop session. Synthetic classifier tests are separated from real Jev calls.
 
-## Results
+## Codex 0.161.0 update — October 8, 2026
 
-Review sequence completed on October 7, 2026: `ecc-security-review`, `ecc-tdd`, `ecc-code-review`, `ecc-eval`, `ecc-update-docs`, then `ecc-verify`. The outcome remains an experimental preview, not full production qualification.
+Preview.4 adds exactly Codex 0.161.0 to the supported builds after its local zero-inference protocol probe passed initialization, fresh-thread creation, model setting and read-only permissions. The actual local `smart-codex` launcher reached the native 0.161.0 terminal in an empty disposable workspace and exited normally without a task. Regression tests cover launcher compatibility, doctor readiness, historical builds and rejection of unknown or modified versions. CI now exercises 0.161.0 on each platform.
+
+The latest GitHub source was fetched and fast-forwarded to `54e9409` before changing runtime behavior. Its merged Claude adapter is included in the preview.4 package and retains its documented experimental status. Local updated suite: 161 passed, one Windows-only skip; type checking and production dependency audit passed. See [Claude-specific qualification](CLAUDE_CODE.md); this Codex update does not certify Claude live task quality. Full native terminal certification remains pending.
+
+## Preview.3 results
+
+The following preview.3 review sequence completed on October 7, 2026: `ecc-security-review`, `ecc-tdd`, `ecc-code-review`, `ecc-eval`, `ecc-update-docs`, then `ecc-verify`. The outcome remains an experimental preview, not full production qualification.
 
 | Check | Result |
 | --- | --- |
