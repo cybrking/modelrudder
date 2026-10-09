@@ -9,3 +9,5 @@ coverage/
 .smart-claude/
 plugins/claude/.claude-plugin/types/
 .DS_Store
+upstream-releases.json
+.upstream-check/

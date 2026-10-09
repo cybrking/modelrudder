@@ -171,3 +171,7 @@ npm run package:pilot -- dist/delivery
 Client CI runs offline fixtures and a no-inference native Codex protocol probe on Windows, Linux and macOS with Node 24 and 26; check the [workflow](.github/workflows/client.yml) and individual results for the operating systems tested. It makes no paid inference calls. `npm run test:native-protocol` is an optional installed-Codex check; it submits no model turn and does not certify the TUI, including on Windows.
 
 Read [contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md). Licensed under [MIT](LICENSE); ws retains its [upstream MIT notice](THIRD_PARTY_NOTICES/ws-LICENSE).
+
+## Keeping up with provider releases
+
+[Daily upstream checks](docs/UPSTREAM_UPDATES.md) detect new stable Codex and Claude Code releases once a day and run isolated candidate checks on macOS, Linux and Windows. Review the workflow reports before changing supported versions.

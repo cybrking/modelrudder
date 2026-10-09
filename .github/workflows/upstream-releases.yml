@@ -1,0 +1,123 @@
+name: Daily upstream CLI compatibility
+
+on:
+  schedule:
+    - cron: '17 13 * * *'
+  workflow_dispatch:
+    inputs:
+      include_recorded:
+        description: Check both latest stable versions even if evidence is already recorded
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstream-cli-compatibility
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.releases.outputs.matrix }}
+      has_updates: ${{ steps.releases.outputs.has_updates }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - id: releases
+        shell: bash
+        run: |
+          if [ "$INCLUDE_RECORDED" = "true" ]; then
+            node scripts/check-upstream-releases.ts --include-recorded
+          else
+            node scripts/check-upstream-releases.ts
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INCLUDE_RECORDED: ${{ inputs.include_recorded || false }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upstream-release-report
+          path: upstream-releases.json
+          retention-days: 30
+
+  compatibility:
+    needs: discover
+    if: needs.discover.outputs.has_updates == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - id: previous
+        uses: actions/cache/restore@v4
+        with:
+          path: .upstream-check
+          key: upstream-cli-pass-v1-${{ github.sha }}-${{ matrix.provider }}-${{ matrix.version }}-${{ matrix.os }}
+      - if: steps.previous.outputs.cache-hit != 'true'
+        run: npm ci --ignore-scripts
+      - if: steps.previous.outputs.cache-hit != 'true'
+        run: npm run typecheck
+      - if: steps.previous.outputs.cache-hit != 'true'
+        run: npm test
+      - name: Install candidate Codex
+        if: steps.previous.outputs.cache-hit != 'true' && matrix.provider == 'codex'
+        shell: bash
+        run: npm install --global "@openai/codex@$CLI_VERSION"
+        env:
+          CLI_VERSION: ${{ matrix.version }}
+      - name: Check Codex protocol without inference
+        if: steps.previous.outputs.cache-hit != 'true' && matrix.provider == 'codex'
+        run: node scripts/native-protocol-smoke.ts > upstream-native.json
+      - name: Install candidate Claude Code
+        if: steps.previous.outputs.cache-hit != 'true' && matrix.provider == 'claude'
+        shell: bash
+        run: npm install --global "@anthropic-ai/claude-code@$CLI_VERSION"
+        env:
+          CLI_VERSION: ${{ matrix.version }}
+      - name: Check native plugin fixtures
+        if: steps.previous.outputs.cache-hit != 'true' && matrix.provider == 'claude'
+        shell: bash
+        run: claude plugin test plugins/claude
+      - name: Check Claude wire contract with synthetic provider
+        if: steps.previous.outputs.cache-hit != 'true' && matrix.provider == 'claude'
+        run: node scripts/claude-native-smoke.ts > upstream-native.json
+      - name: Record successful checks
+        if: steps.previous.outputs.cache-hit != 'true'
+        run: node -e "require('node:fs').mkdirSync('.upstream-check', {recursive:true}); require('node:fs').copyFileSync('upstream-native.json', '.upstream-check/native.json')"
+      - uses: actions/cache/save@v4
+        if: success() && steps.previous.outputs.cache-hit != 'true'
+        with:
+          path: .upstream-check
+          key: ${{ steps.previous.outputs.cache-primary-key }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: upstream-${{ matrix.provider }}-${{ matrix.version }}-${{ matrix.os }}
+          path: |
+            upstream-native.json
+            .upstream-check/native.json
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Explain qualification scope
+        if: always()
+        shell: bash
+        run: |
+          printf 'Candidate checks for %s %s on %s. Cached result: %s.\n\nPassing probes are evidence for review, not automatic runtime approval or full interactive qualification.\n' "$CLI_PROVIDER" "$CLI_VERSION" "$CLI_OS" "$CACHED" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          CLI_PROVIDER: ${{ matrix.provider }}
+          CLI_VERSION: ${{ matrix.version }}
+          CLI_OS: ${{ matrix.os }}
+          CACHED: ${{ steps.previous.outputs.cache-hit }}

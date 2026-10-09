@@ -7,9 +7,10 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
+import { claudeCommand } from '../src/claude-command.ts';
 
-const binary = process.argv[2] || 'claude';
 if (process.argv.length > 3) throw new Error('Usage: node scripts/claude-native-smoke.ts [path-to-official-claude]');
+const command = process.argv[2] ? { file: process.argv[2], args: [] } : await claudeCommand();
 const root = await mkdtemp(join(tmpdir(), 'modelrudder-claude-smoke-'));
 type Capture = { path: string; model: string | null };
 type ProbeCase = { name: string; requested: string; expected: string; allowlist?: string[] };
@@ -70,7 +71,7 @@ function environment(home: string, baseUrl: string): NodeJS.ProcessEnv {
 
 function run(args: string[], home: string, env: NodeJS.ProcessEnv): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(binary, args, { cwd: home, env, stdio: ['ignore', 'pipe', 'pipe'], shell: false });
+    const child = spawn(command.file, [...command.args, ...args], { cwd: home, env, stdio: ['ignore', 'pipe', 'pipe'], shell: false });
     let stdout = '', stderr = '';
     const timer = setTimeout(() => child.kill('SIGKILL'), 20_000);
     child.stdout.on('data', (data) => { stdout += data; if (stdout.length > 256_000) child.kill('SIGKILL'); });

@@ -19,10 +19,11 @@ export async function claudeCommand(env: NodeJS.ProcessEnv = process.env, platfo
 // Mods launched in 2.1.287. Newer minors/majors are deliberately not assumed
 // compatible. Default Haiku 5.5 also needs 2.1.293+. Only 2.1.295 has this
 // change's recorded offline module and synthetic provider-wire evidence.
+export const offlineTestedClaudeVersions = ['2.1.295'] as const;
 export function claudeCompatibility(text: string) {
   const match = /^(2\.1\.(\d+)) \(Claude Code\)\s*$/.exec(text.trim());
   return { version: match?.[1], supportsMods: Boolean(match && Number(match[2]) >= 293),
-    offlineTested: match?.[1] === '2.1.295' };
+    offlineTested: offlineTestedClaudeVersions.some(version => version === match?.[1]) };
 }
 
 export function claudeChildEnv(source: NodeJS.ProcessEnv, platform: NodeJS.Platform = process.platform) {
