@@ -266,7 +266,8 @@ export function register(on) {
       ? 'Native model retained (' + reasonLabel(decision.reason) + ').'
       : mode === 'observe'
       ? (decision.proposed ? 'Suggested ' + modelLabel(decision.proposed, modelIds[decision.proposed]) + '; ' : '') + 'native model unchanged (observe).'
-      : 'Routing this turn to ' + modelLabel(decision.model, modelIds[decision.model]) + ' (' + reasonLabel(decision.reason) + ').');
+      : 'ModelRudder Routing this turn to ' + modelLabel(decision.model, modelIds[decision.model])
+        + (decision.reason === 'experimental_route' ? '.' : ' (' + reasonLabel(decision.reason) + ').'));
     return next(e);
   });
 

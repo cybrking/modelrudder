@@ -8,7 +8,7 @@ Spend your strongest model on the tasks that need it. ModelRudder adds experimen
 
 Use your own native provider account and your own TypeSafe Jev API key. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef support is not included.
 
-Choose the launcher for your native coding tool. The preview.7 installer includes both; you only need the native CLI you intend to use.
+Choose the launcher for your native coding tool. The preview.8 installer includes both; you only need the native CLI you intend to use.
 
 | Native tool | ModelRudder launcher | Experimental automatic routing |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ Copy this entire prompt into Codex. It will install ModelRudder and open the loc
 
 ```text
 Install ModelRudder on this computer so I can use model routing in Codex.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.7
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.8
 Read the README and docs/AGENT_INSTALL.md at that release tag and follow them.
 
 Detect my OS and check Node.js and Codex. Install missing prerequisites using
@@ -54,7 +54,7 @@ Copy this entire prompt into Claude Code. It will install ModelRudder and open t
 
 ```text
 Install ModelRudder on this computer so I can use model routing in Claude Code.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.7
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.8
 Read the current Claude installation guides before continuing:
 https://github.com/cybrking/modelrudder/blob/main/docs/AGENT_INSTALL.md
 https://github.com/cybrking/modelrudder/blob/main/docs/CLAUDE_CODE.md
@@ -112,7 +112,7 @@ shasum -a 256 -c SHA256SUMS
 node -- ./smart-codex-RELEASE_ID-install.mjs
 ```
 
-Replace `RELEASE_ID` with the actual release ID in the downloaded filename. The `smart-codex-…-install.mjs` filename is a legacy shared name: preview.7 installs **both `smart-claude` and `smart-codex`**. Obtain both files from this project's trusted release page; a checksum alone does not authenticate a publisher. The installer needs no checkout or npm download and includes the ws dependency and license. On macOS/Linux, it installs versioned runtime files under `~/.local/share/smart-codex` and both launchers under `~/.local/bin`; add that bin directory to PATH. Plain `claude`, plain `codex` and unmanaged launchers are preserved.
+Replace `RELEASE_ID` with the actual release ID in the downloaded filename. The `smart-codex-…-install.mjs` filename is a legacy shared name: preview.8 installs **both `smart-claude` and `smart-codex`**. Obtain both files from this project's trusted release page; a checksum alone does not authenticate a publisher. The installer needs no checkout or npm download and includes the ws dependency and license. On macOS/Linux, it installs versioned runtime files under `~/.local/share/smart-codex` and both launchers under `~/.local/bin`; add that bin directory to PATH. Plain `claude`, plain `codex` and unmanaged launchers are preserved.
 
 On Windows, use PowerShell's `Get-FileHash -Algorithm SHA256` and compare the installer hash to its exact filename in `SHA256SUMS`, then run `node -- .\smart-codex-RELEASE_ID-install.mjs`. The default runtime, launcher and configuration are under `%LOCALAPPDATA%\ModelRudder\runtime`, `\bin` and `\config\env`, respectively. Use the paths printed by the installer and add its launcher directory to your **user** PATH. Agent-assisted installation instructions are in [AGENT_INSTALL.md](docs/AGENT_INSTALL.md).
 
@@ -221,7 +221,7 @@ These are target routes, not guaranteed choices. The classifier evaluates each e
 Claude may show:
 
 ```text
-Routing this turn to Claude Sonnet 5.5 (Uncertain classification; using fallback).
+ModelRudder Routing this turn to Claude Sonnet 5.5 (Uncertain classification; using fallback).
 ```
 
 The classifier returned a result, but its confidence score was missing or below the routing threshold (0.80 by default). Automatic mode therefore uses the fallback: **Claude Sonnet 5.5** for Claude or **GPT-6.1 Sol** for Codex under the default configuration. Routing has not stopped; the next eligible message is evaluated again. This score is a routing signal, not an 80% guarantee that the answer will be correct. Classifier outages have a separate “classifier unavailable” reason.
@@ -273,9 +273,9 @@ Outcome markers and cleanup are Codex-specific commands. Outcome markers are you
 Copy this prompt into **Claude Code or Codex**. Your coding agent can handle the upgrade; you do not need to copy individual terminal commands. Use a separate native agent session and close active ModelRudder sessions before installation.
 
 ```text
-Upgrade my existing ModelRudder installation to v0.1.0-preview.7.
+Upgrade my existing ModelRudder installation to v0.1.0-preview.8.
 Use this official release:
-https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.7
+https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.8
 Read its README and upgrade guide, then handle the upgrade for me.
 
 Detect my OS, check Node 24+, and identify my existing installation paths.
@@ -286,7 +286,7 @@ using my existing runtime, bin and configuration paths.
 
 Preserve my keys, configuration, local state and PATH. Do not read or print
 my key file, replace my native CLI or change my login. Verify both launchers
-report 0.1.0-preview.7 and run doctor for the native tool I am using.
+report 0.1.0-preview.8 and run doctor for the native tool I am using.
 Explain any prerequisite or compatibility problem instead of claiming success.
 Do not submit model tasks or classifier requests to test the upgrade.
 
@@ -294,41 +294,41 @@ Tell me the result, the command to start a fresh session, and the exact
 rollback command using my saved release ID and installation paths.
 ```
 
-The installer updates both launchers and retains your existing Jev key. The agent should report any remaining native Claude/Codex version requirements. For manual commands, follow [Upgrade to preview.7](#upgrade-to-preview7) below.
+The installer updates both launchers and retains your existing Jev key. The agent should report any remaining native Claude/Codex version requirements. For manual commands, follow [Upgrade to preview.8](#upgrade-to-preview8) below.
 
 ### Manual upgrade
 
 One ModelRudder upgrade updates both launchers and preserves your existing key/configuration and local state. Stop active sessions first, record your current release ID with `--list`, then install the newer verified release using the same installation paths. Restart in a fresh terminal and run `smart-claude doctor` or `smart-codex doctor` for the tool you use.
 
-### Upgrade to preview.7
+### Upgrade to preview.8
 
-[Download preview.7](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.7), including `smart-codex-0.1.0-preview.7-c359bcec384ae8f0-install.mjs` and `SHA256SUMS`, into the same new download folder. This installer adds tested Codex 0.162.0 compatibility and versioned Claude routing notices. It includes the Claude native-instruction fix from PR #10, so normal project instructions no longer stop classification after the first turn. It also retains the earlier per-turn routing and source-installer fixes. No Git checkout or npm install is needed.
+[Download preview.8](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.8), including `smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs` and `SHA256SUMS`, into the same new download folder. This installer changes successful Claude routing notices to “ModelRudder Routing this turn to …” and removes the “Experimental route” suffix. It retains tested Codex 0.162.0 compatibility and versioned model names. It includes the Claude native-instruction fix from PR #10, so normal project instructions no longer stop classification after the first turn. It also retains the earlier per-turn routing and source-installer fixes. No Git checkout or npm install is needed.
 
 Close active ModelRudder sessions. On macOS, run these commands in the download folder:
 
 ```sh
 shasum -a 256 -c SHA256SUMS
-node -- ./smart-codex-0.1.0-preview.7-c359bcec384ae8f0-install.mjs --list
+node -- ./smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs --list
 ```
 
 On Linux/WSL, use `sha256sum -c SHA256SUMS` instead. Stop if checksum verification fails. Save the current release ID printed by `--list`, then upgrade:
 
 ```sh
-node -- ./smart-codex-0.1.0-preview.7-c359bcec384ae8f0-install.mjs
+node -- ./smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs
 ```
 
 On Windows PowerShell, compare the following hash to the exact filename's entry in `SHA256SUMS`:
 
 ```powershell
-Get-FileHash .\smart-codex-0.1.0-preview.7-c359bcec384ae8f0-install.mjs -Algorithm SHA256
+Get-FileHash .\smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs -Algorithm SHA256
 Get-Content .\SHA256SUMS
 ```
 
 Continue only if the hashes match. Record your current release ID, then install:
 
 ```powershell
-node -- .\smart-codex-0.1.0-preview.7-c359bcec384ae8f0-install.mjs --list
-node -- .\smart-codex-0.1.0-preview.7-c359bcec384ae8f0-install.mjs
+node -- .\smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs --list
+node -- .\smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs
 ```
 
 Repeat any original `--root`, `--bin-dir` and `--env-file` flags on **every** installer command. Both launchers, your key/configuration and local state are retained. Keep the verified installer and saved release ID for rollback.
@@ -343,7 +343,7 @@ smart-codex --version
 smart-codex doctor
 ```
 
-The launcher should report `0.1.0-preview.7`. Doctor checks prerequisites, not task quality. ModelRudder does not upgrade native Claude or Codex; their supported versions remain listed under [Requirements](#requirements).
+The launcher should report `0.1.0-preview.8`. Doctor checks prerequisites, not task quality. ModelRudder does not upgrade native Claude or Codex; their supported versions remain listed under [Requirements](#requirements).
 
 To roll back, use the verified installer with `--rollback PREVIOUS_RELEASE_ID` in place of `--list`, substituting your saved ID and repeating custom path flags. Restart launchers afterward. See the [upgrade guide](docs/UPGRADE.md) for recovery and alternative source installation.
 
