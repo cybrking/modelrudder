@@ -7,7 +7,7 @@ import { runSetup, setupTemplate, startEditor } from '../src/setup.ts';
 import { isPrivatePathSync, protectPrivatePathSync } from '../src/private-files.ts';
 import { readLiveConfig } from '../src/live-config.ts';
 
-test('setup creates a private fully commented template, opens the file and never prints its contents', async () => {
+test('setup creates a private minimal disabled configuration, opens the file and never prints its contents', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'modelrudder-setup-'));
   try {
     const file = join(directory, "settings space 'quoted'", 'env');
@@ -15,8 +15,7 @@ test('setup creates a private fully commented template, opens the file and never
     assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, text => { output += text; }, async path => { opened.push(path); }), 0);
     const contents = await readFile(file, 'utf8');
     assert.equal(contents, setupTemplate);
-    assert.ok(contents.split('\n').every(line => !line.trim() || line.startsWith('#')));
-    assert.ok(contents.includes('https://console.typesafe.ai/keys'));
+    assert.equal(contents, 'TYPESAFE_API_KEY=\nALLOW_JEV_CLASSIFICATION=false\nSMART_CODEX_CLASSIFIER=direct\n');
     assert.deepEqual(opened, [file]);
     assert.equal(isPrivatePathSync(file), true);
     assert.equal(readLiveConfig({}).allowClassification, false);

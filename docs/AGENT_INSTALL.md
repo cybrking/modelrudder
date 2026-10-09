@@ -61,22 +61,21 @@ Use the paths printed by the installer as authoritative. Add only the printed la
 smart-codex setup --no-open
 ```
 
-This creates a commented template if absent and prints the configuration path. An existing file is retained. No setting is enabled by creating the file. When the user is ready:
+This creates a minimal configuration with classification disabled if absent and prints the configuration path. An existing file is retained. No setting is enabled by creating the file. When the user is ready:
 
 ```sh
 smart-codex setup
 ```
 
-Setup requests an editor and catches immediate startup failures. If no window appears, open the printed configuration path manually; a successful launch request does not establish that an editor window opened. The user enters credentials in their local editor. If the editor cannot open, give the user the printed path so they can open it manually; do not read the file into agent context. The template includes these disabled settings:
+Setup requests an editor and catches immediate startup failures. If no window appears, open the printed configuration path manually; a successful launch request does not establish that an editor window opened. The user enters credentials in their local editor. If the editor cannot open, give the user the printed path so they can open it manually; do not read the file into agent context. The template includes these settings:
 
 ```dotenv
-# Jev account signup/login and API keys: https://console.typesafe.ai/keys
-# TYPESAFE_API_KEY=
-# ALLOW_JEV_CLASSIFICATION=true
-# SMART_CODEX_CLASSIFIER=direct
+TYPESAFE_API_KEY=
+ALLOW_JEV_CLASSIFICATION=false
+SMART_CODEX_CLASSIFIER=direct
 ```
 
-The [official Jev quickstart](https://docs.typesafe.ai/introduction/quickstart) links to the [TypeSafe key dashboard](https://console.typesafe.ai/keys), which offers account login/signup if needed. Provider fees are separate from the free client and the user's Codex subscription. The user must explicitly uncomment all three settings and enter their own key. Consent enables sending eligible task text and bounded earlier excerpts to TypeSafe as described in the README. Do not enable consent on their behalf, store keys in shell history or a repository, or automatically submit a classification request to check the key. Existing exported environment variables take precedence; do not print them when diagnosing configuration.
+The [official Jev quickstart](https://docs.typesafe.ai/introduction/quickstart) links to the [TypeSafe key dashboard](https://console.typesafe.ai/keys), which offers account login/signup if needed. Provider fees are separate from the free client and the user's Codex subscription. The user enters their own key and explicitly changes `ALLOW_JEV_CLASSIFICATION` to `true`. Consent enables sending eligible task text and bounded earlier excerpts to TypeSafe as described in the README. Do not enable consent on their behalf, store keys in shell history or a repository, or automatically submit a classification request to check the key. Existing exported environment variables take precedence; do not print them when diagnosing configuration.
 
 On Unix, keep the configuration private to the user. On Windows, keep it under the user's profile and avoid shared directories; Unix mode bits do not establish Windows ACL protection. If the profile/directory is shared, have the user review access permissions.
 

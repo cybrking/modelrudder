@@ -4,7 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { defaultInstallOptions } from './install-cli.ts';
 import { isPrivatePathSync, protectPrivatePathSync } from './private-files.ts';
 
-export const setupTemplate = "# Run smart-codex setup or smart-claude setup to open this shared private configuration.\n# All settings below are disabled until you explicitly uncomment them.\n# Jev account signup/login and API keys: https://console.typesafe.ai/keys\n# Official instructions: https://docs.typesafe.ai/introduction/quickstart\n# Provider fees are separate from this free software and your native coding subscription.\n# Enter your own key in this local file; never paste it into agent chat or commit it.\n# TYPESAFE_API_KEY=\n# Observe/auto classification sends eligible task text and bounded earlier excerpts to TypeSafe.\n# Uncomment the consent setting only after reviewing the README data flow.\n# ALLOW_JEV_CLASSIFICATION=true\n# SMART_CODEX_CLASSIFIER=direct\n";
+export const setupTemplate = "TYPESAFE_API_KEY=\nALLOW_JEV_CLASSIFICATION=false\nSMART_CODEX_CLASSIFIER=direct\n";
 
 // Catch immediate launcher failures without waiting for a GUI editor to close.
 export async function startEditor(command: string, args: string[]): Promise<void> {
@@ -48,8 +48,8 @@ export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.
     protectPrivatePathSync(file);
   }
   out('Local configuration: ' + file + '\nJev signup and API keys: https://console.typesafe.ai/keys\n');
-  out(existing ? 'Existing configuration preserved.\n' : 'Created a fully commented template; classification remains disabled.\n');
-  out('Enter your key only in this file, then explicitly uncomment the consent and provider settings. Never paste the key into agent chat.\n');
+  out(existing ? 'Existing configuration preserved.\n' : 'Created a minimal configuration; classification remains disabled.\n');
+  out('Enter your key only in this file. After reviewing the README data flow, change ALLOW_JEV_CLASSIFICATION to true. Never paste the key into agent chat.\n');
   if (!args.includes('--no-open')) { await editor(file); out('Requested the local editor. If no window opens, open the configuration path manually.\n'); }
   return 0;
 }

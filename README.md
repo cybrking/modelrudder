@@ -31,7 +31,7 @@ removing existing entries. Verify smart-codex --help.
 Run smart-codex setup to open my private Jev configuration in a local editor.
 Show me https://console.typesafe.ai/keys so I can sign up and get my own key.
 Never read or print the key file or ask me to paste a key into chat. Leave new
-settings commented out until I enter the key and explicitly enable them.
+classification disabled until I enter the key and explicitly enable it.
 
 Check my Codex login without replacing it. If login is needed, guide me through
 the official codex login flow. Run smart-codex doctor, explain anything still
@@ -67,7 +67,7 @@ smart-claude --help. Do not replace plain claude or an unmanaged launcher.
 Run smart-claude setup to open my private Jev configuration in a local editor.
 Show me https://console.typesafe.ai/keys so I can sign up and get my own key.
 Never read or print the key file or ask me to paste a key into chat. Leave new
-settings commented out until I enter the key and explicitly enable them.
+classification disabled until I enter the key and explicitly enable it.
 Explain that observe/auto sends eligible task text and bounded earlier task
 excerpts to TypeSafe, and requires the direct Jev classifier.
 
@@ -121,16 +121,15 @@ Create and open your private Jev configuration in a local editor:
 smart-codex setup
 ```
 
-Setup preserves an existing file. Agents and terminals without a desktop can use `smart-codex setup --no-open` to create the template and print its path without opening an editor. All settings start commented out:
+Setup preserves an existing file. Agents and terminals without a desktop can use `smart-codex setup --no-open` to create the template and print its path without opening an editor. The configuration starts with three editable settings and classification disabled:
 
 ```dotenv
-# Jev account signup/login and API keys: https://console.typesafe.ai/keys
-# TYPESAFE_API_KEY=
-# ALLOW_JEV_CLASSIFICATION=true
-# SMART_CODEX_CLASSIFIER=direct
+TYPESAFE_API_KEY=
+ALLOW_JEV_CLASSIFICATION=false
+SMART_CODEX_CLASSIFIER=direct
 ```
 
-If needed, sign up and create your key at the [official TypeSafe dashboard](https://console.typesafe.ai/keys), linked by the [Jev quickstart](https://docs.typesafe.ai/introduction/quickstart). Enter your key privately in the local editor and remove the leading `#` from the three settings after reviewing the data flow below. Keep credentials out of agent chat, command arguments and source control. Existing exported environment variables take precedence over the configuration file. Leaving the settings commented keeps Jev disabled; pinned mode remains available.
+If needed, sign up and create your key at the [official TypeSafe dashboard](https://console.typesafe.ai/keys), linked by the [Jev quickstart](https://docs.typesafe.ai/introduction/quickstart). Enter your key privately in the local editor and change `ALLOW_JEV_CLASSIFICATION` from `false` to `true` after reviewing the data flow below. Keep credentials out of agent chat, command arguments and source control. Existing exported environment variables take precedence over the configuration file. Leaving `ALLOW_JEV_CLASSIFICATION=false` keeps Jev disabled; pinned mode remains available.
 
 ```sh
 smart-codex doctor
