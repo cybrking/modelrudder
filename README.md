@@ -2,11 +2,29 @@
 
 # ModelRudder
 
-Spend your strongest model on the tasks that need it. ModelRudder adds experimental model routing to the native Codex terminal experience, while Codex retains its tools, approvals and workspace permissions.
+Spend your strongest model on the tasks that need it. ModelRudder adds experimental model routing to native coding tools, while they retain their tools, approvals and workspace permissions.
 
 **Free local community preview · MIT licensed · macOS, Linux/WSL and Windows preview**
 
-Use your own Codex/ChatGPT account and your own TypeSafe Jev API key. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef and Claude support are not included.
+Use your own native provider account and your own TypeSafe Jev API key. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef support is not included.
+
+**Unreleased source preview:** Claude Code now has a native Mods adapter for per-user-turn Haiku/Sonnet/Opus routing, with one decision held through each tool loop. The published `v0.1.0-preview.3` installer below remains Codex-only. Build the current source to try `smart-claude`; read [Claude support, installation and verification limits](docs/CLAUDE_CODE.md) first. Native Claude effort, model availability and safety fallback remain authoritative. No subscription limit is bypassed, and savings are not guaranteed.
+
+## Claude Code source preview
+
+With Node 24+, an independently installed Claude Code CLI and native Claude login:
+
+```sh
+npm ci --ignore-scripts
+npm test
+npm run typecheck
+npm run install-cli
+smart-claude setup
+smart-claude doctor
+smart-claude --routing observe
+```
+
+Review the TypeSafe data flow before enabling the shared Jev settings. Then try `smart-claude --routing auto`, or use `smart-claude --model sonnet` for pinned mode without classification. This adds a separate launcher; plain `claude` and `smart-codex` remain unchanged. This adapter requires Claude Code 2.1.293+; offline module and synthetic provider-wire checks were run on 2.1.295. Live authenticated task quality and cross-platform TUI checks remain pending.
 
 ## Install with Codex
 
@@ -43,7 +61,7 @@ If an editor cannot open, Codex can give you the file path to open manually. [De
 
 - Node.js 24 or newer, installed separately. The installer does not bundle Node or Codex.
 - macOS, Linux/WSL, or Windows 11 with PowerShell. Native Windows support is a preview; ModelRudder's full Windows TUI has not been validated. WSL is an alternative if your native setup fails; install and sign in separately inside WSL. See [OpenAI's Windows guidance](https://learn.chatgpt.com/docs/windows/windows-sandbox).
-- An independently installed Codex CLI. Exactly versions **0.159.3 and 0.160.1** have recorded protocol evidence and are accepted by this preview. Full interactive TUI compatibility is not certified; other versions are rejected. See the [release-readiness results](docs/RELEASE_READINESS.md) for completed checks and remaining gaps.
+- For `smart-codex`, an independently installed Codex CLI. Exactly versions **0.159.3 and 0.160.1** have recorded protocol evidence and are accepted by this preview. Full interactive TUI compatibility is not certified; other versions are rejected. See the [release-readiness results](docs/RELEASE_READINESS.md) for completed checks and remaining gaps. Claude's separate requirements are in [CLAUDE_CODE.md](docs/CLAUDE_CODE.md).
 - Native ChatGPT login through `codex login`.
 - Your own TypeSafe Jev API key for observe/auto modes. Pinned mode works without classification.
 
@@ -111,9 +129,9 @@ smart-codex --routing pinned --model gpt-6.1-sol
 
 ## Data and privacy
 
-In auto/observe mode, direct classification sends the current text task and up to two bounded earlier task excerpts to TypeSafe. Anything pasted into that text, including source code or secrets, is included. The relay does not automatically send repository files, assistant output or attachments to the classifier. Native Codex sends its normal model inputs to OpenAI under your own account terms.
+In auto/observe mode, direct classification sends the current eligible text task and up to two bounded earlier task excerpts to TypeSafe. Anything pasted into that text, including source code or secrets, is included. The adapters do not automatically send repository files, assistant output or attachments to the classifier. Native Codex and Claude Code send their normal model inputs to their providers under your own account terms. Claude requires the direct classifier; the current hosted gateway has only a Codex rubric.
 
-The child process does not receive the Jev key from ModelRudder's classifier environment. Native Codex manages its own login. Local reports contain routing/usage metadata rather than task text; configuration and logs remain on your machine. Review provider policies before sending confidential content. The community client has no ModelRudder telemetry or hosted billing requirement.
+The child process does not receive the Jev key from ModelRudder's classifier environment. Each native tool manages its own login. Claude's mod contacts a launcher-local authenticated loopback bridge; it does not proxy Claude model requests or obtain Claude credentials. Local reports contain routing/usage metadata rather than task text; configuration and logs remain on your machine. Review provider policies before sending confidential content. The community client has no ModelRudder telemetry or hosted billing requirement.
 
 ## Reports and removal
 

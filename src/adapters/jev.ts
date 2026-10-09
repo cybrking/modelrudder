@@ -13,6 +13,7 @@ const isTokenCount = (value: unknown): value is number =>
 // https://docs.typesafe.ai/api
 export function createJevClassifier(options: {
   apiKey: string; timeoutMs?: number; fetch?: typeof fetch; model?: string;
+  buildInput?: typeof jevInput;
 }): Classifier {
   if (!options.apiKey.trim()) throw new Error('TYPESAFE_API_KEY is required');
   const timeoutMs = options.timeoutMs ?? classificationBudget.client;
@@ -28,7 +29,7 @@ export function createJevClassifier(options: {
         const response = await transport('https://api.typesafe.ai/v1/systemone', {
           method: 'POST', redirect: 'error',
           headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, signal,
-          body: JSON.stringify({ model, ...jevInput(request.input) }),
+          body: JSON.stringify({ model, ...(options.buildInput ?? jevInput)(request.input) }),
         });
         if (!response.ok) throw new Error();
         return boundedJson(response, 16_384, signal);
