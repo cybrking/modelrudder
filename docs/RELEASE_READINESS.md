@@ -1,5 +1,13 @@
 # Community release readiness evaluation
 
+## Preview.8 routing notice update
+
+Successful automatic Claude routes now display `ModelRudder Routing this turn to <model>.` without the experimental-route suffix. Fallback explanations remain visible. Routing decisions, confidence threshold and native CLI compatibility gates are unchanged.
+
+The focused Claude Mods suite passed all 38 tests. Cross-platform checks are provided by the release revision’s Community client CI. No authenticated interactive Claude journey was performed for this text-only change.
+
+Runtime ID: `0.1.0-preview.8-5395ee969164068e`.
+
 Scope: the free local ModelRudder client. Paid hosted service readiness is separate.
 
 Acceptance criteria established before this evaluation:
