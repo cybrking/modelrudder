@@ -8,7 +8,7 @@ If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same
 
 ## Normal release upgrade
 
-Download the newer release's standalone installer and `SHA256SUMS` from the [official releases page](https://github.com/cybrking/modelrudder/releases). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
+Download the **preview.5** standalone installer and `SHA256SUMS` from the [release page](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.5). The exact cross-platform commands are in the [README](../README.md#upgrade-to-preview5). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
 
 The installer filename still begins with `smart-codex`, but preview.4 and newer dual-launcher artifacts update both `smart-claude` and `smart-codex`. You do not need to install each separately. Keep a verified installer and record the current ID before installing the new one.
 
@@ -55,24 +55,11 @@ To receive ModelRudder release notifications, open the [repository](https://gith
 
 Native Claude/Codex updates are separate. A newer native CLI can exceed the launcher's supported range or recorded evidence; run the matching ModelRudder doctor after either component changes. Automated compatibility discovery is not automatic approval of a release.
 
-## Try the issue #2 fix before release
+## Claude routing patch in preview.5
 
-The fix was merged in [PR #3](https://github.com/cybrking/modelrudder/pull/3), but is not yet included in a published release. Reinstalling the existing preview.4 download will not add this fix. Its exact reported interactive trigger still needs a retest; media, resumed history, and other ineligible context intentionally retain the native model.
+Preview.5 includes the consumed-prompt-receipt fix merged in [PR #3](https://github.com/cybrking/modelrudder/pull/3) and the source installer's argument-boundary fix. Upgrading with the preview.5 standalone installer installs those fixes; reinstalling the older preview.4 installer does not.
 
-Review the PR before installing its code. Use a new checkout folder so you do not disturb an existing working tree. These commands work in macOS/Linux shells and Windows PowerShell with Git, npm, and Node.js 24+ installed:
-
-```sh
-git clone --single-branch --branch main https://github.com/cybrking/modelrudder.git modelrudder-issue2
-cd modelrudder-issue2
-git checkout --detach a27a893
-npm ci --ignore-scripts
-node -- src/install-cli.ts --list
-node -- src/install-cli.ts
-```
-
-`a27a893` pins the tested runtime patch instead of installing whichever later changes land on the branch. Save the previous release ID from `--list` before the final command. This installs a versioned copy of both launchers; pulling source alone does not update an existing managed installation.
-
-The package version remains `0.1.0-preview.4`, but the installer prints a different content-based release ID. Use that ID and `--list` to distinguish the patched build from the original preview.4 build.
+The issue reporter's exact interactive trigger still needs a retest. Media, resumed history and other ineligible context intentionally retain the native model. The package now reports `0.1.0-preview.5`; the full content-based release ID is available through the installer's `--list` command.
 
 ## Verify the upgrade
 
