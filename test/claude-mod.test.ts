@@ -288,6 +288,64 @@ test('ordinary tool reminders do not disable routing', async () => {
   assert.equal((await h.step('a')).seen.model, 'claude-haiku-5-5');
 });
 
+for (const kind of ['instructions', 'nested_memory']) {
+  test(`native ${kind} announcements preserve routing across three user turns`, async () => {
+    const inputs: any[] = [];
+    const router = createClaudeRouter({ mode: 'auto', model: 'sonnet', classifier: async (request) => {
+      const input = JSON.parse(request.input); inputs.push(input);
+      return { profile: input.currentTask === 'Design a scheduler' ? 'MAX' : 'FAST', confidence: null, reportedConfidence: 0.99 };
+    } });
+    try {
+      const h = harness({ route: (body) => router.route(body), complete: (body) => router.complete(body) });
+      await h.start();
+      const tasks = ['Explain a loop', 'Design a scheduler', 'Fix a typo'];
+      for (const [index, text] of tasks.entries()) {
+        const id = `turn_${index}`;
+        await h.begin(id, text);
+        if (index === 0) {
+          // Project instructions arrive before the first model call; nested
+          // memory can also arrive after a tool discovers a child directory.
+          if (kind === 'nested_memory') await h.step(id);
+          const attachment = { type: kind, origin: { kind: 'engine' }, text: 'PRIVATE PROJECT INSTRUCTIONS' };
+          assert.equal(await h.event('prompt.attachment', attachment), attachment);
+        }
+        const expected = index === 1 ? 'claude-opus-5-5' : 'claude-haiku-5-5';
+        assert.equal((await h.step(id)).seen.model, expected);
+        await h.complete(id);
+      }
+      assert.deepEqual(inputs.map(input => input.currentTask), tasks);
+      assert.deepEqual(inputs[2].previousUserTasks, tasks.slice(0, 2));
+      assert.doesNotMatch(JSON.stringify(h.requests), /PRIVATE PROJECT INSTRUCTIONS/);
+    } finally { router.close(); }
+  });
+}
+
+test('non-native instruction announcements still invalidate context eligibility', async () => {
+  for (const type of ['instructions', 'nested_memory']) {
+    for (const origin of [undefined, { kind: 'hook', event: 'UserPromptSubmit' }, { kind: 'plugin', event: 'prompt.submit' }]) {
+      const h = harness(); await h.start(); await h.begin('a', 'First task');
+      await h.event('prompt.attachment', { type, origin, text: 'PRIVATE INJECTED CONTEXT' });
+      assert.equal((await h.step('a', 'claude-opus-5-5')).seen.model, 'claude-opus-5-5');
+      await h.complete('a'); await h.begin('b', 'Next task');
+      assert.equal(h.routes()[1].body.contextReason, 'unclassified_context_baseline');
+      assert.equal(h.routes()[1].body.task, '');
+      assert.doesNotMatch(JSON.stringify(h.requests), /PRIVATE INJECTED CONTEXT/);
+    }
+  }
+});
+
+test('engine provenance does not make referenced files or queued input eligible', async () => {
+  for (const type of ['file', 'queued_command']) {
+    const h = harness(); await h.start(); await h.begin('a', 'First task');
+    await h.event('prompt.attachment', { type, origin: { kind: 'engine' }, text: 'PRIVATE EXTRA INPUT' });
+    assert.equal((await h.step('a', 'claude-opus-5-5')).seen.model, 'claude-opus-5-5');
+    await h.complete('a'); await h.begin('b', 'Next task');
+    assert.equal(h.routes()[1].body.task, '');
+    assert.equal(h.routes()[1].body.contextReason, type === 'file' ? 'reference_context_baseline' : 'unclassified_context_baseline');
+    assert.doesNotMatch(JSON.stringify(h.requests), /PRIVATE EXTRA INPUT/);
+  }
+});
+
 test('repeated turn.start does not classify twice and malformed ID is never forwarded', async () => {
   const h = harness(); await h.start(); await h.begin('a', 'Task');
   await h.event('turn.start', { turnId: 'a', text: 'Task' }); assert.equal(h.routes().length, 1);
