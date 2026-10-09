@@ -10,15 +10,48 @@ If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same
 
 Download the newer release's standalone installer and `SHA256SUMS` from the [official releases page](https://github.com/cybrking/modelrudder/releases). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
 
-For a clean source checkout of an approved release, update to that release, then run:
+The installer filename still begins with `smart-codex`, but preview.4 and newer dual-launcher artifacts update both `smart-claude` and `smart-codex`. You do not need to install each separately. Keep a verified installer and record the current ID before installing the new one.
+
+On macOS/Linux, list the existing installation, then verify and install the downloaded release:
 
 ```sh
+node -- ~/.local/share/smart-codex/current/src/install-cli.ts --list
+shasum -a 256 -c SHA256SUMS
+node -- ./smart-codex-RELEASE_ID-install.mjs
+```
+
+Run the last two commands in the download directory. Replace `RELEASE_ID` with the actual downloaded filename. If your installation root is custom, use its existing `current/src/install-cli.ts` path for the first command and repeat all original install-path flags.
+
+On Windows PowerShell, use your retained verified installer to list the current installation. Verify the new download's hash against its exact entry in `SHA256SUMS`, then run it:
+
+```powershell
+node -- .\smart-codex-PREVIOUS_RELEASE_ID-install.mjs --list
+Get-FileHash .\smart-codex-RELEASE_ID-install.mjs -Algorithm SHA256
+Get-Content .\SHA256SUMS
+node -- .\smart-codex-RELEASE_ID-install.mjs
+```
+
+Replace both filename placeholders with your actual files. The old and new files may be in different download directories; use their full paths if needed. Stop if the new installer hash does not match.
+
+For a clean source checkout, select an approved release tag, then install:
+
+```sh
+git fetch --tags origin
+git checkout --detach APPROVED_RELEASE_TAG
 npm ci --ignore-scripts
 npm run install-cli -- --list
 npm run install-cli
 ```
 
-Before installing, record the current release ID printed by `--list` for rollback. Keep your downloaded installer if you use the standalone installation method.
+Replace `APPROVED_RELEASE_TAG` with the release you reviewed. Before installing, record the current release ID printed by `--list` for rollback. Pulling source alone does not update the managed runtime.
+
+## Automatic updates and notifications
+
+ModelRudder has no local self-updater or `upgrade` command in this preview. The [daily upstream workflow](UPSTREAM_UPDATES.md) discovers and tests new Claude/Codex versions on GitHub runners; it does not update your ModelRudder installation or native CLIs.
+
+To receive ModelRudder release notifications, open the [repository](https://github.com/cybrking/modelrudder), choose **Watch → Custom**, and select **Releases**. Follow the reviewed release's upgrade steps when notified. See [GitHub's notification instructions](https://docs.github.com/en/subscriptions-and-notifications/get-started/configuring-notifications).
+
+Native Claude/Codex updates are separate. A newer native CLI can exceed the launcher's supported range or recorded evidence; run the matching ModelRudder doctor after either component changes. Automated compatibility discovery is not automatic approval of a release.
 
 ## Try the issue #2 fix before release
 
@@ -40,6 +73,22 @@ npm run install-cli
 The package version remains `0.1.0-preview.4`, but the installer prints a different content-based release ID. Use that ID and `--list` to distinguish the patched build from the original preview.4 build.
 
 ## Verify the upgrade
+
+Open a fresh terminal and check the launcher you use:
+
+```sh
+# Claude Code
+smart-claude --version
+smart-claude doctor
+
+# Codex
+smart-codex --version
+smart-codex doctor
+```
+
+Doctor checks prerequisites without submitting a model task. For builds with the same package version, use the content-based release ID from `--list` to identify the installed runtime.
+
+### Retest the Claude issue #2 patch
 
 Open a fresh terminal, then run:
 
