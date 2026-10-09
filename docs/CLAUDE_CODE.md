@@ -30,17 +30,19 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 - An independently installed official Claude Code CLI, 2.1.293+ within the 2.1.x line. Mods itself began in 2.1.287; the default Haiku 5.5 route needs 2.1.293+
 - A native `claude.ai` login; use `claude auth login` yourself if needed
 - Your own direct Jev credentials and explicit `ALLOW_JEV_CLASSIFICATION=true` for observe/auto
-- A trusted source checkout; this feature is not in the older published installer
+- The official `v0.1.0-preview.4` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
+
+For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.4 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
+
+Then prepare your private configuration and check readiness:
 
 ```sh
-npm ci --ignore-scripts
-npm test
-npm run typecheck
-npm run install-cli
+smart-claude --help
 smart-claude setup
 smart-claude doctor
-smart-claude --routing observe
 ```
+
+After entering your own key and enabling direct Jev classification, start a fresh terminal and run `smart-claude --routing observe`. Actual tasks consume provider usage; setup does not run them automatically. Source builds remain available through the [development instructions](../README.md#development).
 
 The installer manages both launchers and uses the existing private configuration path and `SMART_CODEX_ENV_FILE` setting for compatibility. In the local editor, enable `TYPESAFE_API_KEY`, `ALLOW_JEV_CLASSIFICATION=true`, and `SMART_CODEX_CLASSIFIER=direct` only after reviewing the data flow. Do not paste a key into chat or command arguments. `smart-claude setup --no-open` prepares the commented template without opening an editor. Existing configuration is preserved.
 

@@ -1,24 +1,23 @@
 # Install ModelRudder with a coding agent
 
-Use the single copy-and-paste Codex prompt in the [README](../README.md#install-with-codex). This guide is the detailed reference for checking prerequisites, installing and configuring ModelRudder, authentication, troubleshooting and removal.
+Use the copy-and-paste prompt for [Codex](../README.md#install-with-codex) or [Claude Code](../README.md#install-with-claude-code). This guide covers prerequisites, release installation, private configuration, authentication and removal.
 
-## Claude source-build preview
+## Claude Code release installation
 
-Claude support is available in source builds that include `src/smart-claude.ts` and `plugins/claude`; earlier Codex-only release installers do not contain it. From that checkout, with Node.js 24 or newer:
+The published **v0.1.0-preview.4** standalone installer bundles both `smart-codex` and `smart-claude`, despite its `smart-codex-...-install.mjs` filename. No checkout or source build is required. Older Codex-only installers do not include Claude support.
 
-```sh
-npm ci --ignore-scripts
-npm run typecheck
-npm test
-npm run install-cli
-smart-claude --help
-```
+1. Check Node.js 24+ and an independently installed official Claude Code **2.1.293 or newer within 2.1.x**. Codex is not required for `smart-claude`. Use [Claude Code's official setup instructions](https://code.claude.com/docs/en/setup) for missing prerequisites. Preserve an incompatible installation until the user chooses how to resolve it. On Windows/WSL, keep Node, Claude and ModelRudder in the same environment.
+2. Follow [Download and verify a release](#2-download-and-verify-a-release) using [v0.1.0-preview.4](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.4). Verify the checksum, run the standalone installer and preserve existing user PATH entries. Verify `smart-claude --help` (`smart-claude.cmd` on Windows).
+3. Run `smart-claude setup` to open the shared private configuration, or `smart-claude setup --no-open` to print its path. Follow the [private-key precautions](#3-prepare-the-private-key-file) below, using `smart-claude` in place of `smart-codex`. The user enters their own key and enables direct Jev classification after reviewing [Claude's data flow](CLAUDE_CODE.md#eligibility-privacy-and-failure-behavior). Do not read the file, enable consent or make classifier requests on their behalf.
+4. Check native login with `claude auth status`; guide the user through `claude auth login` if needed. Preserve existing credentials and explain conflicting authentication without replacing it. Run `smart-claude doctor` for version, plugin and native-login checks without submitting a model request.
+5. Give the user `smart-claude --routing observe` to run in a fresh terminal after private setup. Native plugin trust and organization policy remain authoritative; do not bypass them. After observing results, the user can try `smart-claude --routing auto`. Pinned mode (`smart-claude --model sonnet`) needs no Jev key or consent. All actual Claude tasks, including pinned turns, consume the user's Claude allowance.
+6. Report the OS, Node/Claude versions, release ID, checksum result, installed paths, PATH readiness and doctor findings. Identify private setup and interactive checks still left for the user. Follow the shared [recovery instructions](#5-report-and-retain-recovery-options) below.
 
-The current source installer creates both `smart-codex` and `smart-claude` (`.cmd` launchers on Windows). Both use the existing private `SMART_CODEX_ENV_FILE` configuration and managed installation paths. It does not replace plain `claude`, log in, create API keys, or enable Jev consent. Existing configuration and state survive upgrades and uninstall; rollback to a Codex-only release removes the managed Claude launcher until a dual-launcher release is activated again.
+Both launchers use the existing private `SMART_CODEX_ENV_FILE` configuration and managed installation paths. Installing does not replace plain `claude`, log in, create API keys, or enable Jev consent. Existing configuration and state survive upgrades and uninstall; rollback to a Codex-only release removes the managed Claude launcher until a dual-launcher release is activated again.
 
-Claude routing requires an independently installed Claude Code **2.1.293 or newer within 2.1.x**, with the user's native `claude.ai` login. Run `smart-claude doctor` for version, plugin and native-login checks without submitting a model request. Use `smart-claude setup --no-open` to locate the shared private configuration; follow the same user-controlled Jev setup precautions below. Pinned mode needs no Jev key or consent. Actual interactive turns, including pinned turns, consume the user's Claude allowance. Recorded offline module tests cover 2.1.295; they do not establish live TUI behavior or routing quality. Have the user perform any live validation, and preserve their existing login and permissions.
+Recorded offline module tests cover Claude Code 2.1.295; they do not establish live TUI behavior or routing quality. See [Claude support and verification limits](CLAUDE_CODE.md).
 
-The remaining guide covers the Codex release installation and prerequisites.
+The remaining prerequisite, setup and login examples use Codex. Release verification, installation paths and recovery are shared by both launchers.
 
 ## 1. Inspect the machine
 

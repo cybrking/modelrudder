@@ -10,22 +10,6 @@ Use your own native provider account and your own TypeSafe Jev API key. This pre
 
 **Experimental Claude preview:** Claude Code now has a native Mods adapter for per-user-turn Haiku/Sonnet/Opus routing, with one decision held through each tool loop. The preview.4 installer bundles `smart-claude` alongside `smart-codex`; read [Claude support, installation and verification limits](docs/CLAUDE_CODE.md) first. Native Claude effort, model availability and safety fallback remain authoritative. No subscription limit is bypassed, and savings are not guaranteed.
 
-## Claude Code source preview
-
-With Node 24+, an independently installed Claude Code CLI and native Claude login:
-
-```sh
-npm ci --ignore-scripts
-npm test
-npm run typecheck
-npm run install-cli
-smart-claude setup
-smart-claude doctor
-smart-claude --routing observe
-```
-
-Review the TypeSafe data flow before enabling the shared Jev settings. Then try `smart-claude --routing auto`, or use `smart-claude --model sonnet` for pinned mode without classification. This adds a separate launcher; plain `claude` and `smart-codex` remain unchanged. This adapter requires Claude Code 2.1.293+; offline module and synthetic provider-wire checks were run on 2.1.295. Live authenticated task quality and cross-platform TUI checks remain pending.
-
 ## Install with Codex
 
 Copy this entire prompt into Codex. It will install ModelRudder and open the local configuration file; you enter your Jev key privately in the editor.
@@ -57,12 +41,52 @@ paid model tasks automatically.
 
 If an editor cannot open, Codex can give you the file path to open manually. [Detailed agent instructions](docs/AGENT_INSTALL.md) cover Windows, Linux/WSL and macOS.
 
+## Install with Claude Code
+
+Copy this entire prompt into Claude Code. It will install ModelRudder and open the local configuration file; you enter your Jev key privately in the editor.
+
+```text
+Install ModelRudder on this computer so I can use model routing in Claude Code.
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.4
+Read the current Claude installation guides before continuing:
+https://github.com/cybrking/modelrudder/blob/main/docs/AGENT_INSTALL.md
+https://github.com/cybrking/modelrudder/blob/main/docs/CLAUDE_CODE.md
+
+Detect my OS and check Node.js and Claude Code. Install missing prerequisites
+using official instructions; ModelRudder requires Node 24+ and Claude Code
+2.1.293 or newer within the 2.1.x line. Preserve existing credentials,
+configuration and permissions. Explain any incompatible version or login
+before changing it. Codex is not required to use smart-claude.
+
+Download the release installer and SHA256SUMS, verify the checksum, install
+for my user account, and add its launcher directory to my user PATH without
+removing existing entries. The smart-codex-named preview.4 installer bundles
+both smart-codex and smart-claude; no source build is needed. Verify
+smart-claude --help. Do not replace plain claude or an unmanaged launcher.
+
+Run smart-claude setup to open my private Jev configuration in a local editor.
+Show me https://console.typesafe.ai/keys so I can sign up and get my own key.
+Never read or print the key file or ask me to paste a key into chat. Leave new
+settings commented out until I enter the key and explicitly enable them.
+Explain that observe/auto sends eligible task text and bounded earlier task
+excerpts to TypeSafe, and requires the direct Jev classifier.
+
+Check my native Claude login without replacing it. If login is needed, guide
+me through the official claude auth login flow. Run smart-claude doctor and
+explain anything still needed. Preserve native plugin trust and organization
+policy; do not bypass either. Give me smart-claude --routing observe to run
+in a fresh terminal after setup. Do not submit model tasks or classifier
+requests automatically.
+```
+
+If an editor cannot open, Claude Code can give you the file path to open manually. Once you have checked observe mode, try `smart-claude --routing auto`, or use `smart-claude --model sonnet` for pinned mode without Jev classification. See [Claude support and verification limits](docs/CLAUDE_CODE.md); live task quality and full cross-platform TUI behavior remain unverified.
+
 ## Requirements
 
-- Node.js 24 or newer, installed separately. The installer does not bundle Node or Codex.
+- Node.js 24 or newer, installed separately. The installer does not bundle Node, Codex or Claude Code.
 - macOS, Linux/WSL, or Windows 11 with PowerShell. Native Windows support is a preview; ModelRudder's full Windows TUI has not been validated. WSL is an alternative if your native setup fails; install and sign in separately inside WSL. See [OpenAI's Windows guidance](https://learn.chatgpt.com/docs/windows/windows-sandbox).
 - For `smart-codex`, an independently installed Codex CLI. Exactly versions **0.159.3, 0.160.1 and 0.161.0** have recorded protocol evidence and are accepted by this preview. Full interactive TUI compatibility is not certified; other versions are rejected. See the [release-readiness results](docs/RELEASE_READINESS.md) for completed checks and remaining gaps. Claude's separate requirements are in [CLAUDE_CODE.md](docs/CLAUDE_CODE.md).
-- Native ChatGPT login through `codex login`.
+- For `smart-codex`, native ChatGPT login through `codex login`. For `smart-claude`, an independently installed Claude Code 2.1.293+ within 2.1.x and native `claude.ai` login; Codex is not required.
 - Your own TypeSafe Jev API key for observe/auto modes. Pinned mode works without classification.
 
 OpenAI describes continuation of existing local/open-source app-server applications separately from commercial/hosted authentication. This release does not establish permission to operate a paid subscription-auth service. See [OpenAI guidance](https://learn.chatgpt.com/docs/app-server#auth-endpoints). ModelRudder is an independent project, with no claimed provider endorsement.
