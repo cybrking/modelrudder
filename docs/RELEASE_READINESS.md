@@ -45,6 +45,23 @@ During evaluation the system Codex command changed to 0.161.0; the compatibility
 
 ## Remaining qualification
 
+### October 9 ECC review of the issue #2 patch
+
+The six requested workflows were applied: code review, security review, TDD, evaluation, verification and documentation. Scope was the public client adapters, classifier boundaries, launchers, metadata logging, installer/release lifecycle and relevant tests/CI. The hosted backend was not included.
+
+| Workflow | Evidence and result |
+| --- | --- |
+| Code review | Traced per-turn decisions, eligibility, stream forwarding, cancellation, fallback, native model changes and install activation. No additional confirmed correctness defect was found in the reviewed paths beyond the consumed-prompt-receipt bug already patched. |
+| Security review | Reviewed classifier consent/HTTPS and bounded responses, child credential filtering, authenticated loopback services, argument-array subprocesses, private files and release allowlists/checksums. Boundary regression tests passed; production npm audit reported zero known vulnerabilities. This is a scoped source review, not proof that the client has no vulnerabilities. |
+| TDD | Issue #2's consumed-receipt regression failed before the lifecycle fix and passes afterward. Both Node integration and official native-loader fixtures now cover three successive user turns. The reporter's exact interactive trigger still needs a retest; the fixture demonstrates a confirmed lifecycle defect, not reproduction of every possible cause of the report. |
+| Evaluation | Criteria were defined in [routing evaluation](../.codex/evals/routing.md) before `npm run eval:routing`: 74 checks passed, no failures/skips/cancellations. Uses synthetic classifier/event fixtures; representative live task quality and latency remain pending. |
+| Verification | macOS full tests passed on Node 24 and 26: 165 passed, one Windows-only skip on each. Typecheck passed. Codex 0.161.0 passed four zero-inference protocol checks. Official Claude 2.1.295 passed six Mods fixtures and six synthetic provider-wire cases, without account authentication or paid inference. Full tests include disposable standalone installation, upgrade, rollback, integrity rejection, activation-failure restoration and uninstall/data-preservation checks. |
+| Documentation and CI | Clarified current local results and removed the stale sandbox-failure limitation. Added `npm run eval:routing` and pinned Claude checks to normal PR CI's six-platform/runtime jobs. Scheduled upstream CI already included Claude checks. Passing remote platform runs must be recorded separately from local evidence. |
+
+The review supports the experimental patch. It does not qualify a production release. Claude still needs authenticated terminal journeys for successive prompts/tool loops, interruption, explicit permission denial/acceptance, resume, compaction, classifier failure and normal exit. Confirm actual model availability and record the requested/executed model through those journeys. Repeat applicable journeys on ordinary Linux and Windows desktops; CI fixtures do not certify their terminal experience.
+
+Existing remaining Codex and general quality qualification also applies:
+
 - Repeat the real terminal journey on ordinary Windows 11 and Linux/WSL: task/tool execution, confirmation prompts, interruption, resume and exit.
 - Exercise an explicit confirmation-required approval policy on macOS, including denial and acceptance. Qualify compaction and the default automatic effort policy separately.
 - Run representative task-quality evaluations with trusted graders through the actual router before publishing generalized quality or savings figures.
