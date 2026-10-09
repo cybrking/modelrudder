@@ -166,7 +166,11 @@ smart-codex logs cleanup --older-than-days 30
 
 Outcome markers are your own assessment, not independent validation. Cleanup is a preview unless `--apply` is supplied. Tokens and reference-price comparisons are estimates; they do not establish savings on a subscription bill or verified task quality.
 
-For source users, upgrade by pulling an approved release, running `npm ci --ignore-scripts`, and rerunning `npm run install-cli`. Standalone users can install the next trusted release installer. Restart active launchers after an upgrade. Use the installed maintenance command:
+For source users, upgrade by pulling an approved release, running `npm ci --ignore-scripts`, and rerunning `npm run install-cli`. Standalone users can install the next trusted release installer. Restart active launchers after an upgrade.
+
+See the [upgrade guide](docs/UPGRADE.md) for release upgrades, the unreleased issue #2 patch, verification, custom paths and rollback.
+
+Use the installed maintenance command:
 
 ```sh
 node -- ~/.local/share/smart-codex/current/src/install-cli.ts --list
