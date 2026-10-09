@@ -212,6 +212,39 @@ Outcome markers and cleanup are Codex-specific commands. Outcome markers are you
 
 One ModelRudder upgrade updates both launchers and preserves your existing key/configuration and local state. Stop active sessions first, record your current release ID with `--list`, then install the newer verified release using the same installation paths. Restart in a fresh terminal and run `smart-claude doctor` or `smart-codex doctor` for the tool you use.
 
+### Upgrade to the latest merged changes
+
+The latest published installer is still **v0.1.0-preview.4** and does not include the merged issue #2 fix. Until a newer installer is published, upgrade from source using Git and Node.js 24+. Use a new folder so you do not disturb an existing checkout. These commands work in macOS/Linux shells and Windows PowerShell:
+
+```sh
+git clone https://github.com/cybrking/modelrudder.git modelrudder-upgrade
+cd modelrudder-upgrade
+git checkout --detach 74e43165f543351dc8d87bda91f865577e20427e
+npm ci --ignore-scripts
+npm run install-cli -- --list
+npm run install-cli
+```
+
+This pins the [merged source snapshot](https://github.com/cybrking/modelrudder/commit/74e43165f543351dc8d87bda91f865577e20427e), including the routing fix and both-provider setup/upgrade guides. Choose a different new folder name if `modelrudder-upgrade` already exists. **Save the previous release ID printed by `--list` before running the final install command.** If you used custom installation paths, append the same `--root`, `--bin-dir` and `--env-file` flags to both installer commands.
+
+Open a fresh terminal and run the check for your tool:
+
+```sh
+smart-claude doctor
+# Or, for Codex:
+smart-codex doctor
+```
+
+The package version remains `0.1.0-preview.4`; use the installer's content-based release ID to distinguish this build from the published installer. To roll back from this checkout, replace the placeholder with your saved previous ID and repeat any custom path flags:
+
+```sh
+npm run install-cli -- --rollback PREVIOUS_RELEASE_ID
+```
+
+Restart launchers after rollback. ModelRudder installation does not update your native Claude or Codex CLI. These changes remain an experimental preview; doctor checks prerequisites, not task quality.
+
+### Upgrade to a published release
+
 For standalone installations, download the newer installer and `SHA256SUMS` from [Releases](https://github.com/cybrking/modelrudder/releases), verify its checksum as above, then run it. Keep the previous release ID for rollback. For a clean source checkout, select an approved release tag and run:
 
 ```sh
