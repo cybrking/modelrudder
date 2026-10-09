@@ -16,6 +16,16 @@ Acceptance criteria established before this evaluation:
 
 Full production readiness requires all applicable criteria. An unperformed or unavailable check is not a pass. Windows CI exercises a Windows runner; it does not certify a normal Windows 11 desktop session. Synthetic classifier tests are separated from real Jev calls.
 
+## Preview.5 — October 9, 2026
+
+This release packages the consumed-prompt Claude routing fix, the source npm installer's Node argument boundary, and the both-provider setup/upgrade guides. It remains an experimental preview with unchanged native CLI version gates.
+
+The final local suite passed 166 tests with one Windows-only skip; type checking passed. A new installer regression failed before the argument fix and passed after it. The downloaded, checksum-verified preview.4 installer and the actual preview.5 standalone artifact were exercised in disposable custom paths: installation, upgrade, both launchers reporting preview.5, and rollback to the previous release passed. Configuration and state were preserved byte-for-byte, and the upgraded Claude module contained the routing patch.
+
+Preview.5 runtime ID: `0.1.0-preview.5-9ae7bd6ff2125032`. Standalone installer SHA-256: `a766769c3b43090298c8ba96b5d4a5618f17d37b54287e448dd88a6c86275f71`. The README uses the exact installer filename and checksum-first platform steps. Inspect the release commit's CI for macOS, Ubuntu and Windows results with Node 24/26; those checks include both native provider probes without paid inference.
+
+Authenticated Claude terminal journeys, the issue reporter's exact retest, ordinary Windows/Linux terminal behavior, native approvals and representative task-quality qualification remain incomplete as detailed below. Publishing this preview does not change those limits.
+
 ## Codex 0.161.0 update — October 8, 2026
 
 Preview.4 adds exactly Codex 0.161.0 to the supported builds after its local zero-inference protocol probe passed initialization, fresh-thread creation, model setting and read-only permissions. The actual local `smart-codex` launcher reached the native 0.161.0 terminal in an empty disposable workspace and exited normally without a task. Regression tests cover launcher compatibility, doctor readiness, historical builds and rejection of unknown or modified versions. CI now exercises 0.161.0 on each platform.
