@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "description": "Experimental local model routing for native Codex",
+  "description": "Experimental local model routing for native Codex and Claude Code",
   "engines": {
     "node": ">=24"
   },
@@ -17,11 +17,14 @@
     "typecheck": "tsc --noEmit",
     "install-cli": "node src/install-cli.ts",
     "smart-codex": "node --env-file-if-exists=.env.local src/smart-codex.ts",
+    "smart-claude": "node --env-file-if-exists=.env.local src/smart-claude.ts",
+    "doctor:claude": "node --env-file-if-exists=.env.local src/smart-claude.ts doctor",
     "doctor": "node --env-file-if-exists=.env.local src/doctor.ts",
     "report": "node src/usage-report.ts",
     "package:release": "node scripts/release.ts",
     "package:pilot": "node scripts/package-pilot.ts",
-    "test:native-protocol": "node scripts/native-protocol-smoke.ts"
+    "test:native-protocol": "node scripts/native-protocol-smoke.ts",
+    "test:claude-native": "node scripts/claude-native-smoke.ts"
   },
   "dependencies": {
     "ws": "^8.22.0"

@@ -1,0 +1,3 @@
+#!/bin/sh
+router_root=$(CDPATH= cd -P -- "$(dirname -- "$0")/.." && pwd) || exit 1
+exec node --env-file-if-exists="${SMART_CODEX_ENV_FILE:-$router_root/.env.local}" -- "$router_root/src/smart-claude.ts" "$@"

@@ -2,20 +2,27 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, mkdir, readFile, readdir, readlink, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import fs, { mkdtemp, mkdir, readFile, readdir, readlink, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildRelease, digest, releaseFiles, validateRelease } from '../scripts/release.ts';
+import { buildRelease, digest, legacyReleaseFiles, releaseFiles, validateRelease } from '../scripts/release.ts';
 import { installRelease, rollbackRelease, uninstallRelease, defaultInstallOptions } from '../src/install-cli.ts';
 const run = promisify(execFile);
 const project = fileURLToPath(new URL('../', import.meta.url));
 const isWindows = process.platform === 'win32';
-const target = (options: { binDirectory: string }) => join(options.binDirectory, isWindows ? 'smart-codex.cmd' : 'smart-codex');
+const launcherNames = ['smart-codex', 'smart-claude'] as const;
+const target = (options: { binDirectory: string; platform?: NodeJS.Platform }, name = 'smart-codex') => join(options.binDirectory, (options.platform ?? process.platform) === 'win32' ? `${name}.cmd` : name);
 const pointer = (root: string) => isWindows ? readFile(join(root, 'current'), 'utf8').then(value => value.trim()) : readlink(join(root, 'current'));
-const installedRun = (options: { binDirectory: string }, args: string[], cwd: string) => isWindows
-  ? run(process.execPath, [join(options.binDirectory, 'smart-codex.mjs'), ...args], { cwd })
-  : run(target(options), args, { cwd });
+const installedRun = (options: { binDirectory: string; platform?: NodeJS.Platform }, args: string[], cwd: string, name = 'smart-codex') => (options.platform ?? process.platform) === 'win32'
+  ? run(process.execPath, [join(options.binDirectory, `${name}.mjs`), ...args], { cwd })
+  : run(target(options, name), args, { cwd });
+const sealRelease = (release: Awaited<ReturnType<typeof buildRelease>>) => {
+  release.sha256 = digest(JSON.stringify({ format: 1, version: release.version, files: release.files }));
+  release.id = `${release.version}-${release.sha256.slice(0, 16)}`;
+  return release;
+};
 const fixture = async () => {
   const temp = await mkdtemp(join(tmpdir(), 'smart-release-'));
   const options = { root: join(temp, "install }$root 'quoted' literal"), binDirectory: join(temp, 'bin'), envFile: join(temp, "user }$config 'quoted'") };
@@ -33,6 +40,7 @@ test('standalone pilot installer needs no checkout or downloads and supports ins
       '--env-file', options.envFile], { cwd: temp });
     const help = await installedRun(options, ['--help'], temp);
     assert.match(help.stdout, /smart-codex account/);
+    assert.match((await installedRun(options, ['--help'], temp, 'smart-claude')).stdout, /smart-claude/);
     if (isWindows) {
       const script = '& $env:MODEL_RUDDER_TEST_LAUNCHER --help; exit $LASTEXITCODE';
       const nativeHelp = await run('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive',
@@ -54,6 +62,8 @@ test('release is reproducible, has exact allowlist, and rejects traversal/tamper
   assert.ok(!releaseFiles.some(path => /\.env|\.smart-codex|evals\/|artifacts\//.test(path)));
   const changed = structuredClone(a); changed.files['src/config.ts'] += '\n';
   assert.throws(() => validateRelease(changed), /checksum/);
+  const partial = structuredClone(a); delete partial.files['src/claude-command.ts'];
+  assert.throws(() => validateRelease(sealRelease(partial)), /allowlist/);
   const traversal = structuredClone(a); traversal.files['../escape'] = 'bad';
   assert.throws(() => validateRelease(traversal), /allowlist/);
 });
@@ -71,6 +81,8 @@ test('offline installed help runs independently of checkout; upgrade, rollback a
     assert.match(launcher, /SMART_CODEX_STATE_DIR/);
     const help = await installedRun(options, ['--help'], temp);
     assert.match(help.stdout, /smart-codex/);
+    assert.match((await installedRun(options, ['--help'], temp, 'smart-claude')).stdout, /smart-claude/);
+    if (!isWindows) assert.equal((await stat(join(options.root, 'releases', first.id, 'bin/smart-claude'))).mode & 0o777, 0o700);
     const stateFile = join(options.root, 'state', 'keep.json');
     await writeFile(stateFile, '{}');
     const next = structuredClone(first); next.files['src/config.ts'] += '\n// release smoke variant\n';
@@ -84,7 +96,10 @@ test('offline installed help runs independently of checkout; upgrade, rollback a
     await assert.rejects(rollbackRelease(next.id, options), /modified/);
     assert.equal(await pointer(options.root), `releases/${first.id}`);
     await uninstallRelease(options);
-    await assert.rejects(stat(target(options)), { code: 'ENOENT' });
+    for (const name of launcherNames) {
+      await assert.rejects(stat(target(options, name)), { code: 'ENOENT' });
+      if (isWindows) await assert.rejects(stat(join(options.binDirectory, `${name}.mjs`)), { code: 'ENOENT' });
+    }
     assert.equal(await readFile(options.envFile, 'utf8'), 'RELEASE_SMOKE_CONFIG=preserved\n');
     assert.equal(await readFile(stateFile, 'utf8'), '{}');
   } finally { await rm(temp, { recursive: true, force: true }); }
@@ -117,6 +132,7 @@ test('packager and artifact installer CLI work offline and never overwrite an ar
     assert.equal(await pointer(options.root), `releases/${release.id}`);
     const help = await installedRun(options, ['--help'], temp);
     assert.match(help.stdout, /smart-codex/);
+    assert.match((await installedRun(options, ['--help'], temp, 'smart-claude')).stdout, /smart-claude/);
   } finally { await rm(temp, { recursive: true, force: true }); }
 });
 
@@ -152,6 +168,8 @@ test('Windows installer uses regular pointers and a Node bootstrap without shell
     const bootstrap = await readFile(join(options.binDirectory, 'smart-codex.mjs'), 'utf8');
     assert.match(bootstrap, /shell: false/);
     assert.match(bootstrap, /process\.argv\.slice\(2\)/);
+    assert.match((await installedRun(options, ['--help'], temp, 'smart-claude')).stdout, /smart-claude/);
+    assert.match(await readFile(join(options.binDirectory, 'smart-claude.cmd'), 'utf8'), /node "%~dp0smart-claude.mjs" %\*/);
     const next = structuredClone(first); next.files['src/config.ts'] += '\n// Windows upgrade fixture\n';
     next.sha256 = digest(JSON.stringify({ format: 1, version: next.version, files: next.files }));
     next.id = `${next.version}-${next.sha256.slice(0, 16)}`;
@@ -161,6 +179,8 @@ test('Windows installer uses regular pointers and a Node bootstrap without shell
     await uninstallRelease(options);
     await assert.rejects(stat(join(options.binDirectory, 'smart-codex.cmd')), { code: 'ENOENT' });
     await assert.rejects(stat(join(options.binDirectory, 'smart-codex.mjs')), { code: 'ENOENT' });
+    await assert.rejects(stat(join(options.binDirectory, 'smart-claude.cmd')), { code: 'ENOENT' });
+    await assert.rejects(stat(join(options.binDirectory, 'smart-claude.mjs')), { code: 'ENOENT' });
   } finally { await rm(temp, { recursive: true, force: true }); }
 });
 
@@ -177,17 +197,151 @@ test('Windows bootstrap preserves literal arguments and external configuration/s
   const options = { ...base, platform: 'win32' as const };
   try {
     const release = await buildRelease(project);
-    release.files['src/smart-codex.ts'] = `process.stdout.write(JSON.stringify({ args: process.argv.slice(2), state: process.env.SMART_CODEX_STATE_DIR, env: process.env.SMART_CODEX_ENV_FILE }));\n`;
+    for (const name of launcherNames) release.files[`src/${name}.ts`] = `process.stdout.write(JSON.stringify({ args: process.argv.slice(2), state: process.env.SMART_CODEX_STATE_DIR, env: process.env.SMART_CODEX_ENV_FILE }));\n`;
     release.sha256 = digest(JSON.stringify({ format: 1, version: release.version, files: release.files }));
     release.id = `${release.version}-${release.sha256.slice(0, 16)}`;
     await installRelease(release, options);
     const args = ['plain', 'spaces and & literal', '"quoted"', '%PATH%', '$HOME', '`literal`'];
     const external = { ...process.env, SMART_CODEX_STATE_DIR: join(temp, 'external state'), SMART_CODEX_ENV_FILE: join(temp, 'external env') };
-    const result = await run(process.execPath, [join(options.binDirectory, 'smart-codex.mjs'), ...args], { cwd: temp, env: external });
-    assert.deepEqual(JSON.parse(result.stdout), { args, state: external.SMART_CODEX_STATE_DIR, env: external.SMART_CODEX_ENV_FILE });
+    for (const name of launcherNames) {
+      const result = await run(process.execPath, [join(options.binDirectory, `${name}.mjs`), ...args], { cwd: temp, env: external });
+      assert.deepEqual(JSON.parse(result.stdout), { args, state: external.SMART_CODEX_STATE_DIR, env: external.SMART_CODEX_ENV_FILE });
+    }
     delete external.SMART_CODEX_STATE_DIR;
     delete external.SMART_CODEX_ENV_FILE;
-    const defaults = await run(process.execPath, [join(options.binDirectory, 'smart-codex.mjs'), ...args], { cwd: temp, env: external });
-    assert.deepEqual(JSON.parse(defaults.stdout), { args, state: join(options.root, 'state'), env: options.envFile });
+    for (const name of launcherNames) {
+      const defaults = await run(process.execPath, [join(options.binDirectory, `${name}.mjs`), ...args], { cwd: temp, env: external });
+      assert.deepEqual(JSON.parse(defaults.stdout), { args, state: join(options.root, 'state'), env: options.envFile });
+    }
+  } finally { await rm(temp, { recursive: true, force: true }); }
+});
+
+for (const platform of [...new Set<NodeJS.Platform>([process.platform, 'win32'])]) {
+  test(`${platform}: unmanaged Claude launchers block install before any mutation`, async () => {
+    const { temp, options: base } = await fixture();
+    const options = { ...base, platform };
+    try {
+      const release = await buildRelease(project);
+      await mkdir(options.binDirectory);
+      const targets = [target(options, 'smart-claude')];
+      if (platform === 'win32') targets.push(join(options.binDirectory, 'smart-claude.mjs'));
+      for (const occupied of targets) {
+        await writeFile(occupied, 'unmanaged Claude launcher');
+        await assert.rejects(installRelease(release, options), /unmanaged smart-claude/);
+        assert.equal(await readFile(occupied, 'utf8'), 'unmanaged Claude launcher');
+        await assert.rejects(stat(options.root), { code: 'ENOENT' });
+        await assert.rejects(stat(target(options)), { code: 'ENOENT' });
+        await rm(occupied);
+      }
+    } finally { await rm(temp, { recursive: true, force: true }); }
+  });
+
+  test(`${platform}: Codex-only releases survive upgrade and rollback with matching launchers`, async () => {
+    const { temp, options: base } = await fixture();
+    const options = { ...base, platform };
+    try {
+      const current = await buildRelease(project);
+      const legacy = structuredClone(current);
+      legacy.files = Object.fromEntries(legacyReleaseFiles.map(path => [path, legacy.files[path]]));
+      validateRelease(sealRelease(legacy));
+      await installRelease(legacy, options);
+      await assert.rejects(stat(target(options, 'smart-claude')), { code: 'ENOENT' });
+      assert.match((await installedRun(options, ['--help'], temp)).stdout, /smart-codex/);
+      await installRelease(current, options);
+      assert.match((await installedRun(options, ['--help'], temp, 'smart-claude')).stdout, /smart-claude/);
+      await rollbackRelease(legacy.id, options);
+      await assert.rejects(stat(target(options, 'smart-claude')), { code: 'ENOENT' });
+      if (platform === 'win32') await assert.rejects(stat(join(options.binDirectory, 'smart-claude.mjs')), { code: 'ENOENT' });
+      assert.match((await installedRun(options, ['--help'], temp)).stdout, /smart-codex/);
+      await rollbackRelease(current.id, options);
+      assert.match((await installedRun(options, ['--help'], temp, 'smart-claude')).stdout, /smart-claude/);
+    } finally { await rm(temp, { recursive: true, force: true }); }
+  });
+
+  test(`${platform}: failure installing the second launcher restores both launchers and release pointer`, async () => {
+    const { temp, options: base } = await fixture();
+    const options = { ...base, platform };
+    const originalRename = fs.rename;
+    try {
+      const first = await buildRelease(project);
+      await installRelease(first, options);
+      const targets = launcherNames.flatMap(name => platform === 'win32'
+        ? [target(options, name), join(options.binDirectory, `${name}.mjs`)] : [target(options, name)]);
+      const originals = await Promise.all(targets.map(path => readFile(path, 'utf8')));
+      const next = structuredClone(first);
+      next.files['src/config.ts'] += '\n// failed upgrade fixture\n';
+      sealRelease(next);
+      let failed = false;
+      fs.rename = (async (from, to) => {
+        const lastLauncher = platform === 'win32' ? join(options.binDirectory, 'smart-claude.mjs') : target(options, 'smart-claude');
+        if (!failed && to === lastLauncher) {
+          failed = true;
+          throw Object.assign(new Error('Simulated launcher replacement failure'), { code: 'EACCES' });
+        }
+        return originalRename(from, to);
+      }) as typeof fs.rename;
+      syncBuiltinESMExports();
+      await assert.rejects(installRelease(next, { ...options, envFile: join(temp, 'upgraded config') }), /Simulated launcher replacement failure/);
+      assert.equal(failed, true);
+      assert.deepEqual(await Promise.all(targets.map(path => readFile(path, 'utf8'))), originals);
+      const current = platform === 'win32' ? (await readFile(join(options.root, 'current'), 'utf8')).trim() : await readlink(join(options.root, 'current'));
+      assert.equal(current, `releases/${first.id}`);
+      for (const name of launcherNames) assert.match((await installedRun(options, ['--help'], temp, name)).stdout, new RegExp(name));
+    } finally {
+      fs.rename = originalRename;
+      syncBuiltinESMExports();
+      await rm(temp, { recursive: true, force: true });
+    }
+  });
+}
+
+test('uninstall checks both launcher owners before removing either', async () => {
+  const { temp, options } = await fixture();
+  try {
+    const release = await buildRelease(project);
+    await installRelease(release, options);
+    const codex = await readFile(target(options), 'utf8');
+    await writeFile(target(options, 'smart-claude'), 'unmanaged replacement');
+    await assert.rejects(uninstallRelease(options), /unmanaged smart-claude/);
+    assert.equal(await readFile(target(options), 'utf8'), codex);
+    assert.equal(await pointer(options.root), `releases/${release.id}`);
+  } finally { await rm(temp, { recursive: true, force: true }); }
+});
+
+
+test('POSIX launchers preserve literal arguments and load the shared legacy configuration', { skip: isWindows }, async () => {
+  const { temp, options } = await fixture();
+  try {
+    const release = await buildRelease(project);
+    for (const name of launcherNames) release.files[`src/${name}.ts`] = `process.stdout.write(JSON.stringify({ args: process.argv.slice(2), state: process.env.SMART_CODEX_STATE_DIR, env: process.env.SMART_CODEX_ENV_FILE, loaded: process.env.MODELRUDDER_RELEASE_TEST }));\n`;
+    sealRelease(release);
+    await writeFile(options.envFile, 'MODELRUDDER_RELEASE_TEST=shared-default\n');
+    await installRelease(release, options);
+    const args = ['spaces and & literal', '"quoted"', '$HOME', '`literal`', '--prompt', 'a; b'];
+    const env = { ...process.env };
+    delete env.SMART_CODEX_STATE_DIR; delete env.SMART_CODEX_ENV_FILE; delete env.MODELRUDDER_RELEASE_TEST;
+    for (const name of launcherNames) {
+      const result = await run(target(options, name), args, { cwd: temp, env });
+      assert.deepEqual(JSON.parse(result.stdout), { args, state: join(options.root, 'state'), env: options.envFile, loaded: 'shared-default' });
+    }
+    const external = { ...env, SMART_CODEX_STATE_DIR: join(temp, 'external state'), SMART_CODEX_ENV_FILE: join(temp, 'external config') };
+    await writeFile(external.SMART_CODEX_ENV_FILE, 'MODELRUDDER_RELEASE_TEST=shared-override\n');
+    for (const name of launcherNames) {
+      const result = await run(target(options, name), args, { cwd: temp, env: external });
+      assert.deepEqual(JSON.parse(result.stdout), { args, state: external.SMART_CODEX_STATE_DIR, env: external.SMART_CODEX_ENV_FILE, loaded: 'shared-override' });
+    }
+  } finally { await rm(temp, { recursive: true, force: true }); }
+});
+
+test('managed launchers cannot be taken over by a different installation root', async () => {
+  const { temp, options } = await fixture();
+  try {
+    const release = await buildRelease(project);
+    await installRelease(release, options);
+    const other = { ...options, root: join(temp, 'other installation') };
+    await assert.rejects(installRelease(release, other), /another installation/);
+    await assert.rejects(uninstallRelease(other), /another installation/);
+    await assert.rejects(stat(other.root), { code: 'ENOENT' });
+    for (const name of launcherNames) assert.match((await installedRun(options, ['--help'], temp, name)).stdout, new RegExp(name));
   } finally { await rm(temp, { recursive: true, force: true }); }
 });

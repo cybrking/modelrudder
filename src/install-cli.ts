@@ -12,7 +12,10 @@ const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 const exists = async (path: string) => { try { return await lstat(path); } catch (e) { if ((e as NodeJS.ErrnoException).code === 'ENOENT') return undefined; throw e; } };
 export type InstallOptions = { root: string; binDirectory: string; envFile: string; platform?: NodeJS.Platform };
 const windows = (options: InstallOptions) => (options.platform ?? process.platform) === 'win32';
-const launcherPath = (options: InstallOptions) => join(options.binDirectory, windows(options) ? 'smart-codex.cmd' : 'smart-codex');
+const launcherNames = ['smart-codex', 'smart-claude'] as const;
+type LauncherName = typeof launcherNames[number];
+const launcherPath = (options: InstallOptions, name: LauncherName) => join(options.binDirectory, windows(options) ? `${name}.cmd` : name);
+const bootstrapPath = (options: InstallOptions, name: LauncherName) => join(options.binDirectory, `${name}.mjs`);
 export function defaultInstallOptions(platform: NodeJS.Platform = process.platform, home = homedir(), env: NodeJS.ProcessEnv = process.env): InstallOptions {
   const base = env.LOCALAPPDATA || join(home, 'AppData', 'Local');
   return platform === 'win32'
@@ -54,7 +57,20 @@ async function validatePaths(options: InstallOptions) {
 }
 async function ownedLauncher(target: string) {
   const info = await exists(target);
-  if (info && (!info.isFile() || !(await readFile(target, 'utf8')).includes(marker))) throw new Error('An unmanaged smart-codex already exists; installation stopped.');
+  if (info && (!info.isFile() || !(await readFile(target, 'utf8')).includes(marker))) throw new Error(`An unmanaged ${basename(target)} already exists; installation stopped.`);
+}
+async function ownedLaunchers(options: InstallOptions) {
+  // Check every destination before changing any launcher or the current release.
+  for (const name of launcherNames) {
+    const target = launcherPath(options, name);
+    await ownedLauncher(target);
+    const ownerFile = windows(options) ? bootstrapPath(options, name) : target;
+    if (windows(options)) await ownedLauncher(ownerFile);
+    if (await exists(ownerFile)) {
+      const ownerToken = windows(options) ? `const root = ${JSON.stringify(options.root)};` : quote(join(options.root, 'current'));
+      if (!(await readFile(ownerFile, 'utf8')).includes(ownerToken)) throw new Error('Launcher belongs to another installation.');
+    }
+  }
 }
 async function privateDirectory(path: string) {
   const info = await exists(path);
@@ -85,7 +101,7 @@ async function switchCurrent(options: InstallOptions, id: string) {
   else await symlink(`releases/${id}`, next);
   await rename(next, join(options.root, 'current'));
 }
-function windowsBootstrap(options: InstallOptions): string {
+function windowsBootstrap(options: InstallOptions, name: LauncherName): string {
   return `// ${marker}
 import { readFile, lstat } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -98,16 +114,79 @@ if (!/^releases\\/\\d+\\.\\d+\\.\\d+(?:-[A-Za-z0-9.-]+)?-[a-f0-9]{16}$/.test(cur
 const env = { ...process.env };
 env.SMART_CODEX_STATE_DIR ||= join(root, 'state');
 env.SMART_CODEX_ENV_FILE ||= ${JSON.stringify(options.envFile)};
-const child = spawn(process.execPath, ['--env-file-if-exists=' + env.SMART_CODEX_ENV_FILE, '--', join(root, current, 'src', 'smart-codex.ts'), ...process.argv.slice(2)], { env, stdio: 'inherit', shell: false });
+const child = spawn(process.execPath, ['--env-file-if-exists=' + env.SMART_CODEX_ENV_FILE, '--', join(root, current, 'src', '${name}.ts'), ...process.argv.slice(2)], { env, stdio: 'inherit', shell: false });
 child.once('error', error => { console.error(error.message); process.exitCode = 1; });
 child.once('exit', code => { process.exitCode = code ?? 1; });
 `;
 }
+function launcherContents(options: InstallOptions, name: LauncherName): string {
+  // Resolve current once so a concurrent upgrade cannot mix module versions.
+  return windows(options) ? `@echo off\r\nREM ${marker}\r\nnode "%~dp0${name}.mjs" %*\r\n` : `#!/bin/sh
+${marker}
+if [ -z "\${SMART_CODEX_STATE_DIR:-}" ]; then SMART_CODEX_STATE_DIR=${quote(join(options.root, 'state'))}; fi
+if [ -z "\${SMART_CODEX_ENV_FILE:-}" ]; then SMART_CODEX_ENV_FILE=${quote(options.envFile)}; fi
+export SMART_CODEX_STATE_DIR SMART_CODEX_ENV_FILE
+release_root=$(CDPATH= cd -P -- ${quote(join(options.root, 'current'))} && pwd) || exit 1
+exec "$release_root/bin/${name}" "$@"
+`;
+}
+async function activateRelease(release: Release, options: InstallOptions) {
+  await ownedLaunchers(options);
+  const previous = await currentPointer(options);
+  await mkdir(options.binDirectory, { recursive: true });
+  const temporary = await mkdtemp(join(options.binDirectory, '.modelrudder-'));
+  const changes: { target: string; staged?: string; backup?: string }[] = [];
+  let preserveTemporary = false;
+  try {
+    for (const name of launcherNames) {
+      const enabled = Object.hasOwn(release.files, `bin/${name}`);
+      const entries = [{ target: launcherPath(options, name), content: launcherContents(options, name), mode: 0o755 }];
+      if (windows(options)) entries.push({ target: bootstrapPath(options, name), content: windowsBootstrap(options, name), mode: 0o600 });
+      for (const entry of entries) {
+        const info = await exists(entry.target);
+        const change: typeof changes[number] = { target: entry.target };
+        if (enabled) {
+          change.staged = join(temporary, `${changes.length}.next`);
+          await writeFile(change.staged, entry.content, { mode: entry.mode, flag: 'wx' });
+        }
+        if (info) {
+          change.backup = join(temporary, `${changes.length}.previous`);
+          await writeFile(change.backup, await readFile(entry.target), { mode: info.mode & 0o777, flag: 'wx' });
+        }
+        changes.push(change);
+      }
+    }
+    await switchCurrent(options, release.id);
+    const applied: typeof changes = [];
+    try {
+      for (const change of changes) {
+        applied.push(change);
+        if (change.staged) await rename(change.staged, change.target);
+        else if (change.backup) await rm(change.target);
+      }
+    } catch (error) {
+      const failures: unknown[] = [error];
+      for (const change of applied.reverse()) {
+        try {
+          if (change.backup) await rename(change.backup, change.target);
+          else await rm(change.target, { force: true });
+        } catch (restoreError) { failures.push(restoreError); }
+      }
+      try {
+        if (previous === undefined) await rm(join(options.root, 'current'));
+        else await switchCurrent(options, previous.slice('releases/'.length));
+      } catch (restoreError) { failures.push(restoreError); }
+      if (failures.length > 1) {
+        preserveTemporary = true;
+        throw new AggregateError(failures, `Release activation failed and could not fully restore the previous installation. Recovery files retained in ${temporary}`);
+      }
+      throw error;
+    }
+  } finally { if (!preserveTemporary) await rm(temporary, { recursive: true, force: true }); }
+}
 export async function installRelease(input: Release, options: InstallOptions) {
   const release = validateRelease(input);
-  const target = launcherPath(options);
-  await ownedLauncher(target);
-  if (windows(options)) await ownedLauncher(join(options.binDirectory, 'smart-codex.mjs'));
+  await ownedLaunchers(options);
   return withInstallation(options, async () => {
     await privateDirectory(join(options.root, 'releases'));
     await privateDirectory(join(options.root, 'state'));
@@ -118,35 +197,13 @@ export async function installRelease(input: Release, options: InstallOptions) {
       try {
         for (const [path, content] of Object.entries(release.files)) {
           await mkdir(dirname(join(staging, path)), { recursive: true, mode: 0o700 });
-          await writeFile(join(staging, path), content, { mode: path === 'bin/smart-codex' ? 0o700 : 0o600, flag: 'wx' });
+          await writeFile(join(staging, path), content, { mode: path.startsWith('bin/') ? 0o700 : 0o600, flag: 'wx' });
         }
         await writeFile(join(staging, '.release.json'), JSON.stringify(release), { mode: 0o600, flag: 'wx' });
         await rename(staging, destination);
       } finally { await rm(staging, { recursive: true, force: true }); }
     }
-    // Resolve current once so a concurrent upgrade cannot mix module versions.
-    const launcher = windows(options) ? `@echo off\r\nREM ${marker}\r\nnode "%~dp0smart-codex.mjs" %*\r\n` : `#!/bin/sh\n${marker}\nif [ -z "\${SMART_CODEX_STATE_DIR:-}" ]; then SMART_CODEX_STATE_DIR=${quote(join(options.root, 'state'))}; fi\nif [ -z "\${SMART_CODEX_ENV_FILE:-}" ]; then SMART_CODEX_ENV_FILE=${quote(options.envFile)}; fi\nexport SMART_CODEX_STATE_DIR SMART_CODEX_ENV_FILE\nrelease_root=$(CDPATH= cd -P -- ${quote(join(options.root, 'current'))} && pwd) || exit 1\nexec "$release_root/bin/smart-codex" "$@"\n`;
-    await mkdir(options.binDirectory, { recursive: true });
-    const temporary = await mkdtemp(join(options.binDirectory, '.smart-codex-'));
-    try {
-      await writeFile(join(temporary, 'launcher'), launcher, { mode: 0o755 });
-      const previous = await currentPointer(options);
-      await switchCurrent(options, release.id);
-      try {
-        if (windows(options)) {
-          await writeFile(join(temporary, 'bootstrap'), windowsBootstrap(options), { mode: 0o600 });
-          await rename(join(temporary, 'bootstrap'), join(options.binDirectory, 'smart-codex.mjs'));
-        }
-        await rename(join(temporary, 'launcher'), target);
-      }
-      catch (error) {
-        if (previous === undefined) await rm(join(options.root, 'current'));
-        else {
-          await switchCurrent(options, previous.slice('releases/'.length));
-        }
-        throw error;
-      }
-    } finally { await rm(temporary, { recursive: true, force: true }); }
+    await activateRelease(release, options);
     return release.id;
   });
 }
@@ -162,19 +219,16 @@ export async function verifyInstalled(root: string, id: string) {
   return release;
 }
 export async function rollbackRelease(id: string, options: InstallOptions) {
-  return withInstallation(options, async () => { await verifyInstalled(options.root, id); await switchCurrent(options, id); });
+  await ownedLaunchers(options);
+  return withInstallation(options, async () => { await activateRelease(await verifyInstalled(options.root, id), options); });
 }
 export async function uninstallRelease(options: InstallOptions) {
-  await ownedLauncher(launcherPath(options));
-  if (windows(options)) await ownedLauncher(join(options.binDirectory, 'smart-codex.mjs'));
+  await ownedLaunchers(options);
   return withInstallation(options, async () => {
-    const target = launcherPath(options);
-    if (await exists(target) || (windows(options) && await exists(join(options.binDirectory, 'smart-codex.mjs')))) {
-      const ownerFile = windows(options) ? join(options.binDirectory, 'smart-codex.mjs') : target;
-      const ownerToken = windows(options) ? `const root = ${JSON.stringify(options.root)};` : quote(join(options.root, 'current'));
-      if (!(await readFile(ownerFile, 'utf8')).includes(ownerToken)) throw new Error('Launcher belongs to another installation.');
-      await rm(target, { force: true });
-      if (windows(options)) await rm(join(options.binDirectory, 'smart-codex.mjs'));
+    await ownedLaunchers(options);
+    for (const name of launcherNames) {
+      await rm(launcherPath(options, name), { force: true });
+      if (windows(options)) await rm(bootstrapPath(options, name), { force: true });
     }
     await rm(join(options.root, 'current'), { force: true });
     await rm(join(options.root, 'releases'), { recursive: true, force: true });
@@ -183,7 +237,7 @@ export async function uninstallRelease(options: InstallOptions) {
 }
 export async function runInstaller(args: string[]) {
   if (args.includes('--help')) {
-    console.log('Usage: npm run install-cli -- [--artifact FILE | --rollback RELEASE_ID | --list | --uninstall] [--root DIR] [--bin-dir DIR] [--env-file FILE]\nDefault install creates a versioned copy of the current runtime. Configuration and logs survive upgrade, rollback and uninstall.');
+    console.log('Usage: npm run install-cli -- [--artifact FILE | --rollback RELEASE_ID | --list | --uninstall] [--root DIR] [--bin-dir DIR] [--env-file FILE]\nDefault install creates versioned smart-codex and smart-claude launchers. Configuration and logs survive upgrade, rollback and uninstall.');
     return;
   }
   const options = defaultInstallOptions();
@@ -211,7 +265,7 @@ export async function runInstaller(args: string[]) {
     const release = artifact ? JSON.parse(await readFile(artifact, 'utf8')) : await buildRelease(fileURLToPath(new URL('../', import.meta.url)));
     console.log(`Installed ${await installRelease(release, options)} in ${options.root}`);
     if (windows(options)) console.log('Managed runtime and state directories use private Windows ACLs. External configuration must also be private to your account.');
-    console.log(`Configuration: ${options.envFile} (or SMART_CODEX_ENV_FILE). Add ${options.binDirectory} to PATH.`);
+    console.log(`Shared legacy configuration: ${options.envFile} (or SMART_CODEX_ENV_FILE). Add ${options.binDirectory} to PATH.`);
   }
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

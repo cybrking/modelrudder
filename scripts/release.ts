@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Explicit allowlist: never ship credentials, usage records, or experiment inputs.
-export const releaseFiles = [
+export const legacyReleaseFiles = [
   'LICENSE', 'package.json', 'package-lock.json', 'bin/smart-codex', 'scripts/release.ts',
   'src/install-cli.ts', 'src/smart-codex.ts', 'src/config.ts', 'src/policy.ts',
   'src/runtime-policy.ts', 'src/compatibility.ts', 'src/routing-decision.ts', 'src/classifier-lifecycle.ts', 'src/outcome.ts', 'src/doctor.ts', 'src/live-config.ts', 'src/types.ts', 'src/turn-relay.ts',
@@ -18,6 +18,13 @@ export const releaseFiles = [
     'receiver', 'sender', 'stream', 'subprotocol', 'validation', 'websocket-server', 'websocket']
     .map(name => `node_modules/ws/lib/${name}.js`),
 ].sort();
+// Accept the last Codex-only manifest for offline upgrades and rollback. New builds
+// always include both launchers; partial Claude payloads remain invalid.
+export const releaseFiles = [...legacyReleaseFiles,
+  'bin/smart-claude', 'src/smart-claude.ts', 'src/claude-routing.ts',
+  'src/claude-classifier.ts', 'src/claude-command.ts', 'src/claude-usage.ts',
+  'plugins/claude/.claude-plugin/plugin.json', 'plugins/claude/hooks/hooks.json', 'plugins/claude/hooks/register.js',
+].sort();
 export type Release = { format: 1; version: string; id: string; files: Record<string, string>; sha256: string };
 export const digest = (value: string) => createHash('sha256').update(value).digest('hex');
 const payload = (version: string, files: Record<string, string>) => JSON.stringify({ format: 1, version, files });
@@ -26,7 +33,7 @@ export function validateRelease(value: unknown): Release {
   const r = value as Release;
   if (r.format !== 1 || typeof r.version !== 'string' || !/^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/.test(r.version)
     || !r.files || typeof r.files !== 'object' || Array.isArray(r.files)
-    || JSON.stringify(Object.keys(r.files)) !== JSON.stringify(releaseFiles)
+    || ![releaseFiles, legacyReleaseFiles].some(allowlist => JSON.stringify(Object.keys(r.files)) === JSON.stringify(allowlist))
     || Object.values(r.files).some(content => typeof content !== 'string')) throw new Error('Invalid release manifest or file allowlist.');
   if (r.sha256 !== digest(payload(r.version, r.files)) || r.id !== `${r.version}-${r.sha256.slice(0, 16)}`) throw new Error('Release checksum mismatch.');
   const pkg = JSON.parse(r.files['package.json']);

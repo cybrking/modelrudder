@@ -2,6 +2,24 @@
 
 Use the single copy-and-paste Codex prompt in the [README](../README.md#install-with-codex). This guide is the detailed reference for checking prerequisites, installing and configuring ModelRudder, authentication, troubleshooting and removal.
 
+## Claude source-build preview
+
+Claude support is available in source builds that include `src/smart-claude.ts` and `plugins/claude`; earlier Codex-only release installers do not contain it. From that checkout, with Node.js 24 or newer:
+
+```sh
+npm ci --ignore-scripts
+npm run typecheck
+npm test
+npm run install-cli
+smart-claude --help
+```
+
+The current source installer creates both `smart-codex` and `smart-claude` (`.cmd` launchers on Windows). Both use the existing private `SMART_CODEX_ENV_FILE` configuration and managed installation paths. It does not replace plain `claude`, log in, create API keys, or enable Jev consent. Existing configuration and state survive upgrades and uninstall; rollback to a Codex-only release removes the managed Claude launcher until a dual-launcher release is activated again.
+
+Claude routing requires an independently installed Claude Code **2.1.293 or newer within 2.1.x**, with the user's native `claude.ai` login. Run `smart-claude doctor` for version, plugin and native-login checks without submitting a model request. Use `smart-claude setup --no-open` to locate the shared private configuration; follow the same user-controlled Jev setup precautions below. Pinned mode needs no Jev key or consent. Actual interactive turns, including pinned turns, consume the user's Claude allowance. Recorded offline module tests cover 2.1.295; they do not establish live TUI behavior or routing quality. Have the user perform any live validation, and preserve their existing login and permissions.
+
+The remaining guide covers the Codex release installation and prerequisites.
+
 ## 1. Inspect the machine
 
 Run `node --version` and `codex --version`. ModelRudder requires **Node.js 24 or newer** and an independently installed native Codex CLI. Protocol-qualified builds are exactly **0.159.3** and **0.160.1**; an unknown/newer build is rejected rather than assumed compatible. Node, native Codex and ModelRudder are separate installations.
