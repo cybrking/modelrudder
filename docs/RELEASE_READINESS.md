@@ -1,5 +1,17 @@
 # Community release readiness evaluation
 
+## Preview.9 managed native CLI versions
+
+Scope: isolate ModelRudder from plain native CLI updates. Managed installation checks an exact recorded version and its shipped native smoke tests before selecting it, retains the previous selection, and provides explicit verified rollback. Missing pins produce installation instructions. Claude's managed child disables native auto-updates. Runtime and native rollback remain separate operations.
+
+Community client CI now exercises managed install, status and repeated install for both providers across Node 24/26 on macOS, Linux and Windows. Candidate discovery remains a separate evidence workflow and does not widen local version acceptance.
+
+Local validation on macOS with Node 26: 185 tests passed, one Windows-only test skipped; type checking passed; production dependency audit found zero vulnerabilities. Actual managed Codex 0.162.0 and Claude 2.1.295 installs passed their native checks. Codex 0.161.0 installation followed by rollback to 0.162.0 passed. The standalone installer was installed into disposable paths; both launchers reported preview.9 and reran their shipped native checks successfully. No real model tasks or classifier requests were submitted.
+
+Windows CI exposed an intermittent `EPERM` while renaming a verified candidate directory. Activation now retries bounded transient Windows lock errors; regression coverage verifies eventual success, bounded failure and no retries for unrelated errors.
+
+Runtime ID: `0.1.0-preview.9-7c019f70c019f9f2`. Cross-platform CI must pass before publication. Full authenticated TUI and task-quality qualification remain unperformed; the native probes do not establish them.
+
 ## Preview.8 routing notice update
 
 Successful automatic Claude routes now display `ModelRudder Routing this turn to <model>.` without the experimental-route suffix. Fallback explanations remain visible. Routing decisions, confidence threshold and native CLI compatibility gates are unchanged.

@@ -1,21 +1,27 @@
 import { execFile, spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { claudeCommand, claudeChildEnv, claudeCompatibility, hasNativeClaudeLogin, validateClaudeAuthEnvironment } from './claude-command.ts';
+import { claudeChildEnv, claudeCompatibility, hasNativeClaudeLogin, validateClaudeAuthEnvironment } from './claude-command.ts';
 import { claudeModels, defaultClaudeModelIds, readClaudeModelIds, startClaudeBridge } from './claude-routing.ts';
 import type { ClaudeModel, ClaudeRoutingMode } from './claude-routing.ts';
 import { createClaudeClassifier } from './claude-classifier.ts';
 import { claudeUsageDirectory, createClaudeUsage, formatClaudeUsage, runClaudeReport } from './claude-usage.ts';
 import { routerVersion } from './runtime-policy.ts';
 import { runSetup } from './setup.ts';
+import { nativeStatus, requireManagedNative, runNativeManagement } from './native-runtime.ts';
 import type { NativeCommand } from './native-command.ts';
 
 export const smartClaudeHelp = `Usage: smart-claude [--routing auto|observe|pinned] [--model haiku|sonnet|opus] [Claude options] [PROMPT]
        smart-claude doctor
+       smart-claude native install [VERSION]
+       smart-claude native status
+       smart-claude native rollback
        smart-claude setup [--no-open]
        smart-claude report
 
 Runs the native interactive Claude Code CLI with ModelRudder's local Mods adapter.
+Install an isolated verified CLI first: smart-claude native install.
+Regular CLI updates do not change the selected ModelRudder native version.
 auto (default): one experimental Jev recommendation per eligible user turn;
 the requested model is held throughout that turn's tool loop.
 observe: get recommendations while starting on Sonnet; native choices remain native.
@@ -109,6 +115,7 @@ export async function checkClaudeNative(command: NativeCommand, env: NodeJS.Proc
 }
 
 export async function launchSmartClaude(args: string[], env = process.env): Promise<number> {
+  if (args[0] === 'native') return runNativeManagement('claude', args.slice(1), env);
   if (args[0] === 'setup') return runSetup(args.slice(1), env);
   if (args[0] === 'report') return runClaudeReport(args.slice(1), claudeUsageDirectory(env));
   if (args.length === 1 && ['--help', '-h'].includes(args[0])) { process.stdout.write(smartClaudeHelp); return 0; }
@@ -119,9 +126,10 @@ export async function launchSmartClaude(args: string[], env = process.env): Prom
   const modelIds = readClaudeModelIds(env);
   const pluginDirectory = fileURLToPath(new URL('../plugins/claude', import.meta.url));
   if (!doctor && (!process.stdin.isTTY || !process.stdout.isTTY)) throw new Error('smart-claude requires an interactive terminal; print/SDK routing is not supported.');
-  const command = await claudeCommand(claudeChildEnv(env));
+  const command = await requireManagedNative('claude', env);
   const version = await checkClaudeNative(command, env, pluginDirectory);
   if (doctor) {
+    process.stdout.write(`${await nativeStatus('claude', env)}\n`);
     process.stdout.write(`Claude ${version.version}: native login and plugin validation passed. No model call was submitted.\n`);
     try { createClaudeClassifier(env); process.stdout.write('Direct Jev configuration present (credentials were not tested remotely).\n'); }
     catch { process.stdout.write('Direct Jev configuration is not ready; pinned mode remains available. Run smart-claude setup.\n'); }
@@ -165,7 +173,7 @@ export async function launchSmartClaude(args: string[], env = process.env): Prom
 if (import.meta.main) {
   try { process.exitCode = await launchSmartClaude(process.argv.slice(2)); }
   catch (error) {
-    const message = error instanceof Error && /^(Claude |Invalid Claude |Unsupported Claude |Use plain claude |smart-claude requires |Configure ALLOW_)/.test(error.message)
+    const message = error instanceof Error && /^(ModelRudder native:|Claude |Invalid Claude |Unsupported Claude |Use plain claude |smart-claude requires |Configure ALLOW_)/.test(error.message)
       ? error.message : 'Could not launch smart-claude; check native Claude installation, login, options and direct Jev configuration.';
     process.stderr.write(`${message}\n`); process.exitCode = 1;
   }

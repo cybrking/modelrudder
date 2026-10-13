@@ -26,3 +26,9 @@ Codex evidence is recorded in `protocolTestedCodexVersions` in `src/compatibilit
 With Node 24+, run `node scripts/check-upstream-releases.ts` from the checkout. It makes two public GitHub API requests and writes `upstream-releases.json` in the current directory. `GITHUB_TOKEN` is optional for authenticated API access; do not place it in the repository or print it. The report contains public version metadata only. Discovery alone does not install CLIs or call models.
 
 The schedule follows the owner's October 8, 2026 instruction to check once per day. Sources: [official Codex releases](https://github.com/openai/codex/releases), [official Claude Code releases](https://github.com/anthropics/claude-code/releases), [GitHub release API](https://docs.github.com/en/rest/releases/releases#get-the-latest-release), and [scheduled workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
+
+## From candidate evidence to a managed upgrade
+
+Preview.9's managed launcher only installs versions recorded in the installed ModelRudder release. Daily candidate jobs deliberately continue testing upstream CLIs directly on disposable runners, so they can detect compatibility beyond the current managed allowlist. A green candidate job does not alter a user's selected version or widen that allowlist.
+
+Review candidate results and upstream changes, run applicable interactive checks, then record accepted versions in a reviewed ModelRudder release. Community client CI exercises managed installation, status and repeat installation on Node 24/26 across macOS, Linux and Windows. After installing that release, users explicitly select an accepted version with `smart-codex native install VERSION` or `smart-claude native install VERSION`. Local verification must pass before selection; the previous version remains available for rollback. See [Native versions](NATIVE_VERSIONS.md).

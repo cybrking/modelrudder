@@ -1,3 +1,4 @@
+import { commandForEntry } from '../src/native-runtime.ts';
 // Optional actual-CLI protocol probe. Every provider request is answered by a
 // synthetic loopback server. No account, real key, paid inference, tools or user
 // configuration is used. This qualifies wire behavior, not interactive TUI use.
@@ -10,7 +11,7 @@ import { spawn } from 'node:child_process';
 import { claudeCommand } from '../src/claude-command.ts';
 
 if (process.argv.length > 3) throw new Error('Usage: node scripts/claude-native-smoke.ts [path-to-official-claude]');
-const command = process.argv[2] ? { file: process.argv[2], args: [] } : await claudeCommand();
+const command = process.argv[2] ? commandForEntry(process.argv[2]) : await claudeCommand();
 const root = await mkdtemp(join(tmpdir(), 'modelrudder-claude-smoke-'));
 type Capture = { path: string; model: string | null };
 type ProbeCase = { name: string; requested: string; expected: string; allowlist?: string[] };

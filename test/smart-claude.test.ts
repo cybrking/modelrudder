@@ -18,9 +18,9 @@ test('Claude argument parsing defaults auto and explicit models pin without ambi
 
 test('native child never inherits Jev/gateway secrets but Claude manages its own configuration', () => {
   const source = { PATH: '/bin', TYPESAFE_API_KEY: 'PRIVATE', ALLOW_JEV_CLASSIFICATION: 'true', SMART_CODEX_GATEWAY_TOKEN: 'PRIVATE', SMART_CODEX_ENV_FILE: '/private/config', MODEL_RUDDER_CLAUDE_TOKEN: 'stale', CLAUDE_CONFIG_DIR: '/native/config', TERM: 'xterm' };
-  assert.deepEqual(claudeChildEnv(source), { PATH: '/bin', CLAUDE_CONFIG_DIR: '/native/config', TERM: 'xterm' });
+  assert.deepEqual(claudeChildEnv(source), { PATH: '/bin', CLAUDE_CONFIG_DIR: '/native/config', TERM: 'xterm', DISABLE_AUTOUPDATER: '1', DISABLE_UPDATES: '1' });
   assert.equal(source.TYPESAFE_API_KEY, 'PRIVATE');
-  assert.deepEqual(claudeChildEnv({ typesafe_api_key: 'PRIVATE', smart_codex_gateway_token: 'PRIVATE', Path: 'windows' }, 'win32'), { Path: 'windows' });
+  assert.deepEqual(claudeChildEnv({ typesafe_api_key: 'PRIVATE', smart_codex_gateway_token: 'PRIVATE', Path: 'windows' }, 'win32'), { Path: 'windows', DISABLE_AUTOUPDATER: '1', DISABLE_UPDATES: '1' });
 });
 
 test('auth rejects conflicting billing/provider credentials without logging or changing them', () => {

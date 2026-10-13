@@ -8,6 +8,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         node: [24, 26]
         os: [macos-latest, ubuntu-latest, windows-latest]
@@ -17,14 +18,21 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+      - name: Isolate managed native installations
+        run: node -e "require('node:fs').appendFileSync(process.env.GITHUB_ENV, 'SMART_CODEX_STATE_DIR=' + require('node:path').join(process.env.RUNNER_TEMP, 'modelrudder-native') + '\n')"
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm test
-      - run: npm install --global @openai/codex@0.162.0
-      - run: npm run test:native-protocol
-      - run: npm install --global @anthropic-ai/claude-code@2.1.295
-      - run: claude plugin test plugins/claude
-      - run: npm run test:claude-native
+      - name: Install and verify managed Codex (no inference)
+        run: node --input-type=module -e "import { launchSmartCodex } from './src/smart-codex.ts'; process.exitCode = await launchSmartCodex(['native', 'install']);"
+      - run: node src/smart-codex.ts native status
+      - name: Reuse managed Codex installation
+        run: node --input-type=module -e "import { launchSmartCodex } from './src/smart-codex.ts'; process.exitCode = await launchSmartCodex(['native', 'install']);"
+      - name: Install and verify managed Claude (synthetic provider)
+        run: node --input-type=module -e "import { launchSmartClaude } from './src/smart-claude.ts'; process.exitCode = await launchSmartClaude(['native', 'install']);"
+      - run: node src/smart-claude.ts native status
+      - name: Reuse managed Claude installation
+        run: node --input-type=module -e "import { launchSmartClaude } from './src/smart-claude.ts'; process.exitCode = await launchSmartClaude(['native', 'install']);"
       - run: npm audit --omit=dev
       - run: npm run package:release -- dist-release.json
       - run: npm run package:pilot -- dist/delivery

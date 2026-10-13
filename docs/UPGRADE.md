@@ -4,13 +4,13 @@ For an agent-assisted upgrade, [copy the natural-language prompt](../README.md#u
 
 Stop active `smart-codex` and `smart-claude` sessions before changing releases, then start fresh sessions afterward. An already running launcher keeps its loaded code.
 
-Upgrades preserve the existing private key file and local state. You do not need to enter your Jev key again. ModelRudder and the native provider CLIs are separate installations; upgrading ModelRudder does not upgrade Claude or Codex.
+Upgrades preserve the existing private key file and local state. You do not need to enter your Jev key again. The ModelRudder runtime and managed native CLIs have separate version selection. Upgrading the runtime preserves an existing native pin; plain Claude and Codex are never replaced. Migrating from preview.8 or earlier requires `native install` once for each launcher you use.
 
 If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same flags on every installer and maintenance command below. Use your installation's existing paths, rather than creating a second default installation.
 
 ## Normal release upgrade
 
-Download the **preview.7** standalone installer and `SHA256SUMS` from the [release page](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.7). The exact cross-platform commands are in the [README](../README.md#upgrade-to-preview7). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
+Download the **preview.9** standalone installer and `SHA256SUMS` from the [release page](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9). The exact cross-platform commands are in the [README](../README.md#upgrade-to-preview9). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
 
 The installer filename still begins with `smart-codex`, but preview.4 and newer dual-launcher artifacts update both `smart-claude` and `smart-codex`. You do not need to install each separately. Keep a verified installer and record the current ID before installing the new one.
 
@@ -55,17 +55,17 @@ ModelRudder has no local self-updater or `upgrade` command in this preview. The 
 
 To receive ModelRudder release notifications, open the [repository](https://github.com/cybrking/modelrudder), choose **Watch → Custom**, and select **Releases**. Follow the reviewed release's upgrade steps when notified. See [GitHub's notification instructions](https://docs.github.com/en/subscriptions-and-notifications/get-started/configuring-notifications).
 
-Native Claude/Codex updates are separate. A newer native CLI can exceed the launcher's supported range or recorded evidence; run the matching ModelRudder doctor after either component changes. Automated compatibility discovery is not automatic approval of a release.
+Plain Claude/Codex updates are independent of ModelRudder. Managed native upgrades require an explicit `native install VERSION`, restricted to versions recorded by the installed release. Candidates are checked before selection; failures leave the current pin intact. Automated compatibility discovery is not approval of a release. See [native upgrade and rollback](NATIVE_VERSIONS.md).
 
-## Current release: preview.7
+## Current release: preview.9
 
-Preview.7 adds tested Codex 0.162.0 compatibility, model names and configured versions in Claude notices, and [routing examples for both tools](../README.md#three-routing-tests-for-claude-code). Low or missing classifier confidence is explained as a fallback decision. It includes the earlier Claude fixes below.
+Preview.9 introduces separate managed native CLIs, verification before selection, explicit rollback and actionable missing-pin errors. Run `smart-claude native install` or `smart-codex native install` after upgrading from an older release. These commands download official npm packages and run no-inference/synthetic checks without submitting a real provider task. Earlier routing fixes are retained.
 
 ## Claude routing fixes retained from preview.6
 
 Preview.6 includes the native-instruction fix from [PR #10](https://github.com/cybrking/modelrudder/pull/10). In preview.5, Claude's own project-instruction or nested-memory announcements could mark the chat unclassified and stop routing later requests. Preview.6 preserves routing for those engine-authored announcements without transmitting their contents to the classifier. It retains the earlier consumed-prompt-receipt fix and source installer's argument-boundary fix. Reinstalling preview.5 does not install this new patch.
 
-The issue reporter's exact interactive trigger still needs a retest. Media, resumed history and other ineligible context intentionally retain the native model. The package now reports `0.1.0-preview.7`; the full content-based release ID is available through the installer's `--list` command.
+The issue reporter's exact interactive trigger still needs a retest. Media, resumed history and other ineligible context intentionally retain the native model. The package now reports `0.1.0-preview.9`; the full content-based release ID is available through the installer's `--list` command.
 
 ## Verify the upgrade
 
@@ -74,10 +74,14 @@ Open a fresh terminal and check the launcher you use:
 ```sh
 # Claude Code
 smart-claude --version
+smart-claude native install
+smart-claude native status
 smart-claude doctor
 
 # Codex
 smart-codex --version
+smart-codex native install
+smart-codex native status
 smart-codex doctor
 ```
 
@@ -108,3 +112,5 @@ node -- src/install-cli.ts --rollback PREVIOUS_RELEASE_ID
 Replace `PREVIOUS_RELEASE_ID` with the exact ID printed by `--list`, and repeat any custom installation flags. Restart active launchers afterward. Rollback preserves configuration and state.
 
 Standalone users can use the retained verified installer with `--list` and `--rollback PREVIOUS_RELEASE_ID`, as described in [recovery instructions](AGENT_INSTALL.md#5-report-and-retain-recovery-options).
+
+To roll back only the managed native CLI, use `smart-codex native rollback` or `smart-claude native rollback`. This rechecks the retained previous native version before switching. It is separate from the ModelRudder runtime rollback above; see [Native versions](NATIVE_VERSIONS.md).

@@ -4,7 +4,8 @@ import { readLiveConfig } from './live-config.ts';
 import { readClassifierConfig } from './classifier.ts';
 import { createRuntimePolicy, routerVersion } from './runtime-policy.ts';
 import type { RuntimePolicy } from './runtime-policy.ts';
-import { codexCommand } from './native-command.ts';
+import type { NativeCommand } from './native-command.ts';
+import { nativeStatus, requireManagedNative } from './native-runtime.ts';
 
 type Probe = (args: string[]) => Promise<{ stdout: string; stderr: string }>;
 
@@ -17,16 +18,15 @@ export function doctorChildEnv(source: Record<string, string | undefined>) {
   return env;
 }
 
-const probeCodex: Probe = async args => {
-  const env = doctorChildEnv(process.env);
-  const command = await codexCommand(env);
-  return new Promise((resolve, reject) => execFile(command.file, [...command.args, ...args], { env, timeout: 15_000, maxBuffer: 64 * 1024 }, (error, stdout, stderr) => {
+async function probeCodex(command: NativeCommand, args: string[], source: NodeJS.ProcessEnv) {
+  const env = doctorChildEnv(source);
+  return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => execFile(command.file, [...command.args, ...args], { env, timeout: 15_000, maxBuffer: 64 * 1024 }, (error, stdout, stderr) => {
     if (error) reject(new Error('Codex diagnostic failed'));
     else resolve({ stdout, stderr });
   }));
 };
 
-export async function runDoctor(env: Record<string, string | undefined>, probe: Probe = probeCodex,
+export async function runDoctor(env: Record<string, string | undefined>, probe?: Probe,
   runtimePolicy: RuntimePolicy = createRuntimePolicy()) {
   const effective = createRuntimePolicy(runtimePolicy);
   const lines = [`Router: smart-codex ${routerVersion}`, `Node: ${process.versions.node}`,
@@ -52,22 +52,30 @@ export async function runDoctor(env: Record<string, string | undefined>, probe: 
   lines.push(`Interactive Jev classification: ${!effective.policy.allowClassification ? 'disabled; no credentials required' : interactiveReady ? 'configured' : 'requires ALLOW_JEV_CLASSIFICATION=true and TYPESAFE_API_KEY or hosted gateway credentials; alternatively use --routing pinned'}`);
   ok &&= interactiveReady;
   try {
-    const version = await probe(['--version']);
+    let run = probe;
+    if (!run) {
+      lines.push(await nativeStatus('codex', env));
+      const command = await requireManagedNative('codex', env);
+      run = (args: string[]) => probeCodex(command, args, env);
+    }
+    const version = await run(['--version']);
     const compatibility = codexCompatibility(version.stdout);
     lines.push(`Codex CLI: ${compatibility.version ?? 'unrecognized'}; protocol evidence ${compatibility.protocolTested ? 'recorded' : 'missing'}`);
     ok &&= compatibility.protocolTested;
-    const status = await probe(['login', 'status']);
+    if (!compatibility.protocolTested) lines.push('Codex version is not yet verified; this does not establish a protocol failure. Run smart-codex native install.');
+    const status = await run(['login', 'status']);
     const loggedIn = `${status.stdout}\n${status.stderr}`.includes('Logged in using ChatGPT');
     lines.push(`Codex subscription login: ${loggedIn ? 'ready' : 'required; run codex login'}`);
     ok &&= loggedIn;
-    const help = await probe(['--help']);
-    const serverHelp = await probe(['app-server', '--help']);
+    const help = await run(['--help']);
+    const serverHelp = await run(['app-server', '--help']);
     const remote = /(?:^|\s)--remote(?:\s|[=<])/.test(help.stdout);
     const stdio = /(?:^|\s)--stdio(?:\s|$)/.test(serverHelp.stdout);
     lines.push(`Codex advertised capabilities: --remote ${remote ? 'present' : 'missing'}; app-server --stdio ${stdio ? 'present' : 'missing'}`);
     ok &&= remote && stdio;
-  } catch {
-    lines.push('Codex diagnostic probe failed; check installation, login and CLI capabilities. Run codex login if needed.');
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('ModelRudder native:')) lines.push(error.message);
+    else lines.push('Codex diagnostic probe failed; check installation, login and CLI capabilities. Run codex login if needed.');
     ok = false;
   }
   lines.push(`Compatibility: exact protocol-tested builds ${protocolTestedCodexVersions.join(', ')}; native TUI release certification remains pending.`);
