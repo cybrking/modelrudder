@@ -98,7 +98,17 @@ If an editor cannot open, Claude Code can give you the file path to open manuall
 
 ## Start using ModelRudder
 
-After installation, private key setup and a successful doctor check, open a fresh terminal. Observe mode recommends routes while the default model runs:
+After installation, private key setup and a successful doctor check, open a fresh terminal and run the launcher for your tool:
+
+```sh
+smart-claude
+# Or:
+smart-codex
+```
+
+Both launchers default to **auto routing**: ModelRudder selects a model for each eligible new message. `smart-codex` also defaults to automatic effort selection. The explicit `--routing auto` and `--effort-mode auto` flags are optional. Plain `claude` or `codex` starts the native tool without ModelRudder routing.
+
+To inspect routing recommendations before enabling model switching, choose **observe** mode. Claude starts on Sonnet and Codex on Sol; ModelRudder recommends routes without switching the model:
 
 ```sh
 # Claude Code
@@ -107,13 +117,7 @@ smart-claude --routing observe
 smart-codex --routing observe --effort-mode fixed
 ```
 
-After checking the results, try automatic routing:
-
-```sh
-smart-claude --routing auto
-# Or:
-smart-codex --routing auto --effort-mode auto
-```
+Both observe and auto send eligible task text to Jev and consume its usage. To switch from observe to auto, exit and start a new session with the bare launcher command above.
 
 For pinned models, reports and detailed routing behavior, see the [command reference](docs/COMMANDS.md). Try the [routing examples](docs/ROUTING_EXAMPLES.md) or consult [troubleshooting](docs/TROUBLESHOOTING.md) if a route is unexpected.
 
