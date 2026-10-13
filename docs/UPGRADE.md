@@ -10,7 +10,7 @@ If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same
 
 ## Normal release upgrade
 
-Download the **preview.9** standalone installer and `SHA256SUMS` from the [release page](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9). The exact cross-platform commands are in the [README](../README.md#upgrade-to-preview9). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
+Download the **preview.9** standalone installer and `SHA256SUMS` from the [release page](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9). The exact current-release commands are [below](#upgrade-to-preview9). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
 
 The installer filename still begins with `smart-codex`, but preview.4 and newer dual-launcher artifacts update both `smart-claude` and `smart-codex`. You do not need to install each separately. Keep a verified installer and record the current ID before installing the new one.
 
@@ -22,7 +22,7 @@ shasum -a 256 -c SHA256SUMS
 node -- ./smart-codex-RELEASE_ID-install.mjs
 ```
 
-Run the last two commands in the download directory. Replace `RELEASE_ID` with the actual downloaded filename. If your installation root is custom, use its existing `current/src/install-cli.ts` path for the first command and repeat all original install-path flags.
+On Linux/WSL, use `sha256sum -c SHA256SUMS` instead. Run the last two commands in the download directory. Replace `RELEASE_ID` with the actual downloaded filename. If your installation root is custom, use its existing `current/src/install-cli.ts` path for the first command and repeat all original install-path flags.
 
 On Windows PowerShell, use your retained verified installer to list the current installation. Verify the new download's hash against its exact entry in `SHA256SUMS`, then run it:
 
@@ -56,6 +56,39 @@ ModelRudder has no local self-updater or `upgrade` command in this preview. The 
 To receive ModelRudder release notifications, open the [repository](https://github.com/cybrking/modelrudder), choose **Watch → Custom**, and select **Releases**. Follow the reviewed release's upgrade steps when notified. See [GitHub's notification instructions](https://docs.github.com/en/subscriptions-and-notifications/get-started/configuring-notifications).
 
 Plain Claude/Codex updates are independent of ModelRudder. Managed native upgrades require an explicit `native install VERSION`, restricted to versions recorded by the installed release. Candidates are checked before selection; failures leave the current pin intact. Automated compatibility discovery is not approval of a release. See [native upgrade and rollback](NATIVE_VERSIONS.md).
+
+## Upgrade to preview.9
+
+[Download preview.9](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9), including its `smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs` and `SHA256SUMS`, into the same new download folder. This release isolates native CLI versions from ordinary upstream updates, verifies candidates before selection, and retains the previous native version for rollback. The standalone ModelRudder installer needs no checkout or npm install; the separate `native install` step needs npm and network access.
+
+Close active ModelRudder sessions. On macOS, run these commands in the download folder:
+
+```sh
+shasum -a 256 -c SHA256SUMS
+node -- ./smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs --list
+```
+
+On Linux/WSL, use `sha256sum -c SHA256SUMS` instead. Stop if checksum verification fails. Save the current release ID printed by `--list`, then upgrade:
+
+```sh
+node -- ./smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs
+```
+
+On Windows PowerShell, compare the following hash to the exact filename's entry in `SHA256SUMS`:
+
+```powershell
+Get-FileHash .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs -Algorithm SHA256
+Get-Content .\SHA256SUMS
+```
+
+Continue only if the hashes match. Record your current release ID, then install:
+
+```powershell
+node -- .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs --list
+node -- .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs
+```
+
+Repeat any original `--root`, `--bin-dir` and `--env-file` flags on **every** installer command. Both launchers, your key/configuration and local state are retained. Keep the verified installer and saved release ID for rollback.
 
 ## Current release: preview.9
 
@@ -114,3 +147,17 @@ Replace `PREVIOUS_RELEASE_ID` with the exact ID printed by `--list`, and repeat 
 Standalone users can use the retained verified installer with `--list` and `--rollback PREVIOUS_RELEASE_ID`, as described in [recovery instructions](AGENT_INSTALL.md#5-report-and-retain-recovery-options).
 
 To roll back only the managed native CLI, use `smart-codex native rollback` or `smart-claude native rollback`. This rechecks the retained previous native version before switching. It is separate from the ModelRudder runtime rollback above; see [Native versions](NATIVE_VERSIONS.md).
+
+## Uninstall and installed maintenance
+
+On macOS/Linux, the shared installed maintenance command manages both launchers:
+
+```sh
+node -- ~/.local/share/smart-codex/current/src/install-cli.ts --list
+node -- ~/.local/share/smart-codex/current/src/install-cli.ts --rollback RELEASE_ID
+node -- ~/.local/share/smart-codex/current/src/install-cli.ts --uninstall
+```
+
+On Windows, retain the verified installer and use `node -- .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs --list`, `--rollback RELEASE_ID` or `--uninstall` instead. Repeat any custom install-path flags used originally.
+
+Uninstall retains your private configuration and local state. Remove those manually if you intend to discard them.

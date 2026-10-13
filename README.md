@@ -15,7 +15,16 @@ Choose the launcher for your native coding tool. The preview.9 installer include
 | Claude Code | `smart-claude` | Haiku / Sonnet / Opus |
 | Codex | `smart-codex` | Luna / Sol / Astra |
 
-Both adapters route each eligible new user turn and hold the decision through its tool loop. Claude uses a session-local Mods adapter; Codex uses a local app-server relay. Read [Claude support and verification limits](docs/CLAUDE_CODE.md) and the [release-readiness results](docs/RELEASE_READINESS.md). Native tools, approvals and model availability remain authoritative. No subscription limit is bypassed, and savings are not guaranteed.
+Both launchers choose a model for each eligible new user turn and keep that choice through its tool loop. Native tools, approvals and workspace permissions remain in place. ModelRudder is an independent project with no claimed provider endorsement.
+
+## Requirements
+
+- Node.js 24+, npm and network access for the managed native CLI installation.
+- macOS, Linux/WSL, or Windows 11 with PowerShell. Native Windows support is a preview.
+- Your own Claude or ChatGPT account and the corresponding official CLI for native login.
+- Your own [TypeSafe Jev key](https://console.typesafe.ai/keys) for observe/auto routing. Pinned mode works without Jev.
+
+The installer creates separate managed native CLI versions and reuses your native login. Plain Claude and Codex can update independently. See the [installation guide](docs/AGENT_INSTALL.md) and [native version management](docs/NATIVE_VERSIONS.md).
 
 ## Install with Codex
 
@@ -55,9 +64,8 @@ Copy this entire prompt into Claude Code. It will install ModelRudder and open t
 ```text
 Install ModelRudder on this computer so I can use model routing in Claude Code.
 Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9
-Read the current Claude installation guides before continuing:
-https://github.com/cybrking/modelrudder/blob/main/docs/AGENT_INSTALL.md
-https://github.com/cybrking/modelrudder/blob/main/docs/CLAUDE_CODE.md
+Read docs/AGENT_INSTALL.md and docs/CLAUDE_CODE.md at that release tag
+and follow them.
 
 Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
 credentials, configuration and permissions. If plain Claude is missing, install
@@ -86,190 +94,28 @@ in a fresh terminal after setup. Do not submit model tasks or classifier
 requests automatically.
 ```
 
-If an editor cannot open, Claude Code can give you the file path to open manually. Once you have checked observe mode, try `smart-claude --routing auto`, or use `smart-claude --model sonnet` for pinned mode without Jev classification. See [Claude support and verification limits](docs/CLAUDE_CODE.md); live task quality and full cross-platform TUI behavior remain unverified.
+If an editor cannot open, Claude Code can give you the file path to open manually. See the [installation guide](docs/AGENT_INSTALL.md) for manual setup.
 
-## Requirements
+## Start using ModelRudder
 
-- Node.js 24 or newer, installed separately, and npm/network access for `native install`. The standalone ModelRudder installer does not bundle Node or the native CLIs.
-- macOS, Linux/WSL, or Windows 11 with PowerShell. Native Windows support is a preview; ModelRudder's full Windows TUI has not been validated. WSL is an alternative if your native setup fails; install and sign in separately inside WSL. See [OpenAI's Windows guidance](https://learn.chatgpt.com/docs/windows/windows-sandbox).
-- A separately installed official CLI for the provider you use, to complete `codex login` or `claude auth login`. Its version can update independently of the managed CLI; existing native login is reused.
-- Your own TypeSafe Jev API key for observe/auto modes. Pinned mode works without classification.
-
-| Launcher | Managed native CLI | Native login |
-| --- | --- | --- |
-| `smart-claude` | `smart-claude native install` selects **2.1.295** | `claude auth login` with a `claude.ai` account |
-| `smart-codex` | `smart-codex native install` selects **0.162.0**; recorded older builds can be selected explicitly | `codex login` with ChatGPT |
-
-Managed CLIs are isolated from plain `codex`/`claude` updates. First-time and existing users must run the matching `native install` before launching. See [native version management](docs/NATIVE_VERSIONS.md) for migration, verification and rollback.
-
-Protocol and synthetic fixture evidence do not certify full interactive compatibility. See [Claude qualification](docs/CLAUDE_CODE.md) and [release readiness](docs/RELEASE_READINESS.md) for completed checks and remaining gaps.
-
-OpenAI describes continuation of existing local/open-source app-server applications separately from commercial/hosted authentication. This release does not establish permission to operate a paid subscription-auth service. See [OpenAI guidance](https://learn.chatgpt.com/docs/app-server#auth-endpoints). ModelRudder is an independent project, with no claimed provider endorsement.
-
-## Install
-
-Download the installer and `SHA256SUMS` from [Releases](https://github.com/cybrking/modelrudder/releases). Keep them in the same directory and verify the checksum before running the installer filename shown on that release:
+After installation, private key setup and a successful doctor check, open a fresh terminal. Observe mode recommends routes while the default model runs:
 
 ```sh
-shasum -a 256 -c SHA256SUMS
-node -- ./smart-codex-RELEASE_ID-install.mjs
-```
-
-Replace `RELEASE_ID` with the actual release ID in the downloaded filename. The `smart-codex-…-install.mjs` filename is a legacy shared name: preview.9 installs **both `smart-claude` and `smart-codex`**. Obtain both files from this project's trusted release page; a checksum alone does not authenticate a publisher. The installer needs no checkout or npm download and includes the ws dependency and license. On macOS/Linux, it installs versioned runtime files under `~/.local/share/smart-codex` and both launchers under `~/.local/bin`; add that bin directory to PATH. Plain `claude`, plain `codex` and unmanaged launchers are preserved.
-
-On Windows, use PowerShell's `Get-FileHash -Algorithm SHA256` and compare the installer hash to its exact filename in `SHA256SUMS`, then run `node -- .\smart-codex-RELEASE_ID-install.mjs`. The default runtime, launcher and configuration are under `%LOCALAPPDATA%\ModelRudder\runtime`, `\bin` and `\config\env`, respectively. Use the paths printed by the installer and add its launcher directory to your **user** PATH. Agent-assisted installation instructions are in [AGENT_INSTALL.md](docs/AGENT_INSTALL.md).
-
-Alternatively, build from a trusted source checkout:
-
-```sh
-npm ci --ignore-scripts
-npm test
-npm run typecheck
-node -- src/install-cli.ts
-```
-
-## Configure and start
-
-Follow the section for your native tool. Both launchers use the [shared Jev configuration](#shared-jev-configuration) below.
-
-### Claude Code
-
-Run `smart-claude setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described below. Then check readiness and start with recommendations while Claude begins on Sonnet:
-
-```sh
-smart-claude native install
-smart-claude doctor
+# Claude Code
 smart-claude --routing observe
-```
-
-Inspect your results before trying automatic routing, or choose a pinned model without sending tasks to Jev:
-
-```sh
-smart-claude --routing auto
-smart-claude --model sonnet
-```
-
-Auto maps FAST to Haiku, BALANCED/DEEP to Sonnet, and MAX to Opus. Native effort is preserved. Observe respects subsequent native model choices; auto makes a new decision for each eligible turn. Media, references, resumed history and other opaque context retain the native model. Native model changes and fallback during a tool loop take precedence. See [Claude commands and eligibility](docs/CLAUDE_CODE.md#commands).
-
-### Codex
-
-Run `smart-codex setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described below. Then check readiness and start with recommendations while Sol executes:
-
-```sh
-smart-codex native install
-smart-codex doctor
+# Codex
 smart-codex --routing observe --effort-mode fixed
 ```
 
-Inspect your results before trying experimental automatic routing:
+After checking the results, try automatic routing:
 
 ```sh
+smart-claude --routing auto
+# Or:
 smart-codex --routing auto --effort-mode auto
 ```
 
-Automatic mode chooses among Luna, Sol and Astra at each eligible new user turn and keeps that choice throughout its tool loop. Uncertain or unavailable classification keeps the fallback. Media, native references and unobserved history can prevent downgrading. The next auto/observe turn overrides native model-picker choices. An explicit `--model` selects pinned mode unless `--routing` is also supplied.
-
-To use a pinned model without sending tasks to Jev:
-
-```sh
-smart-codex --routing pinned --model gpt-6.1-sol
-```
-
-### Three routing tests for Claude Code
-
-Start a fresh chat with `smart-claude --routing auto` after enabling Jev. Paste each prompt as a separate message and wait for its answer before sending the next. Use plain text without attachments, file references or slash commands.
-
-1. **Claude Haiku 5.5 — small extraction**
-
-   ```text
-   Extract the three email addresses from this text and return only the addresses, one per line: Alice: alice@example.com. Bob: bob@example.org. Carol: carol@example.net.
-   ```
-
-2. **Claude Sonnet 5.5 — bounded coding**
-
-   ```text
-   Write a TypeScript function that groups an array of objects by a supplied key. Preserve item order within each group. Include tests for empty input, repeated keys, and missing keys. Explain your handling of missing keys. Reply with code; do not modify files.
-   ```
-
-3. **Claude Opus 5.5 — complex architecture**
-
-   ```text
-   Review a distributed payment system where API requests can be retried, webhooks arrive out of order, workers can crash after charging but before saving results, and refunds race with settlement. Design the transaction state machine, idempotency strategy, database constraints, reconciliation process, and failure tests. Explain consistency tradeoffs and propose a staged implementation plan.
-   ```
-
-### Three routing tests for Codex
-
-Start a fresh chat with `smart-codex --routing auto --effort-mode auto` after enabling Jev. Send these as separate messages, waiting for each answer. Use the same plain-text conditions as the Claude tests.
-
-1. **GPT-6 Luna — small extraction (FAST)**
-
-   ```text
-   Extract the three email addresses from this text and return only the addresses, one per line: Alice: alice@example.com. Bob: bob@example.org. Carol: carol@example.net.
-   ```
-
-2. **GPT-6.1 Sol — complex debugging (DEEP)**
-
-   ```text
-   Debug this bounded TypeScript async queue. It must run at most two jobs concurrently, process each item once, and continue after a rejected job. Current implementation: const pending: Array<() => Promise<void>> = []; let active = 0; function drain() { while (active < 2 && pending.length) { const job = pending[0]!; active++; job().then(() => { pending.shift(); active--; drain(); }); } } Analyze interleavings for two completions in reverse order and one rejection. Provide a corrected implementation and deterministic tests using deferred promises to verify concurrency, exactly-once processing, rejection recovery, and eventual draining. Explain why each test catches the original failure. Reply with code; do not modify files.
-   ```
-
-3. **GPT-6 Astra — complex architecture (MAX)**
-
-   ```text
-   Review a distributed payment system where API requests can be retried, webhooks arrive out of order, workers can crash after charging but before saving results, and refunds race with settlement. Design the transaction state machine, idempotency strategy, database constraints, reconciliation process, and failure tests. Explain consistency tradeoffs and propose a staged implementation plan.
-   ```
-
-These are target routes, not guaranteed choices. The classifier evaluates each eligible turn with recent task excerpts; confidence and policy can keep the fallback. Codex FAST and BALANCED both use Luna, so four profiles produce three model families. Inspect Claude's routing notice or [Codex's session monitor](#reports) for the chosen model. Configured model overrides can change the versions shown.
-
-### What “uncertain classification” means
-
-Claude may show:
-
-```text
-ModelRudder Routing this turn to Claude Sonnet 5.5 (Uncertain classification; using fallback).
-```
-
-The classifier returned a result, but its confidence score was missing or below the routing threshold (0.80 by default). Automatic mode therefore uses the fallback: **Claude Sonnet 5.5** for Claude or **GPT-6.1 Sol** for Codex under the default configuration. Routing has not stopped; the next eligible message is evaluated again. This score is a routing signal, not an 80% guarantee that the answer will be correct. Classifier outages have a separate “classifier unavailable” reason.
-
-“Native model retained (Unclassified context)” means something different: the adapter cannot safely classify the available context, for example after resuming unobserved history. It leaves the native model unchanged. Observe mode also leaves the native model unchanged, and pinned mode uses your explicit model.
-
-### Shared Jev configuration
-
-Setup preserves an existing file. Add `--no-open` to either command to create the template and print its path without opening an editor. The configuration starts with three editable settings and classification disabled:
-
-```dotenv
-TYPESAFE_API_KEY=
-ALLOW_JEV_CLASSIFICATION=false
-SMART_CODEX_CLASSIFIER=direct
-```
-
-`SMART_CODEX_CLASSIFIER`, `SMART_CODEX_ENV_FILE` and the macOS/Linux `~/.config/smart-codex/env` path are shared legacy names used by **both** launchers. Keep these names as written; Claude currently requires `SMART_CODEX_CLASSIFIER=direct`.
-
-If needed, sign up and create your key at the [official TypeSafe dashboard](https://console.typesafe.ai/keys), linked by the [Jev quickstart](https://docs.typesafe.ai/introduction/quickstart). Enter your key privately in the local editor and change `ALLOW_JEV_CLASSIFICATION` from `false` to `true` after reviewing the data flow below. Keep credentials out of agent chat, command arguments and source control. Existing exported environment variables take precedence over the configuration file. Leaving `ALLOW_JEV_CLASSIFICATION=false` keeps Jev disabled; pinned mode remains available.
-
-## Data and privacy
-
-In auto/observe mode, direct classification sends the current eligible text task and up to two bounded earlier task excerpts to TypeSafe. Anything pasted into that text, including source code or secrets, is included. The adapters do not automatically send repository files, assistant output or attachments to the classifier. Native Codex and Claude Code send their normal model inputs to their providers under your own account terms. Claude requires the direct classifier; the current hosted gateway has only a Codex rubric.
-
-The child process does not receive the Jev key from ModelRudder's classifier environment. Each native tool manages its own login. Claude's mod contacts a launcher-local authenticated loopback bridge; it does not proxy Claude model requests or obtain Claude credentials. Local reports contain routing/usage metadata rather than task text; configuration and logs remain on your machine. Review provider policies before sending confidential content. The community client has no ModelRudder telemetry or hosted billing requirement.
-
-## Reports
-
-For Claude routing and usage metadata:
-
-```sh
-smart-claude report
-```
-
-For Codex metadata, user outcome labels and log cleanup:
-
-```sh
-smart-codex report
-smart-codex outcome --result accepted
-smart-codex logs cleanup --older-than-days 30
-```
-
-Outcome markers and cleanup are Codex-specific commands. Outcome markers are your own assessment, not independent validation. Cleanup is a preview unless `--apply` is supplied. Claude reports separate native token counts; Codex includes reference-price estimates. Neither report establishes savings on a subscription bill or verified task quality.
+For pinned models, reports and detailed routing behavior, see the [command reference](docs/COMMANDS.md). Try the [routing examples](docs/ROUTING_EXAMPLES.md) or consult [troubleshooting](docs/TROUBLESHOOTING.md) if a route is unexpected.
 
 ## Upgrade and rollback
 
@@ -301,95 +147,25 @@ Tell me the result, the command to start a fresh session, and the exact
 rollback command using my saved release ID and installation paths.
 ```
 
-The installer updates both launchers and retains your existing Jev key. The agent should report any remaining native Claude/Codex version requirements. For manual commands, follow [Upgrade to preview.9](#upgrade-to-preview9) below.
+The installer updates both launchers and retains your existing Jev key. The agent should report any remaining native Claude/Codex version requirements. See the [upgrade guide](docs/UPGRADE.md) for manual upgrades, rollback and uninstall.
 
-### Manual upgrade
+## Data and privacy
 
-One ModelRudder upgrade updates both launchers and preserves your existing key/configuration and local state. Stop active sessions first, record your current release ID with `--list`, then install the newer verified release using the same installation paths. Restart in a fresh terminal and run `smart-claude doctor` or `smart-codex doctor` for the tool you use.
+Observe and auto modes send eligible task text and up to two bounded earlier task excerpts to TypeSafe. Anything pasted into that text, including code or secrets, is included. Enter your Jev key privately in the local editor; never paste it into agent chat.
 
-### Upgrade to preview.9
-
-[Download preview.9](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9), including its `smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs` and `SHA256SUMS`, into the same new download folder. Replace `RELEASE_ID` in the commands below with the exact filename from that release. This release isolates native CLI versions from ordinary upstream updates, verifies candidates before selection, and retains the previous native version for rollback. The standalone ModelRudder installer needs no checkout or npm install; the separate `native install` step needs npm and network access.
-
-Close active ModelRudder sessions. On macOS, run these commands in the download folder:
-
-```sh
-shasum -a 256 -c SHA256SUMS
-node -- ./smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs --list
-```
-
-On Linux/WSL, use `sha256sum -c SHA256SUMS` instead. Stop if checksum verification fails. Save the current release ID printed by `--list`, then upgrade:
-
-```sh
-node -- ./smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs
-```
-
-On Windows PowerShell, compare the following hash to the exact filename's entry in `SHA256SUMS`:
-
-```powershell
-Get-FileHash .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs -Algorithm SHA256
-Get-Content .\SHA256SUMS
-```
-
-Continue only if the hashes match. Record your current release ID, then install:
-
-```powershell
-node -- .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs --list
-node -- .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs
-```
-
-Repeat any original `--root`, `--bin-dir` and `--env-file` flags on **every** installer command. Both launchers, your key/configuration and local state are retained. Keep the verified installer and saved release ID for rollback.
-
-Open a fresh terminal and check the tool you use:
-
-```sh
-smart-claude --version
-smart-claude native install
-smart-claude native status
-smart-claude doctor
-# Or, for Codex:
-smart-codex --version
-smart-codex native install
-smart-codex native status
-smart-codex doctor
-```
-
-The launcher should report `0.1.0-preview.9`. Doctor checks prerequisites, not task quality. Existing installations need the matching `native install` once to create a managed pin. Plain Claude and Codex stay unchanged. See [native upgrade and rollback](docs/NATIVE_VERSIONS.md).
-
-To roll back, use the verified installer with `--rollback PREVIOUS_RELEASE_ID` in place of `--list`, substituting your saved ID and repeating custom path flags. Restart launchers afterward. See the [upgrade guide](docs/UPGRADE.md) for recovery and alternative source installation.
-
-**Automatic updates:** ModelRudder currently has no local self-updater or `upgrade` command. GitHub's [daily upstream checks](docs/UPSTREAM_UPDATES.md) test new native CLI candidates; they do not install updates on your computer. To receive ModelRudder release notifications, use the repository's **Watch → Custom → Releases** option. Install a reviewed release using the steps above. Plain Claude and Codex can update independently. ModelRudder continues using its selected managed CLI; new managed versions require a reviewed ModelRudder release and an explicit `native install VERSION`.
-
-On macOS/Linux, the shared installed maintenance command manages both launchers:
-
-```sh
-node -- ~/.local/share/smart-codex/current/src/install-cli.ts --list
-node -- ~/.local/share/smart-codex/current/src/install-cli.ts --rollback RELEASE_ID
-node -- ~/.local/share/smart-codex/current/src/install-cli.ts --uninstall
-```
-
-On Windows, retain the verified installer and use `node -- .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs --list`, `--rollback RELEASE_ID` or `--uninstall` instead. Repeat any custom install-path flags used originally.
-
-Uninstall retains your private configuration and local state. Remove those manually if you intend to discard them.
+Native Claude and Codex use your provider account normally. Provider charges and usage limits still apply; no subscription limit is bypassed. ModelRudder has no client telemetry. See [data flow and local reports](docs/COMMANDS.md#data-and-privacy).
 
 ## Preview status
 
 Automatic routing is experimental: classifier confidence is not a coding success probability. Full native TUI behavior, task quality and a general Codex compatibility range remain unqualified. Start with observe mode, inspect changes and run your own tests. The preview is not a production SLA or a guaranteed savings claim. See [release evidence](docs/RELEASE_EVIDENCE.md).
 
-## Development
+## Documentation
 
-```sh
-npm ci --ignore-scripts
-npm test
-npm run typecheck
-npm run eval:routing
-npm run package:pilot -- dist/delivery
-```
+- [Manual installation and configuration](docs/AGENT_INSTALL.md)
+- [Commands and reports](docs/COMMANDS.md) · [Routing examples](docs/ROUTING_EXAMPLES.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Upgrade and rollback](docs/UPGRADE.md) · [Managed native versions](docs/NATIVE_VERSIONS.md)
+- [Claude support and verification limits](docs/CLAUDE_CODE.md) · [Release readiness](docs/RELEASE_READINESS.md)
+- [Provider release checks](docs/UPSTREAM_UPDATES.md)
+- [Contributing and development](CONTRIBUTING.md) · [Security reporting](SECURITY.md)
 
-Client CI runs offline fixtures and the managed installation, status and repeat-install paths for Codex 0.162.0 and Claude 2.1.295 on Windows, Linux and macOS with Node 24 and 26. Installation includes the Codex no-inference protocol probe and Claude Mods fixtures and synthetic provider-wire checks. Check the [workflow](.github/workflows/client.yml) and individual results for the operating systems tested. It makes no paid inference calls. Local native commands are `npm run test:native-protocol` for installed Codex, and `claude plugin test plugins/claude` plus `npm run test:claude-native` for installed Claude. These do not certify authenticated terminal journeys or task quality. The [routing evaluation](.codex/evals/routing.md) defines the synthetic regression criteria.
-
-Read [contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md). Licensed under [MIT](LICENSE); ws retains its [upstream MIT notice](THIRD_PARTY_NOTICES/ws-LICENSE).
-
-## Keeping up with provider releases
-
-[Daily upstream checks](docs/UPSTREAM_UPDATES.md) detect new stable Codex and Claude Code releases once a day and run isolated candidate checks on macOS, Linux and Windows. Review the workflow reports before changing supported versions.
+Licensed under [MIT](LICENSE); ws retains its [upstream MIT notice](THIRD_PARTY_NOTICES/ws-LICENSE).

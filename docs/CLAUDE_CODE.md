@@ -46,7 +46,7 @@ smart-claude setup
 smart-claude doctor
 ```
 
-After entering your own key and enabling direct Jev classification, start a fresh terminal and run `smart-claude --routing observe`. Actual tasks consume provider usage; setup does not run them automatically. Source builds remain available through the [development instructions](../README.md#development).
+After entering your own key and enabling direct Jev classification, start a fresh terminal and run `smart-claude --routing observe`. Actual tasks consume provider usage; setup does not run them automatically. Source builds remain available through the [development instructions](../CONTRIBUTING.md#development).
 
 The installer manages both launchers and uses the existing private configuration path and `SMART_CODEX_ENV_FILE` setting for compatibility. In the local editor, enter your own `TYPESAFE_API_KEY` and change `ALLOW_JEV_CLASSIFICATION` to `true` only after reviewing the data flow; `SMART_CODEX_CLASSIFIER=direct` is already set. Do not paste a key into chat or command arguments. `smart-claude setup --no-open` prepares the minimal disabled configuration without opening an editor. Existing configuration is preserved.
 
@@ -124,6 +124,6 @@ The Agent SDK has separate authentication terms. This integration runs native Cl
 
 ## Routing notices
 
-Notices display the configured model ID as a readable name and version, for example `Claude Sonnet 5.5`. Dated IDs also show the snapshot date; custom IDs retain the exact ID. “Uncertain classification; using fallback” means the classifier score is missing or below the 0.80 threshold, so auto uses Sonnet. It does not disable later classification. See the [copyable routing tests and reason explanation](../README.md#three-routing-tests-for-claude-code).
+Notices display the configured model ID as a readable name and version, for example `Claude Sonnet 5.5`. Dated IDs also show the snapshot date; custom IDs retain the exact ID. “Uncertain classification; using fallback” means the classifier score is missing or below the 0.80 threshold, so auto uses Sonnet. It does not disable later classification. See the [copyable routing examples](ROUTING_EXAMPLES.md#three-routing-tests-for-claude-code) and [routing troubleshooting](TROUBLESHOOTING.md).
 
 Managed native selection, explicit upgrades and rollback are described in [Native versions](NATIVE_VERSIONS.md). An existing installation must create its managed pin once after upgrading to preview.9. Native installation and its synthetic verification do not require a Jev key or copy provider credentials.
