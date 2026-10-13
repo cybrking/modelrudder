@@ -128,21 +128,25 @@ For pinned models, reports and detailed routing behavior, see the [command refer
 Copy this prompt into **Claude Code or Codex**. Your coding agent can handle the upgrade; you do not need to copy individual terminal commands. Use a separate native agent session and close active ModelRudder sessions before installation.
 
 ```text
-Upgrade my existing ModelRudder installation to v0.1.0-preview.9.
-Use this official release:
-https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9
-Read its README and upgrade guide, then handle the upgrade for me.
+Upgrade my existing ModelRudder installation to the newest published release
+from https://github.com/cybrking/modelrudder/releases.
+Include preview releases, exclude drafts, and select by publication date.
+Resolve the release once, tell me its exact tag, and use that same release
+for all documentation and downloads. Do not use GitHub's /releases/latest
+shortcut, which excludes previews. Read the README and docs/UPGRADE.md at
+that release tag, then handle the upgrade for me.
 
-Detect my OS, check Node 24+, and identify my existing installation paths.
-Download the standalone installer and SHA256SUMS into a new folder.
+Detect my OS, check the selected release's Node/npm requirements, and identify
+my existing installation paths. Download that release's standalone installer
+and SHA256SUMS into a new folder using the exact published asset filenames.
 Verify the checksum before running it; stop if it does not match.
 Record my current release ID for rollback, then upgrade both launchers
 using my existing runtime, bin and configuration paths.
 
 Preserve my keys, configuration, local state and PATH. Do not read or print
 my key file, replace my native CLI or change my login. Verify both launchers
-report 0.1.0-preview.9. Run native install, native status and doctor for the
-native tool I am using. Explain that native install selects the latest
+report the expected version from the selected release. Run native install,
+native status and doctor for the native tool I am using. Explain that native install selects the latest
 recorded version in this release and retains the previous pin for rollback.
 Explain any prerequisite or compatibility problem instead of claiming success.
 Do not submit model tasks or classifier requests to test the upgrade.
