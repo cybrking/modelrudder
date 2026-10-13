@@ -2,6 +2,16 @@
 
 Complete the [installation and private configuration steps](AGENT_INSTALL.md) first. Both launchers share the same Jev configuration. Claude uses a session-local Mods adapter; Codex uses a local app-server relay.
 
+## Routing modes and defaults
+
+- **Auto:** ModelRudder selects a model for each eligible new user message and holds that choice through its tool loop. This is the default for both `smart-claude` and `smart-codex`.
+- **Observe:** ModelRudder recommends a route without switching the native model. Fresh sessions start on Sonnet for Claude or Sol for Codex.
+- **Pinned:** Use an explicit model without Jev classification. An explicit `--model` selects pinned mode unless `--routing` is also supplied.
+
+Observe and auto both send eligible task text and bounded earlier task excerpts to Jev and consume its usage. Pinned tasks still use the native provider's allowance.
+
+Bare `smart-codex` is equivalent to `smart-codex --routing auto --effort-mode auto`; bare `smart-claude` is equivalent to `smart-claude --routing auto`. These flags make the defaults explicit. Plain `codex` and `claude` do not enable ModelRudder routing.
+
 ## Claude Code
 
 Run `smart-claude setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described in the installation guide. Then check readiness and start with recommendations while Claude begins on Sonnet:
