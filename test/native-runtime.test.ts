@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { installNative, rollbackNative, managedNativeCommand, requireManagedNative, nativeDirectory, nativeMaintenanceEnv, nativeStatus } from '../src/native-runtime.ts';
+import { installNative, rollbackNative, managedNativeCommand, requireManagedNative, nativeDirectory, nativeMaintenanceEnv, nativeStatus, renameNative } from '../src/native-runtime.ts';
 import type { NativeInstallOperations } from '../src/native-runtime.ts';
 import { codexCommand } from '../src/native-command.ts';
 
@@ -155,3 +155,26 @@ for (const failure of ['metadata', 'verification'] as const) {
     } finally { await f.close(); }
   });
 }
+
+
+test('Windows activation retries transient locks, bounds failures, and never retries unrelated errors', async () => {
+  let calls = 0;
+  const waits: number[] = [];
+  await renameNative('candidate', 'verified', 'win32', async () => {
+    if (++calls < 3) throw Object.assign(new Error('locked'), { code: 'EPERM' });
+  }, async ms => { waits.push(ms); });
+  assert.equal(calls, 3);
+  assert.deepEqual(waits, [100, 200]);
+  calls = 0;
+  await assert.rejects(renameNative('candidate', 'verified', 'win32', async () => {
+    calls++; throw Object.assign(new Error('locked'), { code: 'EBUSY' });
+  }, async () => {}), /current selection was not changed/);
+  assert.equal(calls, 7);
+  for (const [platform, code] of [['linux', 'EPERM'], ['win32', 'ENOENT']] as const) {
+    calls = 0;
+    await assert.rejects(renameNative('candidate', 'verified', platform, async () => {
+      calls++; throw Object.assign(new Error('failure'), { code });
+    }, async () => { assert.fail('Unexpected retry'); }), /Could not activate/);
+    assert.equal(calls, 1);
+  }
+});

@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { setTimeout as delay } from 'node:timers/promises';
 import { lstat, mkdir, mkdtemp, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -156,10 +157,24 @@ async function withLock<T>(root: string, action: () => Promise<T>) {
   catch { throw problem('Another native install/rollback is active. Retry after it finishes; an interrupted operation may require removing its .lock directory.'); }
   try { return await action(); } finally { await rm(lock, { recursive: true, force: true }); }
 }
+// Windows can briefly retain executable/directory handles after a successful probe.
+export async function renameNative(from: string, to: string, platform: NodeJS.Platform = process.platform,
+  move = rename, wait: (ms: number) => Promise<unknown> = delay) {
+  for (let attempt = 0; ; attempt++) {
+    try { await move(from, to); return; }
+    catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (platform !== 'win32' || !['EPERM', 'EACCES', 'EBUSY'].includes(code ?? '') || attempt >= 6) {
+        throw problem('Could not activate the verified native installation. Close other ModelRudder sessions and retry; the current selection was not changed.');
+      }
+      await wait(100 * 2 ** attempt);
+    }
+  }
+}
 async function activate(root: string, pin: Selection) {
   const temporary = join(root, '.selection-next');
   await writeFile(temporary, `${JSON.stringify(pin)}\n`, { mode: 0o600 });
-  try { await rename(temporary, join(root, 'selection.json')); }
+  try { await renameNative(temporary, join(root, 'selection.json')); }
   finally { await rm(temporary, { force: true }); }
 }
 export async function installNative(provider: NativeProvider, version: string, env: NodeJS.ProcessEnv = process.env,
@@ -188,7 +203,7 @@ export async function installNative(provider: NativeProvider, version: string, e
         await ops.verify(provider, version, commandForEntry(absolute), cleanEnv);
         const metadata: Metadata = { format: 1, provider, version, platform: process.platform, arch: process.arch, entry };
         await writeFile(join(staging, 'metadata.json'), JSON.stringify(metadata), { mode: 0o600, flag: 'wx' });
-        await rename(staging, target);
+        await renameNative(staging, target);
       } finally { await rm(staging, { recursive: true, force: true }); }
     }
     if (previous?.current !== version) await activate(root, { format: 1, current: version, previous: previous?.current ?? null });
