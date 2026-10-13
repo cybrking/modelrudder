@@ -27,19 +27,21 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 ## Requirements and installation
 
 - Node.js 24+ for ModelRudder
-- An independently installed official Claude Code CLI, 2.1.293+ within the 2.1.x line. Mods itself began in 2.1.287; the default Haiku 5.5 route needs 2.1.293+
+- A managed official Claude Code **2.1.295** installation via `smart-claude native install`, requiring npm/network access once. The managed launcher disables native auto-updates for its child process; plain Claude remains independent.
 - A native `claude.ai` login; use `claude auth login` yourself if needed
 - Your own direct Jev credentials and explicit `ALLOW_JEV_CLASSIFICATION=true` for observe/auto
-- The official `v0.1.0-preview.7` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
+- The official `v0.1.0-preview.9` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
 
-For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.7 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
+For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.9 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
 
-Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.7 release containing both Claude multi-turn fixes.
+Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.9 release containing both Claude multi-turn fixes.
 
 Then prepare your private configuration and check readiness:
 
 ```sh
 smart-claude --help
+smart-claude native install
+smart-claude native status
 smart-claude setup
 smart-claude doctor
 ```
@@ -123,3 +125,5 @@ The Agent SDK has separate authentication terms. This integration runs native Cl
 ## Routing notices
 
 Notices display the configured model ID as a readable name and version, for example `Claude Sonnet 5.5`. Dated IDs also show the snapshot date; custom IDs retain the exact ID. “Uncertain classification; using fallback” means the classifier score is missing or below the 0.80 threshold, so auto uses Sonnet. It does not disable later classification. See the [copyable routing tests and reason explanation](../README.md#three-routing-tests-for-claude-code).
+
+Managed native selection, explicit upgrades and rollback are described in [Native versions](NATIVE_VERSIONS.md). An existing installation must create its managed pin once after upgrading to preview.9. Native installation and its synthetic verification do not require a Jev key or copy provider credentials.

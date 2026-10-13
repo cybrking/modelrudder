@@ -24,18 +24,24 @@ import { runOutcomeCommand } from './outcome.ts';
 import { codexCommand } from './native-command.ts';
 import type { NativeCommand } from './native-command.ts';
 import { runSetup } from './setup.ts';
+import { requireManagedNative, runNativeManagement } from './native-runtime.ts';
 
 export const smartCodexHelp = `Usage: smart-codex [--routing auto|observe|pinned] [--effort-mode fixed|observe|auto] [Codex options] [PROMPT]
        smart-codex resume --last
        smart-codex monitor
        smart-codex report [--format markdown|json] [--decisions] [--output FILE]
        smart-codex doctor
+       smart-codex native install [VERSION]
+       smart-codex native status
+       smart-codex native rollback
        smart-codex setup [--no-open]
        smart-codex account
        smart-codex outcome --result accepted|rejected [--review-minutes N] [--file SESSION.jsonl]
        smart-codex logs cleanup --older-than-days DAYS [--apply]
 
 Opens the native interactive Codex CLI with a private local routing relay.
+Install an isolated verified CLI first: smart-codex native install.
+Regular CLI updates do not change the selected ModelRudder native version.
 auto (default): experimental Jev model selection at each new user turn.
 observe: Jev recommends; GPT-6.1 Sol executes every turn.
 pinned: no Jev calls; use --model gpt-6-luna, gpt-6.1-sol, or gpt-6-astra.
@@ -246,6 +252,7 @@ export async function startSmartRelay(options: {
 }
 
 export async function launchSmartCodex(args: string[], env = process.env): Promise<number> {
+  if (args[0] === 'native') return runNativeManagement('codex', args.slice(1), env);
   if (args[0] === 'setup') return runSetup(args.slice(1), env);
   if (args[0] === 'logs' && args[1] === 'cleanup') return runLogCleanup(args.slice(2));
   if (args[0] === 'outcome') return runOutcomeCommand(args.slice(1));
@@ -274,10 +281,11 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
     if (env.ALLOW_JEV_CLASSIFICATION !== 'true') throw new Error('Configure ALLOW_JEV_CLASSIFICATION=true and classifier credentials in the selected environment file, or use --routing pinned');
     readClassifierConfig(env);
   }
-  const command = await codexCommand(smartCodexChildEnv(env));
+  const command = await requireManagedNative('codex', env);
   await new Promise<void>((done, reject) => {
     execFile(command.file, [...command.args, '--version'], { env: smartCodexChildEnv(env), timeout: 15_000, maxBuffer: 16_384 }, (error, stdout) => {
-      if (error || !codexCompatibility(stdout).protocolTested) reject(new Error(`Unsupported Codex CLI version; use a protocol-tested build (${protocolTestedCodexVersions.join(', ')}). Native TUI certification is pending.`));
+      if (error) reject(new Error('ModelRudder native: Codex version check failed; run smart-codex native status or smart-codex native rollback.'));
+      else if (!codexCompatibility(stdout).protocolTested) reject(new Error(`ModelRudder native: Codex version is not yet verified; tested builds: ${protocolTestedCodexVersions.join(', ')}. Run smart-codex native install. Native TUI certification is pending.`));
       else done();
     });
   });
@@ -352,7 +360,7 @@ if (import.meta.main) {
     // Only messages deliberately constructed here are actionable; never print
     // subprocess, filesystem, or provider diagnostics containing user content.
     const message = error instanceof Error && [
-      'Access token', 'Account status requires', 'Account status is unavailable',
+      'ModelRudder native:', 'Access token', 'Account status requires', 'Account status is unavailable',
       'Unsupported Codex CLI version', 'smart-codex requires', 'Configure ALLOW_', 'ChatGPT subscription', 'Invalid --routing', 'Invalid --effort-mode',
       'Model must', 'Use plain codex', 'Provider/authentication',
       'Setup accepts', 'Existing configuration must', 'Configuration directory must',

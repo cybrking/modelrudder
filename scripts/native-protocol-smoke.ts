@@ -1,3 +1,4 @@
+import { commandForEntry } from '../src/native-runtime.ts';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -10,12 +11,12 @@ import { codexCommand } from '../src/native-command.ts';
 
 // Explicit local compatibility check. Never submits a turn or calls a classifier.
 const directory = await mkdtemp(join(tmpdir(), 'smart-native-protocol-'));
-const env = doctorChildEnv(process.env);
+const env = { ...doctorChildEnv(process.env), CODEX_HOME: directory };
 let child: ReturnType<typeof spawn> | undefined;
 let stage = 'version';
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 try {
-  const command = await codexCommand(env);
+  const command = process.argv[2] ? commandForEntry(process.argv[2]) : await codexCommand(env);
   const { stdout } = await promisify(execFile)(command.file, [...command.args, '--version'], { env, timeout: 15_000, maxBuffer: 16_384 });
   const compatibility = codexCompatibility(stdout);
   if (!compatibility.version) throw new Error('Unrecognized native version');

@@ -8,7 +8,7 @@ Spend your strongest model on the tasks that need it. ModelRudder adds experimen
 
 Use your own native provider account and your own TypeSafe Jev API key. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef support is not included.
 
-Choose the launcher for your native coding tool. The preview.8 installer includes both; you only need the native CLI you intend to use.
+Choose the launcher for your native coding tool. The preview.9 installer includes both; you only need the native CLI you intend to use.
 
 | Native tool | ModelRudder launcher | Experimental automatic routing |
 | --- | --- | --- |
@@ -23,13 +23,13 @@ Copy this entire prompt into Codex. It will install ModelRudder and open the loc
 
 ```text
 Install ModelRudder on this computer so I can use model routing in Codex.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.8
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9
 Read the README and docs/AGENT_INSTALL.md at that release tag and follow them.
 
-Detect my OS and check Node.js and Codex. Install missing prerequisites using
-the official instructions; ModelRudder requires Node 24+ and a supported Codex
-version. Preserve existing credentials and configuration, and explain any
-incompatible Codex version before changing it.
+Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
+credentials and configuration. If plain Codex is missing, install its official
+CLI for native login. After installing ModelRudder, run smart-codex
+native install to install and check its separate, recorded Codex version.
 
 Download the release installer and SHA256SUMS, verify the checksum, install
 for my user account, and add its launcher directory to my user PATH without
@@ -54,16 +54,16 @@ Copy this entire prompt into Claude Code. It will install ModelRudder and open t
 
 ```text
 Install ModelRudder on this computer so I can use model routing in Claude Code.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.8
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9
 Read the current Claude installation guides before continuing:
 https://github.com/cybrking/modelrudder/blob/main/docs/AGENT_INSTALL.md
 https://github.com/cybrking/modelrudder/blob/main/docs/CLAUDE_CODE.md
 
-Detect my OS and check Node.js and Claude Code. Install missing prerequisites
-using official instructions; ModelRudder requires Node 24+ and Claude Code
-2.1.293 or newer within the 2.1.x line. Preserve existing credentials,
-configuration and permissions. Explain any incompatible version or login
-before changing it. Only the native Claude CLI is required for smart-claude.
+Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
+credentials, configuration and permissions. If plain Claude is missing, install
+its official CLI for native login. After installing ModelRudder, run
+smart-claude native install to install and check its separate Claude version.
+Codex is not required for smart-claude.
 
 Download the release installer and SHA256SUMS, verify the checksum, install
 for my user account, and add its launcher directory to my user PATH without
@@ -90,14 +90,16 @@ If an editor cannot open, Claude Code can give you the file path to open manuall
 
 ## Requirements
 
-- Node.js 24 or newer, installed separately. The installer does not bundle Node, Codex or Claude Code.
+- Node.js 24 or newer, installed separately, and npm/network access for `native install`. The standalone ModelRudder installer does not bundle Node or the native CLIs.
 - macOS, Linux/WSL, or Windows 11 with PowerShell. Native Windows support is a preview; ModelRudder's full Windows TUI has not been validated. WSL is an alternative if your native setup fails; install and sign in separately inside WSL. See [OpenAI's Windows guidance](https://learn.chatgpt.com/docs/windows/windows-sandbox).
 - Your own TypeSafe Jev API key for observe/auto modes. Pinned mode works without classification.
 
-| Launcher | Independently installed native CLI | Native login |
+| Launcher | Managed native CLI | Native login |
 | --- | --- | --- |
-| `smart-claude` | Claude Code 2.1.293+ within 2.1.x; 2.1.295 has recorded native fixture/wire evidence | `claude auth login` with a `claude.ai` account |
-| `smart-codex` | Codex **0.159.3, 0.160.1, 0.161.0 or 0.162.0**; other versions are rejected | `codex login` with ChatGPT |
+| `smart-claude` | `smart-claude native install` selects **2.1.295** | `claude auth login` with a `claude.ai` account |
+| `smart-codex` | `smart-codex native install` selects **0.162.0**; recorded older builds can be selected explicitly | `codex login` with ChatGPT |
+
+Managed CLIs are isolated from plain `codex`/`claude` updates. First-time and existing users must run the matching `native install` before launching. See [native version management](docs/NATIVE_VERSIONS.md) for migration, verification and rollback.
 
 Protocol and synthetic fixture evidence do not certify full interactive compatibility. See [Claude qualification](docs/CLAUDE_CODE.md) and [release readiness](docs/RELEASE_READINESS.md) for completed checks and remaining gaps.
 
@@ -112,7 +114,7 @@ shasum -a 256 -c SHA256SUMS
 node -- ./smart-codex-RELEASE_ID-install.mjs
 ```
 
-Replace `RELEASE_ID` with the actual release ID in the downloaded filename. The `smart-codex-…-install.mjs` filename is a legacy shared name: preview.8 installs **both `smart-claude` and `smart-codex`**. Obtain both files from this project's trusted release page; a checksum alone does not authenticate a publisher. The installer needs no checkout or npm download and includes the ws dependency and license. On macOS/Linux, it installs versioned runtime files under `~/.local/share/smart-codex` and both launchers under `~/.local/bin`; add that bin directory to PATH. Plain `claude`, plain `codex` and unmanaged launchers are preserved.
+Replace `RELEASE_ID` with the actual release ID in the downloaded filename. The `smart-codex-…-install.mjs` filename is a legacy shared name: preview.9 installs **both `smart-claude` and `smart-codex`**. Obtain both files from this project's trusted release page; a checksum alone does not authenticate a publisher. The installer needs no checkout or npm download and includes the ws dependency and license. On macOS/Linux, it installs versioned runtime files under `~/.local/share/smart-codex` and both launchers under `~/.local/bin`; add that bin directory to PATH. Plain `claude`, plain `codex` and unmanaged launchers are preserved.
 
 On Windows, use PowerShell's `Get-FileHash -Algorithm SHA256` and compare the installer hash to its exact filename in `SHA256SUMS`, then run `node -- .\smart-codex-RELEASE_ID-install.mjs`. The default runtime, launcher and configuration are under `%LOCALAPPDATA%\ModelRudder\runtime`, `\bin` and `\config\env`, respectively. Use the paths printed by the installer and add its launcher directory to your **user** PATH. Agent-assisted installation instructions are in [AGENT_INSTALL.md](docs/AGENT_INSTALL.md).
 
@@ -134,6 +136,7 @@ Follow the section for your native tool. Both launchers use the [shared Jev conf
 Run `smart-claude setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described below. Then check readiness and start with recommendations while Claude begins on Sonnet:
 
 ```sh
+smart-claude native install
 smart-claude doctor
 smart-claude --routing observe
 ```
@@ -152,6 +155,7 @@ Auto maps FAST to Haiku, BALANCED/DEEP to Sonnet, and MAX to Opus. Native effort
 Run `smart-codex setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described below. Then check readiness and start with recommendations while Sol executes:
 
 ```sh
+smart-codex native install
 smart-codex doctor
 smart-codex --routing observe --effort-mode fixed
 ```
@@ -273,9 +277,9 @@ Outcome markers and cleanup are Codex-specific commands. Outcome markers are you
 Copy this prompt into **Claude Code or Codex**. Your coding agent can handle the upgrade; you do not need to copy individual terminal commands. Use a separate native agent session and close active ModelRudder sessions before installation.
 
 ```text
-Upgrade my existing ModelRudder installation to v0.1.0-preview.8.
+Upgrade my existing ModelRudder installation to v0.1.0-preview.9.
 Use this official release:
-https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.8
+https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9
 Read its README and upgrade guide, then handle the upgrade for me.
 
 Detect my OS, check Node 24+, and identify my existing installation paths.
@@ -286,7 +290,9 @@ using my existing runtime, bin and configuration paths.
 
 Preserve my keys, configuration, local state and PATH. Do not read or print
 my key file, replace my native CLI or change my login. Verify both launchers
-report 0.1.0-preview.8 and run doctor for the native tool I am using.
+report 0.1.0-preview.9. Run native install, native status and doctor for the
+native tool I am using. Explain that native install selects the latest
+recorded version in this release and retains the previous pin for rollback.
 Explain any prerequisite or compatibility problem instead of claiming success.
 Do not submit model tasks or classifier requests to test the upgrade.
 
@@ -294,41 +300,41 @@ Tell me the result, the command to start a fresh session, and the exact
 rollback command using my saved release ID and installation paths.
 ```
 
-The installer updates both launchers and retains your existing Jev key. The agent should report any remaining native Claude/Codex version requirements. For manual commands, follow [Upgrade to preview.8](#upgrade-to-preview8) below.
+The installer updates both launchers and retains your existing Jev key. The agent should report any remaining native Claude/Codex version requirements. For manual commands, follow [Upgrade to preview.9](#upgrade-to-preview9) below.
 
 ### Manual upgrade
 
 One ModelRudder upgrade updates both launchers and preserves your existing key/configuration and local state. Stop active sessions first, record your current release ID with `--list`, then install the newer verified release using the same installation paths. Restart in a fresh terminal and run `smart-claude doctor` or `smart-codex doctor` for the tool you use.
 
-### Upgrade to preview.8
+### Upgrade to preview.9
 
-[Download preview.8](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.8), including `smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs` and `SHA256SUMS`, into the same new download folder. This installer changes successful Claude routing notices to “ModelRudder Routing this turn to …” and removes the “Experimental route” suffix. It retains tested Codex 0.162.0 compatibility and versioned model names. It includes the Claude native-instruction fix from PR #10, so normal project instructions no longer stop classification after the first turn. It also retains the earlier per-turn routing and source-installer fixes. No Git checkout or npm install is needed.
+[Download preview.9](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9), including its `smart-codex-0.1.0-preview.9-07e214013ac6b1d9-install.mjs` and `SHA256SUMS`, into the same new download folder. Replace `RELEASE_ID` in the commands below with the exact filename from that release. This release isolates native CLI versions from ordinary upstream updates, verifies candidates before selection, and retains the previous native version for rollback. The standalone ModelRudder installer needs no checkout or npm install; the separate `native install` step needs npm and network access.
 
 Close active ModelRudder sessions. On macOS, run these commands in the download folder:
 
 ```sh
 shasum -a 256 -c SHA256SUMS
-node -- ./smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs --list
+node -- ./smart-codex-0.1.0-preview.9-07e214013ac6b1d9-install.mjs --list
 ```
 
 On Linux/WSL, use `sha256sum -c SHA256SUMS` instead. Stop if checksum verification fails. Save the current release ID printed by `--list`, then upgrade:
 
 ```sh
-node -- ./smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs
+node -- ./smart-codex-0.1.0-preview.9-07e214013ac6b1d9-install.mjs
 ```
 
 On Windows PowerShell, compare the following hash to the exact filename's entry in `SHA256SUMS`:
 
 ```powershell
-Get-FileHash .\smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs -Algorithm SHA256
+Get-FileHash .\smart-codex-0.1.0-preview.9-07e214013ac6b1d9-install.mjs -Algorithm SHA256
 Get-Content .\SHA256SUMS
 ```
 
 Continue only if the hashes match. Record your current release ID, then install:
 
 ```powershell
-node -- .\smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs --list
-node -- .\smart-codex-0.1.0-preview.8-5395ee969164068e-install.mjs
+node -- .\smart-codex-0.1.0-preview.9-07e214013ac6b1d9-install.mjs --list
+node -- .\smart-codex-0.1.0-preview.9-07e214013ac6b1d9-install.mjs
 ```
 
 Repeat any original `--root`, `--bin-dir` and `--env-file` flags on **every** installer command. Both launchers, your key/configuration and local state are retained. Keep the verified installer and saved release ID for rollback.
@@ -337,17 +343,21 @@ Open a fresh terminal and check the tool you use:
 
 ```sh
 smart-claude --version
+smart-claude native install
+smart-claude native status
 smart-claude doctor
 # Or, for Codex:
 smart-codex --version
+smart-codex native install
+smart-codex native status
 smart-codex doctor
 ```
 
-The launcher should report `0.1.0-preview.8`. Doctor checks prerequisites, not task quality. ModelRudder does not upgrade native Claude or Codex; their supported versions remain listed under [Requirements](#requirements).
+The launcher should report `0.1.0-preview.9`. Doctor checks prerequisites, not task quality. Existing installations need the matching `native install` once to create a managed pin. Plain Claude and Codex stay unchanged. See [native upgrade and rollback](docs/NATIVE_VERSIONS.md).
 
 To roll back, use the verified installer with `--rollback PREVIOUS_RELEASE_ID` in place of `--list`, substituting your saved ID and repeating custom path flags. Restart launchers afterward. See the [upgrade guide](docs/UPGRADE.md) for recovery and alternative source installation.
 
-**Automatic updates:** ModelRudder currently has no local self-updater or `upgrade` command. GitHub's [daily upstream checks](docs/UPSTREAM_UPDATES.md) test new native CLI candidates; they do not install updates on your computer. To receive ModelRudder release notifications, use the repository's **Watch → Custom → Releases** option. Install a reviewed release using the steps above. Claude and Codex update separately; an upstream CLI update can exceed ModelRudder's verified compatibility, so run the matching doctor afterward.
+**Automatic updates:** ModelRudder currently has no local self-updater or `upgrade` command. GitHub's [daily upstream checks](docs/UPSTREAM_UPDATES.md) test new native CLI candidates; they do not install updates on your computer. To receive ModelRudder release notifications, use the repository's **Watch → Custom → Releases** option. Install a reviewed release using the steps above. Plain Claude and Codex can update independently. ModelRudder continues using its selected managed CLI; new managed versions require a reviewed ModelRudder release and an explicit `native install VERSION`.
 
 On macOS/Linux, the shared installed maintenance command manages both launchers:
 
@@ -357,7 +367,7 @@ node -- ~/.local/share/smart-codex/current/src/install-cli.ts --rollback RELEASE
 node -- ~/.local/share/smart-codex/current/src/install-cli.ts --uninstall
 ```
 
-On Windows, retain the verified installer and use `node -- .\smart-codex-RELEASE_ID-install.mjs --list`, `--rollback RELEASE_ID` or `--uninstall` instead. Repeat any custom install-path flags used originally.
+On Windows, retain the verified installer and use `node -- .\smart-codex-0.1.0-preview.9-07e214013ac6b1d9-install.mjs --list`, `--rollback RELEASE_ID` or `--uninstall` instead. Repeat any custom install-path flags used originally.
 
 Uninstall retains your private configuration and local state. Remove those manually if you intend to discard them.
 
@@ -375,7 +385,7 @@ npm run eval:routing
 npm run package:pilot -- dist/delivery
 ```
 
-Client CI runs offline fixtures, a Codex 0.162.0 no-inference protocol probe, and Claude 2.1.295 Mods fixtures and synthetic provider-wire checks on Windows, Linux and macOS with Node 24 and 26. Check the [workflow](.github/workflows/client.yml) and individual results for the operating systems tested. It makes no paid inference calls. Local native commands are `npm run test:native-protocol` for installed Codex, and `claude plugin test plugins/claude` plus `npm run test:claude-native` for installed Claude. These do not certify authenticated terminal journeys or task quality. The [routing evaluation](.codex/evals/routing.md) defines the synthetic regression criteria.
+Client CI runs offline fixtures and the managed installation, status and repeat-install paths for Codex 0.162.0 and Claude 2.1.295 on Windows, Linux and macOS with Node 24 and 26. Installation includes the Codex no-inference protocol probe and Claude Mods fixtures and synthetic provider-wire checks. Check the [workflow](.github/workflows/client.yml) and individual results for the operating systems tested. It makes no paid inference calls. Local native commands are `npm run test:native-protocol` for installed Codex, and `claude plugin test plugins/claude` plus `npm run test:claude-native` for installed Claude. These do not certify authenticated terminal journeys or task quality. The [routing evaluation](.codex/evals/routing.md) defines the synthetic regression criteria.
 
 Read [contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md). Licensed under [MIT](LICENSE); ws retains its [upstream MIT notice](THIRD_PARTY_NOTICES/ws-LICENSE).
 

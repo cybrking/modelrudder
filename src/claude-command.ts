@@ -1,9 +1,12 @@
+import { managedNativeCommand } from './native-runtime.ts';
 import { stat } from 'node:fs/promises';
 import { delimiter, join } from 'node:path';
 import type { NativeCommand } from './native-command.ts';
 
 // Invoke the native program without a shell; never evaluate an npm .cmd shim.
 export async function claudeCommand(env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform): Promise<NativeCommand> {
+  const managed = await managedNativeCommand('claude', env);
+  if (managed) return managed;
   if (platform !== 'win32') return { file: 'claude', args: [] };
   const path = Object.entries(env).find(([key]) => key.toLowerCase() === 'path')?.[1] ?? '';
   for (const directory of path.split(delimiter).filter(Boolean)) {
@@ -34,7 +37,7 @@ export function claudeChildEnv(source: NodeJS.ProcessEnv, platform: NodeJS.Platf
         name.startsWith('SMART_CODEX_') || name.startsWith('SMART_CLAUDE_') || name.startsWith('MODEL_RUDDER_') ||
         ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'].includes(name)) delete env[key];
   }
-  return env;
+  return { ...env, DISABLE_AUTOUPDATER: '1', DISABLE_UPDATES: '1' };
 }
 
 export function validateClaudeAuthEnvironment(env: NodeJS.ProcessEnv, platform: NodeJS.Platform = process.platform) {

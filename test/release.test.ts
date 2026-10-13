@@ -258,6 +258,8 @@ for (const platform of [...new Set<NodeJS.Platform>([process.platform, 'win32'])
       const current = await buildRelease(project);
       const legacy = structuredClone(current);
       legacy.files = Object.fromEntries(legacyReleaseFiles.map(path => [path, legacy.files[path]]));
+      // Legacy adapters predate native-runtime; use a standalone launcher fixture.
+      legacy.files['src/smart-codex.ts'] = "console.log('Usage: smart-codex');\n";
       validateRelease(sealRelease(legacy));
       await installRelease(legacy, options);
       await assert.rejects(stat(target(options, 'smart-claude')), { code: 'ENOENT' });
