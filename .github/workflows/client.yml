@@ -23,15 +23,15 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - name: Install and verify managed Codex (no inference)
-        run: node src/smart-codex.ts native install
+        run: node --input-type=module -e "import { launchSmartCodex } from './src/smart-codex.ts'; process.exitCode = await launchSmartCodex(['native', 'install']);"
       - run: node src/smart-codex.ts native status
       - name: Reuse managed Codex installation
-        run: node src/smart-codex.ts native install
+        run: node --input-type=module -e "import { launchSmartCodex } from './src/smart-codex.ts'; process.exitCode = await launchSmartCodex(['native', 'install']);"
       - name: Install and verify managed Claude (synthetic provider)
-        run: node src/smart-claude.ts native install
+        run: node --input-type=module -e "import { launchSmartClaude } from './src/smart-claude.ts'; process.exitCode = await launchSmartClaude(['native', 'install']);"
       - run: node src/smart-claude.ts native status
       - name: Reuse managed Claude installation
-        run: node src/smart-claude.ts native install
+        run: node --input-type=module -e "import { launchSmartClaude } from './src/smart-claude.ts'; process.exitCode = await launchSmartClaude(['native', 'install']);"
       - run: npm audit --omit=dev
       - run: npm run package:release -- dist-release.json
       - run: npm run package:pilot -- dist/delivery
