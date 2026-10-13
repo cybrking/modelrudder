@@ -10,7 +10,11 @@ If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same
 
 ## Normal release upgrade
 
-Download the **preview.9** standalone installer and `SHA256SUMS` from the [release page](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9). The exact current-release commands are [below](#upgrade-to-preview9). Verify the exact installer checksum and run it with Node.js 24+, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release).
+Select the newest published release by publication date from the [official releases list](https://github.com/cybrking/modelrudder/releases), including preview releases and excluding drafts. GitHub's [`/releases/latest` endpoint](https://docs.github.com/en/rest/releases/releases#get-the-latest-release) excludes prereleases, so it is not suitable for this preview channel.
+
+Resolve the release once and record its exact tag. Read the README and `docs/UPGRADE.md` at that tag for its prerequisites and migration steps. Download its standalone installer and `SHA256SUMS` into a new folder using the exact published asset filenames. Keep the documentation, installer and checksum tied to that same release throughout the upgrade.
+
+Verify the exact installer checksum before running it, following the [release installation instructions](AGENT_INSTALL.md#2-download-and-verify-a-release). The commands below use filename placeholders; replace them with the selected release's actual filenames.
 
 The installer filename still begins with `smart-codex`, but preview.4 and newer dual-launcher artifacts update both `smart-claude` and `smart-codex`. You do not need to install each separately. Keep a verified installer and record the current ID before installing the new one.
 
@@ -57,40 +61,7 @@ To receive ModelRudder release notifications, open the [repository](https://gith
 
 Plain Claude/Codex updates are independent of ModelRudder. Managed native upgrades require an explicit `native install VERSION`, restricted to versions recorded by the installed release. Candidates are checked before selection; failures leave the current pin intact. Automated compatibility discovery is not approval of a release. See [native upgrade and rollback](NATIVE_VERSIONS.md).
 
-## Upgrade to preview.9
-
-[Download preview.9](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9), including its `smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs` and `SHA256SUMS`, into the same new download folder. This release isolates native CLI versions from ordinary upstream updates, verifies candidates before selection, and retains the previous native version for rollback. The standalone ModelRudder installer needs no checkout or npm install; the separate `native install` step needs npm and network access.
-
-Close active ModelRudder sessions. On macOS, run these commands in the download folder:
-
-```sh
-shasum -a 256 -c SHA256SUMS
-node -- ./smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs --list
-```
-
-On Linux/WSL, use `sha256sum -c SHA256SUMS` instead. Stop if checksum verification fails. Save the current release ID printed by `--list`, then upgrade:
-
-```sh
-node -- ./smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs
-```
-
-On Windows PowerShell, compare the following hash to the exact filename's entry in `SHA256SUMS`:
-
-```powershell
-Get-FileHash .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs -Algorithm SHA256
-Get-Content .\SHA256SUMS
-```
-
-Continue only if the hashes match. Record your current release ID, then install:
-
-```powershell
-node -- .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs --list
-node -- .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs
-```
-
-Repeat any original `--root`, `--bin-dir` and `--env-file` flags on **every** installer command. Both launchers, your key/configuration and local state are retained. Keep the verified installer and saved release ID for rollback.
-
-## Current release: preview.9
+## Migration from preview.8 and earlier
 
 Preview.9 introduces separate managed native CLIs, verification before selection, explicit rollback and actionable missing-pin errors. Run `smart-claude native install` or `smart-codex native install` after upgrading from an older release. These commands download official npm packages and run no-inference/synthetic checks without submitting a real provider task. Earlier routing fixes are retained.
 
@@ -98,7 +69,7 @@ Preview.9 introduces separate managed native CLIs, verification before selection
 
 Preview.6 includes the native-instruction fix from [PR #10](https://github.com/cybrking/modelrudder/pull/10). In preview.5, Claude's own project-instruction or nested-memory announcements could mark the chat unclassified and stop routing later requests. Preview.6 preserves routing for those engine-authored announcements without transmitting their contents to the classifier. It retains the earlier consumed-prompt-receipt fix and source installer's argument-boundary fix. Reinstalling preview.5 does not install this new patch.
 
-The issue reporter's exact interactive trigger still needs a retest. Media, resumed history and other ineligible context intentionally retain the native model. The package now reports `0.1.0-preview.9`; the full content-based release ID is available through the installer's `--list` command.
+The issue reporter's exact interactive trigger still needs a retest. Media, resumed history and other ineligible context intentionally retain the native model. The full content-based release ID is available through the installer's `--list` command.
 
 ## Verify the upgrade
 
@@ -118,7 +89,7 @@ smart-codex native status
 smart-codex doctor
 ```
 
-Doctor checks prerequisites without submitting a model task. For builds with the same package version, use the content-based release ID from `--list` to identify the installed runtime.
+Verify both launchers report the expected version from the selected release. Doctor checks prerequisites without submitting a model task. For builds with the same package version, use the content-based release ID from `--list` to identify the installed runtime.
 
 ### Retest the Claude multi-turn fixes
 
@@ -158,6 +129,6 @@ node -- ~/.local/share/smart-codex/current/src/install-cli.ts --rollback RELEASE
 node -- ~/.local/share/smart-codex/current/src/install-cli.ts --uninstall
 ```
 
-On Windows, retain the verified installer and use `node -- .\smart-codex-0.1.0-preview.9-7c019f70c019f9f2-install.mjs --list`, `--rollback RELEASE_ID` or `--uninstall` instead. Repeat any custom install-path flags used originally.
+On Windows, retain the verified installer and use `node -- .\smart-codex-RELEASE_ID-install.mjs --list`, `--rollback RELEASE_ID` or `--uninstall` instead. Repeat any custom install-path flags used originally.
 
 Uninstall retains your private configuration and local state. Remove those manually if you intend to discard them.
