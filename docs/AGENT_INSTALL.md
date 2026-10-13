@@ -1,6 +1,6 @@
-# Install ModelRudder with a coding agent
+# Installing ModelRudder
 
-Use the copy-and-paste prompt for [Codex](../README.md#install-with-codex) or [Claude Code](../README.md#install-with-claude-code). This guide covers prerequisites, release installation, private configuration, authentication and removal.
+Use the copy-and-paste prompt for [Codex](../README.md#install-with-codex) or [Claude Code](../README.md#install-with-claude-code). Use this guide for manual installation or as the detailed procedure for your coding agent. It covers prerequisites, release installation, private configuration, authentication and removal.
 
 ## Claude Code release installation
 
@@ -75,6 +75,8 @@ ALLOW_JEV_CLASSIFICATION=false
 SMART_CODEX_CLASSIFIER=direct
 ```
 
+`SMART_CODEX_CLASSIFIER`, `SMART_CODEX_ENV_FILE` and the macOS/Linux `~/.config/smart-codex/env` path are shared legacy names used by **both** launchers. Keep these names as written; Claude currently requires `SMART_CODEX_CLASSIFIER=direct`. Leaving `ALLOW_JEV_CLASSIFICATION=false` keeps Jev disabled; pinned mode remains available.
+
 The [official Jev quickstart](https://docs.typesafe.ai/introduction/quickstart) links to the [TypeSafe key dashboard](https://console.typesafe.ai/keys), which offers account login/signup if needed. Provider fees are separate from the free client and the user's Codex subscription. The user enters their own key and explicitly changes `ALLOW_JEV_CLASSIFICATION` to `true`. Consent enables sending eligible task text and bounded earlier excerpts to TypeSafe as described in the README. Do not enable consent on their behalf, store keys in shell history or a repository, or automatically submit a classification request to check the key. Existing exported environment variables take precedence; do not print them when diagnosing configuration.
 
 On Unix, keep the configuration private to the user. On Windows, keep it under the user's profile and avoid shared directories; Unix mode bits do not establish Windows ACL protection. If the profile/directory is shared, have the user review access permissions.
@@ -106,3 +108,16 @@ Report the OS, Node/Codex versions, release ID, checksum result, installed paths
 On macOS/Linux, run the installed `current/src/install-cli.ts` with Node using the runtime root printed during installation. On Windows, retain and reuse the verified downloaded installer, for example `node -- .\smart-codex-RELEASE_ID-install.mjs --list`; Windows `current` is a pointer file, not a directory. Both maintenance paths support `--list`, `--rollback RELEASE_ID` and `--uninstall`. Repeat any custom install-path flags originally used. Upgrades, rollback and uninstall preserve private configuration and local state; deleting those is a separate explicit user choice. Restart active launchers after changing releases.
 
 Native CLI rollback is separate from ModelRudder release rollback: `smart-codex native rollback` or `smart-claude native rollback` rechecks the previous managed version before selecting it. Report both `native status` and the ModelRudder release ID. See [native version management](NATIVE_VERSIONS.md).
+
+## Source installation
+
+Alternatively, build from a trusted source checkout with Node.js 24+:
+
+```sh
+npm ci --ignore-scripts
+npm test
+npm run typecheck
+node -- src/install-cli.ts
+```
+
+Then follow the private configuration, native installation and login steps above for your tool. See [development instructions](../CONTRIBUTING.md#development) for CI and native checks.
