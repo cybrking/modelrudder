@@ -28,7 +28,7 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 
 - Node.js 24+ for ModelRudder
 - A managed official Claude Code **2.1.295** installation via `smart-claude native install`, requiring npm/network access once. The managed launcher disables native auto-updates for its child process; plain Claude remains independent.
-- A native `claude.ai` login; use `claude auth login` yourself if needed
+- A separately installed official Claude CLI for native login; use `claude auth login` with a `claude.ai` account yourself if needed. This login is reused by the managed CLI; the plain CLI can update independently
 - Your own direct Jev credentials and explicit `ALLOW_JEV_CLASSIFICATION=true` for observe/auto
 - The official `v0.1.0-preview.9` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
 

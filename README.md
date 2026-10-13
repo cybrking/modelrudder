@@ -92,6 +92,7 @@ If an editor cannot open, Claude Code can give you the file path to open manuall
 
 - Node.js 24 or newer, installed separately, and npm/network access for `native install`. The standalone ModelRudder installer does not bundle Node or the native CLIs.
 - macOS, Linux/WSL, or Windows 11 with PowerShell. Native Windows support is a preview; ModelRudder's full Windows TUI has not been validated. WSL is an alternative if your native setup fails; install and sign in separately inside WSL. See [OpenAI's Windows guidance](https://learn.chatgpt.com/docs/windows/windows-sandbox).
+- A separately installed official CLI for the provider you use, to complete `codex login` or `claude auth login`. Its version can update independently of the managed CLI; existing native login is reused.
 - Your own TypeSafe Jev API key for observe/auto modes. Pinned mode works without classification.
 
 | Launcher | Managed native CLI | Native login |
