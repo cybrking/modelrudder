@@ -25,15 +25,15 @@ test('only releases newer than recorded evidence get candidate platform checks',
   assert.equal(plan.matrix.include.length, 6);
   assert.deepEqual(new Set(plan.matrix.include.map(entry => entry.os)),
     new Set(['ubuntu-latest', 'macos-latest', 'windows-latest']));
-  assert.equal(plan.releases[0].launcherAccepted, false);
-  assert.equal(plan.releases[1].launcherAccepted, false);
+  assert.equal(plan.releases[0].launcherAccepted, true);
+  assert.equal(plan.releases[1].launcherAccepted, true);
   const unchanged = releasePlan([
-    parseStableRelease('codex', release('rust-v0.161.0')),
+    parseStableRelease('codex', release('rust-v0.162.0')),
     parseStableRelease('claude', release('v2.1.295')),
   ]);
   assert.deepEqual(unchanged.matrix.include, []);
   assert.equal(releasePlan([
-    parseStableRelease('codex', release('rust-v0.161.0')),
+    parseStableRelease('codex', release('rust-v0.162.0')),
     parseStableRelease('claude', release('v2.1.295')),
   ], true).matrix.include.length, 6);
   assert.deepEqual(releasePlan([parseStableRelease('codex', release('rust-v0.150.0'))]).matrix.include, []);

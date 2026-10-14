@@ -16,7 +16,9 @@ Use only the commands for the provider you need. `native install` needs npm and 
 
 ## Selection and verification
 
-`native install` without a version selects the latest recorded version in the installed release, even if an older managed version was previously selected. The default versions in this release are Codex **0.162.0** and Claude Code **2.1.295**. An explicit version must be recorded in the installed ModelRudder release: Codex **0.159.3**, **0.160.1**, **0.161.0** or **0.162.0**, and Claude **2.1.295**. Unknown versions fail before installation. To select a recorded version:
+`native install` without a version selects the latest recorded version shipped in the installed router, even if an older managed version was previously selected. The current defaults remain Codex **0.162.0** and Claude Code **2.1.295** until reviewed promotion evidence changes them. Evidence history, minimums and explicit known-broken blocks are in `src/cli-compatibility-data.ts`.
+
+An explicit stable candidate at or above the minimum within the supported major can be evaluated with `native install VERSION`. It is downloaded into separate temporary state, checked with the actual native protocol/plugin probes and selected only after success. Unsupported majors, prereleases/modified versions, too-old builds and known broken builds are rejected before download. Unrecorded selected candidates also need a fresh probe at launch; local success does not record cross-platform release qualification. See [managed upstream updates](UPSTREAM_UPDATES.md). To select a recorded version:
 
 ```sh
 smart-codex native install 0.162.0
@@ -47,7 +49,7 @@ Rollback checks the retained version before selecting it. If no previous version
 
 Managed installations and selection metadata live under `SMART_CODEX_STATE_DIR/native/<provider>`, where the provider is `codex` or `claude`. The shared `SMART_CODEX_STATE_DIR` name applies to both launchers. Installed launchers default it to `<runtime-root>/state`: normally `~/.local/share/smart-codex/state` on macOS/Linux or `%LOCALAPPDATA%\ModelRudder\runtime\state` on Windows. Source commands use these same default state paths. Use the same state directory for installation and launch, especially with custom runtime paths or a source checkout. `native status` reports the selected and previous versions without reading provider credentials.
 
-If launch or doctor reports a missing/invalid managed pin, run the matching `native status`, then `native install VERSION` with a recorded version. A version that is “not verified by this ModelRudder release” needs compatibility review and a release that records it; it is distinct from a candidate that failed its smoke check. Do not edit selection metadata or broaden compatibility lists locally to bypass these checks. Plain provider CLIs remain available independently.
+If launch or doctor reports a missing/invalid managed pin, run the matching `native status`, then `native install VERSION` with a recorded version. A blocked or unsupported version needs policy/adapter review; a candidate that fails its native checks cannot replace the working selection. Do not edit selection metadata or broaden compatibility lists locally to bypass these checks. Plain provider CLIs remain available independently.
 
 Native login continues to use the separately installed official `codex login` or `claude auth login` flow. If the plain provider CLI is absent, install it using the provider’s official instructions; its version can update independently of the managed routing installation.
 

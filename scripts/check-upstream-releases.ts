@@ -44,7 +44,7 @@ export function releasePlan(latest: StableRelease[], includeRecorded = false) {
     const recorded = release.provider === 'codex' ? protocolTestedCodexVersions : offlineTestedClaudeVersions;
     const baseline = [...recorded].sort(compare).at(-1)!;
     const launcherAccepted = release.provider === 'codex'
-      ? codexCompatibility(`codex-cli ${release.version}`).protocolTested
+      ? codexCompatibility(`codex-cli ${release.version}`).eligible
       : claudeCompatibility(`${release.version} (Claude Code)`).supportsMods;
     return { ...release, baseline, needsChecks: includeRecorded || compare(release.version, baseline) > 0, launcherAccepted };
   });
@@ -63,7 +63,7 @@ async function main() {
     await appendFile(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify(plan.matrix)}\nhas_updates=${plan.matrix.include.length > 0}\n`);
   }
   if (process.env.GITHUB_STEP_SUMMARY) {
-    const rows = plan.releases.map(release => `| ${release.provider} | [${release.version}](${release.url}) | ${release.baseline} | ${release.needsChecks ? 'candidate checks' : 'no newer release'} | ${release.launcherAccepted ? 'accepted' : 'currently rejected'} |`);
+    const rows = plan.releases.map(release => `| ${release.provider} | [${release.version}](${release.url}) | ${release.baseline} | ${release.needsChecks ? 'candidate checks' : 'no newer release'} | ${release.launcherAccepted ? 'eligible (probe may be required)' : 'blocked or unsupported'} |`);
     await appendFile(process.env.GITHUB_STEP_SUMMARY, `## Daily upstream releases\n\n| CLI | Latest stable | Recorded baseline | Action | Current launcher |\n| --- | --- | --- | --- | --- |\n${rows.join('\n')}\n\nNative probes use no paid inference. Passing probes do not update launchers or certify full interactive/task-quality behavior.\n`);
   }
   console.log(JSON.stringify(plan, null, 2));

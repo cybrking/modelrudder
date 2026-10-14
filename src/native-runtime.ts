@@ -1,3 +1,4 @@
+import { cliCompatibility } from './cli-compatibility.ts';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -29,10 +30,12 @@ async function info(path: string) {
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined; throw error; }
 }
 function approved(provider: NativeProvider, version: unknown): asserts version is string {
-  if (typeof version !== 'string' || !versionPattern.test(version) || !testedNativeVersions(provider).includes(version)) {
-    throw problem(`${provider} ${typeof version === 'string' && versionPattern.test(version) ? version : 'version'} is not verified by this ModelRudder release. Supported: ${testedNativeVersions(provider).join(', ')}. Upgrade ModelRudder after candidate checks pass; the current CLI was not changed.`);
+  const policy = cliCompatibility(provider, typeof version === 'string' ? version : null);
+  if (!policy.eligible) {
+    throw problem(`${provider} version is blocked or unsupported${policy.blockReason ? `: ${policy.blockReason}` : ''}. Select a stable build within the supported major at or above its minimum; the current CLI was not changed.`);
   }
 }
+
 async function selection(root: string): Promise<Selection | undefined> {
   const path = join(root, 'selection.json');
   const item = await info(path);

@@ -67,7 +67,7 @@ test('doctor accurately separates text observe from interactive auto and probes 
   assert.match(result.text, /Interactive effort mode: auto/);
   assert.match(result.text, /Context eligibility: fresh-text-only-history-v1/);
   assert.match(result.text, /--remote present; app-server --stdio present/);
-  assert.match(result.text, /exact protocol-tested builds/);
+  assert.match(result.text, /recorded protocol evidence/);
   assert.ok(!result.text.includes('SECRET'));
 });
 

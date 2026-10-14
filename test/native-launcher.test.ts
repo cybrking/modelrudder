@@ -40,13 +40,13 @@ test('default doctor uses the supplied state directory and refuses to execute an
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
-test('doctor distinguishes an unverified version from a failed diagnostic probe', async () => {
+test('doctor distinguishes an unsupported major from a failed diagnostic probe', async () => {
   const result = await runDoctor({}, async args => ({
     stdout: args[0] === '--version' ? 'codex-cli 99.0.0' : args[0] === 'login' ? 'Logged in using ChatGPT' : args[0] === 'app-server' ? '--stdio' : '--remote',
     stderr: '',
   }), createRuntimePolicy({ mode: 'pinned' }));
   assert.equal(result.ok, false);
-  assert.match(result.text, /not yet verified/);
+  assert.match(result.text, /blocked or unsupported/);
   assert.doesNotMatch(result.text, /diagnostic probe failed/);
 });
 

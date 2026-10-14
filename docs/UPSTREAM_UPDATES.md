@@ -1,34 +1,41 @@
-# Daily upstream CLI checks
+# Managed CLI updates
 
-The **Daily upstream CLI compatibility** workflow checks the official stable Codex and Claude Code releases once a day at **13:17 UTC** (09:17 New York during daylight time, 08:17 during standard time). GitHub may delay scheduled runs. It also supports **Run workflow** for an immediate check.
+The daily workflow checks official stable Codex and Claude Code releases at 13:17 UTC. GitHub may delay scheduled runs. Run it manually with `include_recorded` to include already-recorded baselines. Discovery excludes drafts/prereleases and uses fixed official GitHub and npm endpoints. Discovery failures fail the run rather than reporting no updates.
 
-Open [the workflow](https://github.com/cybrking/modelrudder/actions/workflows/upstream-releases.yml). The discovery summary lists each latest stable version, the recorded evidence baseline, whether the current launcher accepts it, and whether candidate checks are needed. The `upstream-release-report` artifact contains the same metadata as JSON. API failures fail the run instead of claiming there are no updates.
+## One runtime policy
 
-For an initial verification or to include already-recorded releases, select **include_recorded** when using Run workflow (locally: `--include-recorded`). Successful results for the same revision/version/OS are still reused. To repeat native checks after a failure, rerun the failed job; to replace an existing successful result, delete its cache in GitHub Actions first.
+`src/cli-compatibility-data.ts` ships with the router. For each provider it records the minimum stable version, latest recorded build, exact evidence history, and known broken versions with reasons. The minimum-to-latest span is a reporting boundary, not proof that every intervening build was tested.
 
-Drafts and prereleases are excluded. Release tags must match the official provider's bounded numeric version format before a package version enters the job matrix. Installation uses fixed official npm package names and passes versions through quoted environment variables.
+Both launchers retain their isolated managed native pins; updating plain provider CLIs does not change them. `native install` without a version selects the latest recorded build shipped with the router. Explicit `native install VERSION` may evaluate a stable candidate within the supported major: it downloads a separate official package, runs checks and switches selection only after they pass. Existing selection and previous-version rollback are preserved on failure. Launch also rechecks an unrecorded candidate. Both adapters use the same decision rules:
 
-## Candidate checks
+- Recorded stable builds can start after their normal native login and configuration checks.
+- Unrecorded stable builds at or above the minimum within the same major must pass a fresh local interface probe before routing starts. This includes gaps between recorded versions. Probe success is local compatibility evidence, not release certification; it is not persisted or used to approve other builds.
+- Explicit blocks override recorded evidence. Too-old builds, malformed/modified versions, prereleases and new majors are rejected. New-major support needs an adapter/policy review.
 
-A stable version newer than the recorded baseline gets isolated macOS, Ubuntu and Windows jobs with Node 24. Each job runs type checking and the offline client tests, then installs exactly the detected CLI version on its disposable GitHub runner:
+Codex probes verify required remote/stdio CLI capabilities, app-server initialization, fresh ephemeral thread creation, exact model setting and read-only permissions. No inference turn is submitted. Claude probes use temporary configuration, fake credentials and a synthetic loopback provider to verify Mods model rewrites and native model restrictions. They use no real account or paid inference. These startup checks add latency for unrecorded builds. CLI upgrades during a probe are rejected if the observed version changes.
 
-- Codex: native stdio initialization, fresh-thread creation, model setting and read-only permissions. No turn is submitted.
-- Claude Code: native plugin fixtures and a native model-rewrite/allowlist probe against a synthetic loopback provider with fake credentials and temporary configuration. No real provider inference or user authentication is used.
+`smart-codex doctor` and `smart-claude doctor` report the installed build, recorded evidence and applicable local checks. Probe failure stops routing and tells the user to run plain `codex` or `claude`, or select a recorded build. The router does not silently launch a different mode, downgrade a CLI, change credentials or retry paid tasks.
 
-Successful results are cached by provider, version, OS and source commit. Repeated daily runs reuse those results for the same revision; a new version or source commit triggers fresh checks. Failed checks are not cached and are retried on the next run. Cache eviction can also cause a fresh check. Native result artifacts are retained for 30 days; failure details are in the job logs. GitHub Actions notification preferences determine whether you receive failure notifications.
+## Validate and promote
 
-Passing these probes does not certify complete interactive approvals, interruption, resume or task quality. The workflow reports evidence for review; it does not change version gates, merge PRs, publish releases, or update anyone's local CLI. After reviewing the results and relevant upstream changes, update the recorded support metadata, run the applicable user-flow checks and publish an ordinary reviewed release when needed.
+The candidate matrix runs type checking, the offline client suite and native provider checks on macOS, Ubuntu and Windows. Successful native results are cached by provider/version/OS/source commit; failed results are retried. Each evidence record binds the native result to the exact candidate, OS and source revision. Artifacts last 30 days.
 
-Codex evidence is recorded in `protocolTestedCodexVersions` in `src/compatibility.ts`. Claude evidence is recorded in `offlineTestedClaudeVersions` in `src/claude-command.ts`; its supported Mods range remains a separate rule.
+After every candidate job passes, the promotion validator requires exactly one matching record per provider/platform, complete required checks and the expected no-paid-inference flags. Missing, duplicate, stale, blocked or incomplete evidence cannot promote a version. The proposal appends evidence history, updates the recorded endpoint and adds `docs/compatibility/latest.json`; it does not remove blocks or broaden supported majors.
 
-## Run the discovery locally
+The workflow opens an ordinary review PR with those changes and evidence. It never auto-merges, publishes a release or updates a user's native CLI. Existing automation PRs and edited branches are preserved so daily runs do not overwrite review edits or reopen rejected proposals. If branch publication succeeded but PR creation failed, a later run can retry creation only when the remote tree exactly matches the newly validated proposal. Ordinary PR CI installs the proposed recorded baselines for both CLIs and repeats native checks on all supported OS/Node combinations.
 
-With Node 24+, run `node scripts/check-upstream-releases.ts` from the checkout. It makes two public GitHub API requests and writes `upstream-releases.json` in the current directory. `GITHUB_TOKEN` is optional for authenticated API access; do not place it in the repository or print it. The report contains public version metadata only. Discovery alone does not install CLIs or call models.
+Enable the repository setting allowing GitHub Actions to create pull requests. The default `GITHUB_TOKEN` has write permissions only in the promotion job; GitHub requires a maintainer to approve CI workflows on a PR created with that token. For CI to start automatically, optionally configure `CLI_UPDATE_TOKEN` as a dedicated repository-scoped GitHub App installation token or fine-grained bot token with contents and pull-request write access. Do not use an operator credential with broader access. The workflow does not print credentials. See [GitHub's workflow-trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
-The schedule follows the owner's October 8, 2026 instruction to check once per day. Sources: [official Codex releases](https://github.com/openai/codex/releases), [official Claude Code releases](https://github.com/anthropics/claude-code/releases), [GitHub release API](https://docs.github.com/en/rest/releases/releases#get-the-latest-release), and [scheduled workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
+The `cli-promotion-proposal` artifact remains available if PR creation fails or repository permissions are not enabled. API/job failures appear in workflow logs; configure GitHub Actions notifications for this workflow.
 
-## From candidate evidence to a managed upgrade
+## Review and recovery
 
-Preview.9's managed launcher only installs versions recorded in the installed ModelRudder release. Daily candidate jobs deliberately continue testing upstream CLIs directly on disposable runners, so they can detect compatibility beyond the current managed allowlist. A green candidate job does not alter a user's selected version or widen that allowlist.
+Before release, inspect upstream changes and exercise applicable interactive journeys: routing, approvals, cancellation, resume, compaction, accounting and shutdown. No-inference Codex handshakes and synthetic Claude requests do not establish those journeys, model entitlement, task quality or savings. Record those results separately from contract evidence. Prerelease checks are not promoted by this workflow; a separate explicit candidate run is needed if prerelease support is being evaluated.
 
-Review candidate results and upstream changes, run applicable interactive checks, then record accepted versions in a reviewed ModelRudder release. Community client CI exercises managed installation, status and repeat installation on Node 24/26 across macOS, Linux and Windows. After installing that release, users explicitly select an accepted version with `smart-codex native install VERSION` or `smart-claude native install VERSION`. Local verification must pass before selection; the previous version remains available for rollback. See [Native versions](NATIVE_VERSIONS.md).
+If a release regresses, add the exact broken version and reason to the shipped provider block list, fix the adapter and repeat affected checks. Restore a working native pin with `smart-codex native rollback` or `smart-claude native rollback`. Roll back the router using its versioned installer's `--list` and `--rollback RELEASE_ID` commands. Historical Codex-only and previous two-adapter artifacts remain accepted for rollback. A new router release is required to distribute a new block or policy; launchers do not download executable code or approval policy at startup.
+
+Community runtime changes belong in the community checkout. Carry shared Codex fixes back to the private checkout deliberately; it does not currently contain the Claude adapter.
+
+## Local discovery
+
+Run `node scripts/check-upstream-releases.ts` with Node 24+. It makes two public GitHub requests and writes `upstream-releases.json`. `GITHUB_TOKEN` is optional for authenticated lookup. Discovery does not install CLIs, mutate compatibility policy or call models.

@@ -1,4 +1,5 @@
-import { codexCompatibility, protocolTestedCodexVersions } from './compatibility.ts';
+import { checkCodexCompatibility } from './codex-protocol-probe.ts';
+import { codexCompatibility } from './compatibility.ts';
 import { spawn, execFile } from 'node:child_process';
 import { createServer } from 'node:http';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
@@ -282,13 +283,17 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
     readClassifierConfig(env);
   }
   const command = await requireManagedNative('codex', env);
-  await new Promise<void>((done, reject) => {
+  const compatibility = await new Promise<ReturnType<typeof codexCompatibility>>((done, reject) => {
     execFile(command.file, [...command.args, '--version'], { env: smartCodexChildEnv(env), timeout: 15_000, maxBuffer: 16_384 }, (error, stdout) => {
-      if (error) reject(new Error('ModelRudder native: Codex version check failed; run smart-codex native status or smart-codex native rollback.'));
-      else if (!codexCompatibility(stdout).protocolTested) reject(new Error(`ModelRudder native: Codex version is not yet verified; tested builds: ${protocolTestedCodexVersions.join(', ')}. Run smart-codex native install. Native TUI certification is pending.`));
-      else done();
+      const result = codexCompatibility(stdout);
+      if (error || !result.eligible) reject(new Error('Unsupported Codex CLI version; install a stable supported build or use plain codex.'));
+      else done(result);
     });
   });
+  await checkCodexCompatibility(`codex-cli ${compatibility.version}`, smartCodexChildEnv(env));
+  if (!compatibility.protocolTested) {
+    process.stderr.write(`Codex ${compatibility.version}: local protocol probe passed; release/TUI qualification remains pending.\n`);
+  }
   await new Promise<void>((done, reject) => {
     execFile(command.file, [...command.args, 'login', 'status'],
       { env: smartCodexChildEnv(env), timeout: 10_000, maxBuffer: 64 * 1024 }, (error, stdout, stderr) => {
@@ -361,7 +366,7 @@ if (import.meta.main) {
     // subprocess, filesystem, or provider diagnostics containing user content.
     const message = error instanceof Error && [
       'ModelRudder native:', 'Access token', 'Account status requires', 'Account status is unavailable',
-      'Unsupported Codex CLI version', 'smart-codex requires', 'Configure ALLOW_', 'ChatGPT subscription', 'Invalid --routing', 'Invalid --effort-mode',
+      'Native protocol smoke failed', 'Unsupported Codex CLI version', 'smart-codex requires', 'Configure ALLOW_', 'ChatGPT subscription', 'Invalid --routing', 'Invalid --effort-mode',
       'Model must', 'Use plain codex', 'Provider/authentication',
       'Setup accepts', 'Existing configuration must', 'Configuration directory must',
       'Could not start editor', 'Codex executable not found', 'Unable to enforce private Windows',

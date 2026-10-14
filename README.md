@@ -177,3 +177,5 @@ Automatic routing is experimental: classifier confidence is not a coding success
 - [Contributing and development](CONTRIBUTING.md) · [Security reporting](SECURITY.md)
 
 Licensed under [MIT](LICENSE); ws retains its [upstream MIT notice](THIRD_PARTY_NOTICES/ws-LICENSE).
+
+CLI update management: the [daily upstream workflow](docs/UPSTREAM_UPDATES.md) tests stable candidates across operating systems and prepares reviewed evidence PRs. Explicit candidate installs must pass native checks before replacing a managed pin; known broken versions are blocked. Plain CLI updates stay independent of ModelRudder's selected runtime.
