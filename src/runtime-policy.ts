@@ -8,7 +8,7 @@ import type { Policy, Profile, Route, EffortMode } from './types.ts';
 
 export type RoutingMode = 'auto' | 'observe' | 'pinned';
 export const routerVersion: string = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
-export const runtimePolicyVersion = '4';
+export const runtimePolicyVersion = '5';
 export const contextEligibility = 'fresh-text-only-history-v1';
 // Requested model/rubric revision; the hosted Jev model is not pinned.
 export { classifierVersion } from './classifier-contract.ts';
@@ -17,6 +17,7 @@ export type RuntimePolicy = Readonly<{
   version: string;
   hash: string;
   mode: RoutingMode;
+  selectionRule: 'classifier-choice';
   model: string;
   effort: 'medium';
   effortMode: EffortMode;
@@ -70,7 +71,7 @@ export function createRuntimePolicy(options: {
   if (!Number.isSafeInteger(classificationTimeoutMs) || classificationTimeoutMs < 1 || classificationTimeoutMs > 30_000) {
     throw new Error('Invalid classification timeout; expected 1–30000 milliseconds');
   }
-  const snapshot = { version: runtimePolicyVersion, mode, model, effort: 'medium' as const, effortMode, contextEligibility, classifierLifecycle: 'bounded-circuit-v1' as const,
+  const snapshot = { version: runtimePolicyVersion, mode, selectionRule: 'classifier-choice' as const, model, effort: 'medium' as const, effortMode, contextEligibility, classifierLifecycle: 'bounded-circuit-v1' as const,
     classificationTimeoutMs, policy, routes: Object.freeze(routes) } as const;
   const hash = createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
   return Object.freeze({ ...snapshot, hash });

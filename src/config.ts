@@ -15,6 +15,7 @@ export const allowedEfforts: Record<string, readonly Effort[]> = {
 };
 export const defaultPolicy: Policy = {
   minimum: 'FAST', maximum: 'MAX', fallback: 'DEEP',
+  // Retained for policy-input compatibility; Codex selection ignores this value.
   confidenceThreshold: 0.8,
   allowClassification: true,
   allowedModels: ['gpt-6-luna', 'gpt-6.1-sol', 'gpt-6-astra'],

@@ -47,7 +47,7 @@ Inspect your results before trying experimental automatic routing:
 smart-codex --routing auto --effort-mode auto
 ```
 
-Automatic mode chooses among Luna, Sol and Astra at each eligible new user turn and keeps that choice throughout its tool loop. Uncertain or unavailable classification keeps the fallback. Media, native references and unobserved history can prevent downgrading. The next auto/observe turn overrides native model-picker choices. An explicit `--model` selects pinned mode unless `--routing` is also supplied.
+Automatic mode chooses among Luna, Sol and Astra at each eligible new user turn and keeps that choice throughout its tool loop. Every valid classification selects its profile without a confidence threshold. Reported confidence remains informational. Invalid or unavailable classification keeps the fallback. Media, native references and unobserved history can prevent downgrading. The next auto/observe turn overrides native model-picker choices. An explicit `--model` selects pinned mode unless `--routing` is also supplied.
 
 To use a pinned model without sending tasks to Jev:
 

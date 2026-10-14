@@ -122,7 +122,7 @@ export function createSessionUsage() {
       try { probabilities = parseProbabilities(metadata.probabilities, metadata.proposed); } catch {}
       try { servedModel = parseServedModel(metadata.servedModel); } catch {}
       latestRoute = { decisionId: randomUUID(),
-        policyVersion: ['1', '2', '3', '4'].includes(metadata.policyVersion as string) ? metadata.policyVersion as string : null,
+        policyVersion: ['1', '2', '3', '4', '5'].includes(metadata.policyVersion as string) ? metadata.policyVersion as string : null,
         policyHash: typeof metadata.policyHash === 'string' && /^[a-f0-9]{64}$/.test(metadata.policyHash) ? metadata.policyHash : null,
         classifierVersion: metadata.classifierVersion === 'jev-latest:rubric-2026-10-01' ? metadata.classifierVersion : null,
         model: String(metadata.model), proposed: typeof metadata.proposed === 'string' ? metadata.proposed : null,

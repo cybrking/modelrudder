@@ -15,7 +15,8 @@ test('interactive snapshot is deeply immutable and isolates caller policy and ro
   assert.equal(snapshot.routes.DEEP.model, 'gpt-6.1-sol');
   assert.equal(snapshot.routes.FAST.effort, 'low');
   assert.equal(snapshot.effortMode, 'auto');
-  assert.equal(snapshot.version, '4');
+  assert.equal(snapshot.selectionRule, 'classifier-choice');
+  assert.equal(snapshot.version, '5');
   assert.equal(snapshot.contextEligibility, 'fresh-text-only-history-v1');
   assert.throws(() => { (snapshot as any).contextEligibility = 'unrestricted'; }, TypeError);
   assert.equal(routes.FAST.effort, 'low');

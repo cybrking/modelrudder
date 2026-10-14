@@ -70,7 +70,7 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
     attribution: 'Inferred from session model settings; backend reroutes are unattributed. Not verified per-response model identity.',
     routing: {
       decisionId, decisionCount: count(raw.decisionCount) ? raw.decisionCount : null,
-      policyVersion: ['1', '2', '3', '4'].includes(r?.policyVersion) ? r!.policyVersion as string : null,
+      policyVersion: ['1', '2', '3', '4', '5'].includes(r?.policyVersion) ? r!.policyVersion as string : null,
       policyHash: typeof r?.policyHash === 'string' && /^[a-f0-9]{64}$/.test(r.policyHash) ? r.policyHash : null,
       classifierVersion: r?.classifierVersion === 'jev-latest:rubric-2026-10-01' ? r.classifierVersion : null,
       probabilities, servedModel,
