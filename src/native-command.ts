@@ -19,3 +19,12 @@ export async function codexCommand(env: NodeJS.ProcessEnv = process.env): Promis
   }
   throw new Error('Codex executable not found; install Codex and add it to PATH.');
 }
+
+export function nativeDiagnosticEnv(source: Record<string, string | undefined>) {
+  const env = { ...source };
+  for (const key of Object.keys(env)) {
+    if (/(?:API_?KEY|TOKEN|SECRET|PASSWORD)$/i.test(key) ||
+      ['OPENAI_BASE_URL', 'OPENAI_ORG_ID', 'OPENAI_PROJECT_ID'].includes(key)) delete env[key];
+  }
+  return env;
+}

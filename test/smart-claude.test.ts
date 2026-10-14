@@ -40,7 +40,7 @@ test('Mods version guidance is separate from actual offline test evidence', () =
   assert.equal(claudeCompatibility('2.1.287 (Claude Code)').supportsMods, false);
   assert.equal(claudeCompatibility('2.1.293 (Claude Code)').supportsMods, true);
   assert.equal(claudeCompatibility('2.1.295 (Claude Code)').offlineTested, true);
-  assert.equal(claudeCompatibility('2.2.0 (Claude Code)').supportsMods, false);
+  assert.equal(claudeCompatibility('2.2.0 (Claude Code)').supportsMods, true);
   assert.equal(claudeCompatibility('garbage').supportsMods, false);
 });
 

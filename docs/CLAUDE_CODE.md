@@ -30,9 +30,9 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 - A managed official Claude Code **2.1.295** installation via `smart-claude native install`, requiring npm/network access once. The managed launcher disables native auto-updates for its child process; plain Claude remains independent.
 - A separately installed official Claude CLI for native login; use `claude auth login` with a `claude.ai` account yourself if needed. This login is reused by the managed CLI; the plain CLI can update independently
 - Your own direct Jev credentials and explicit `ALLOW_JEV_CLASSIFICATION=true` for observe/auto
-- The official `v0.1.0-preview.10` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
+- The official `v0.1.0-preview.11` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
 
-For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.10 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
+For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.11 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
 
 Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.9 release containing both Claude multi-turn fixes.
 
@@ -104,7 +104,7 @@ Logs are private metadata files in the installed state directory's `claude-logs`
 - Normal PR CI now includes pinned Claude 2.1.295 Mods fixtures and the synthetic provider-wire probe on macOS, Ubuntu and Windows with Node 24/26. Scheduled upstream checks already exercised Claude; the added checks close the ordinary PR coverage gap. Check the actual run associated with the source revision before treating platform results as passed.
 - `npm run eval:routing` runs 74 synthetic lifecycle checks for both adapters. Its [predefined criteria](../.codex/evals/routing.md) distinguish routing regressions from live task-quality evaluation.
 - Authenticated live Claude conversations, model availability, actual plan allowance impact, quality outcomes and full TUI behavior remain **unverified**. No user credentials, real provider inference, paid tests, publication or account changes were used for these checks.
-- Newer/older supported-line builds may differ; only 2.1.295 has the recorded module/wire checks. Full-ID defaults will need review when models change, and other trusted mods or managed policy can replace a requested route. Observe and validate before using auto on important work. Model-switch-hook interactions are not certified; this adapter rewrites a request and does not run `/model` or change the saved session default.
+- Newer/older supported-line builds may differ; the shipped compatibility data identifies recorded module/wire checks. Unrecorded stable candidates must pass local synthetic probes before managed activation and launch. Full-ID defaults will need review when models change, and other trusted mods or managed policy can replace a requested route. Observe and validate before using auto on important work. Model-switch-hook interactions are not certified; this adapter rewrites a request and does not run `/model` or change the saved session default.
 
 ## Official references
 

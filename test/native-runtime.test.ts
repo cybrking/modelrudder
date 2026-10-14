@@ -62,8 +62,8 @@ test('failed download, verification and unsupported version preserve current and
       assert.equal(await readFile(path, 'utf8'), before);
       assert.deepEqual((await readdir(join(nativeDirectory('codex', f.env), 'versions'))).sort(), ['0.160.1', '0.161.0']);
     }
-    await assert.rejects(installNative('codex', '0.162.1', f.env, f.ops), /not verified/);
-    await assert.rejects(installNative('codex', '../../outside', f.env, f.ops), /not verified/);
+    await assert.rejects(installNative('codex', '1.0.0', f.env, f.ops), /blocked or unsupported/);
+    await assert.rejects(installNative('codex', '../../outside', f.env, f.ops), /blocked or unsupported/);
     assert.equal(await readFile(path, 'utf8'), before);
     await assert.rejects(rollbackNative('codex', f.env, { ...f.ops, async verify() { throw new Error('rollback failed'); } }), /rollback failed/);
     assert.equal(await readFile(path, 'utf8'), before);
@@ -111,7 +111,8 @@ test('provider installs stay separate and rollback without history reports actio
     await installNative('claude', '2.1.295', f.env, f.ops);
     assert.notDeepEqual(await requireManagedNative('codex', f.env), await requireManagedNative('claude', f.env));
     await assert.rejects(rollbackNative('claude', f.env, f.ops), /No previous/);
-    await assert.rejects(installNative('claude', '2.1.296', f.env, f.ops), /not verified/);
+    await installNative('claude', '2.1.296', f.env, f.ops);
+    assert.match(await nativeStatus('claude', f.env), /2.1.296/);
   } finally { await f.close(); }
 });
 
@@ -177,4 +178,24 @@ test('Windows activation retries transient locks, bounds failures, and never ret
     }, async () => { assert.fail('Unexpected retry'); }), /Could not activate/);
     assert.equal(calls, 1);
   }
+});
+
+test('unrecorded candidates switch only after verification and a later block permits rollback', async () => {
+  const f = await fixture();
+  const { cliCompatibilityData } = await import('../src/cli-compatibility-data.ts');
+  try {
+    await installNative('codex', '0.162.0', f.env, f.ops);
+    const selectionPath = join(nativeDirectory('codex', f.env), 'selection.json');
+    const before = await readFile(selectionPath, 'utf8');
+    await assert.rejects(installNative('codex', '0.162.1', f.env, { ...f.ops,
+      async verify() { throw new Error('candidate contract failed'); } }), /candidate contract failed/);
+    assert.equal(await readFile(selectionPath, 'utf8'), before);
+    await installNative('codex', '0.162.1', f.env, f.ops);
+    assert.match(await nativeStatus('codex', f.env), /0.162.1/);
+    cliCompatibilityData.codex.blocked.push({ version: '0.162.1', reason: 'Known regression fixture' });
+    try {
+      await assert.rejects(requireManagedNative('codex', f.env), /Known regression fixture/);
+      assert.equal(await rollbackNative('codex', f.env, f.ops), '0.162.0');
+    } finally { cliCompatibilityData.codex.blocked.pop(); }
+  } finally { await f.close(); }
 });

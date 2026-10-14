@@ -1,3 +1,6 @@
+import { cliCompatibilityData } from './cli-compatibility-data.ts';
+import { probeCodexProtocol } from './codex-protocol-probe.ts';
+import { nativeDiagnosticEnv as doctorChildEnv } from './native-command.ts';
 import { codexCompatibility, protocolTestedCodexVersions, routingQualification } from './compatibility.ts';
 import { execFile } from 'node:child_process';
 import { readLiveConfig } from './live-config.ts';
@@ -9,14 +12,7 @@ import { nativeStatus, requireManagedNative } from './native-runtime.ts';
 
 type Probe = (args: string[]) => Promise<{ stdout: string; stderr: string }>;
 
-export function doctorChildEnv(source: Record<string, string | undefined>) {
-  const env = { ...source };
-  for (const key of Object.keys(env)) {
-    if (/(?:API_?KEY|TOKEN|SECRET|PASSWORD)$/i.test(key) ||
-      ['OPENAI_BASE_URL', 'OPENAI_ORG_ID', 'OPENAI_PROJECT_ID'].includes(key)) delete env[key];
-  }
-  return env;
-}
+export { nativeDiagnosticEnv as doctorChildEnv } from './native-command.ts';
 
 async function probeCodex(command: NativeCommand, args: string[], source: NodeJS.ProcessEnv) {
   const env = doctorChildEnv(source);
@@ -27,7 +23,7 @@ async function probeCodex(command: NativeCommand, args: string[], source: NodeJS
 };
 
 export async function runDoctor(env: Record<string, string | undefined>, probe?: Probe,
-  runtimePolicy: RuntimePolicy = createRuntimePolicy()) {
+  runtimePolicy: RuntimePolicy = createRuntimePolicy(), protocolProbe = probeCodexProtocol) {
   const effective = createRuntimePolicy(runtimePolicy);
   const lines = [`Router: smart-codex ${routerVersion}`, `Node: ${process.versions.node}`,
     'Text commands: observe (DEEP baseline); ROUTER_MODE applies only to text commands.',
@@ -61,8 +57,13 @@ export async function runDoctor(env: Record<string, string | undefined>, probe?:
     const version = await run(['--version']);
     const compatibility = codexCompatibility(version.stdout);
     lines.push(`Codex CLI: ${compatibility.version ?? 'unrecognized'}; protocol evidence ${compatibility.protocolTested ? 'recorded' : 'missing'}`);
-    ok &&= compatibility.protocolTested;
-    if (!compatibility.protocolTested) lines.push('Codex version is not yet verified; this does not establish a protocol failure. Run smart-codex native install.');
+    ok &&= compatibility.eligible;
+    if (compatibility.eligible && !compatibility.protocolTested) {
+      const evidence = await protocolProbe(env);
+      if (evidence.version !== compatibility.version) throw new Error('CLI changed during probe');
+      lines.push('Installed CLI protocol probe: passed; release/TUI qualification pending.');
+    }
+    if (!compatibility.eligible) lines.push('Codex version is blocked or unsupported; use native rollback or plain codex.');
     const status = await run(['login', 'status']);
     const loggedIn = `${status.stdout}\n${status.stderr}`.includes('Logged in using ChatGPT');
     lines.push(`Codex subscription login: ${loggedIn ? 'ready' : 'required; run codex login'}`);
@@ -78,7 +79,8 @@ export async function runDoctor(env: Record<string, string | undefined>, probe?:
     else lines.push('Codex diagnostic probe failed; check installation, login and CLI capabilities. Run codex login if needed.');
     ok = false;
   }
-  lines.push(`Compatibility: exact protocol-tested builds ${protocolTestedCodexVersions.join(', ')}; native TUI release certification remains pending.`);
+  lines.push(`Compatibility minimum: ${cliCompatibilityData.codex.minimum}; latest recorded evidence: ${cliCompatibilityData.codex.latestRecorded}; unrecorded stable builds within the supported major require a local probe. Blocked versions are rejected.`);
+  lines.push(`Compatibility: recorded protocol evidence for ${protocolTestedCodexVersions.join(', ')}; native TUI release certification remains pending.`);
   lines.push(`Automatic routing qualification: ${routingQualification.status}; task quality and confidence calibration remain unverified. Customer onboarding baseline: observe.`);
   lines.push('Diagnostics do not call Jev or execute a model; account model access and native TUI behavior remain unverified.');
   return { ok, text: `${lines.join('\n')}\n` };

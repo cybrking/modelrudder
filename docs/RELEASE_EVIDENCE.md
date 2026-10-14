@@ -1,5 +1,7 @@
 # Community preview evidence — October 7, 2026
 
+Preview.11 adds bounded stable CLI candidate evaluation and cross-platform reviewed evidence promotion. Release qualification remains distinct from local protocol compatibility. See [release readiness](RELEASE_READINESS.md) and [managed CLI updates](UPSTREAM_UPDATES.md).
+
 The source snapshot includes the allowlisted local client, client tests, packaging/installer and empty direct-classifier configuration. It excludes private Git history, hosted backend/billing infrastructure, customer records, internal business documents, raw evaluation traces and workspace projects. MIT and bundled dependency notices are retained.
 
 Preview.10 adds ungated Codex model and effort selection, retaining invalid-response and context fallbacks. The user approved the experimental change from synthetic route-label comparisons; this does not establish executor task quality. Its validation is recorded in [RELEASE_READINESS.md](RELEASE_READINESS.md).

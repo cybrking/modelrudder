@@ -1,3 +1,5 @@
+import { cliCompatibilityData } from './cli-compatibility-data.ts';
+import { probeClaudeProtocol } from './claude-protocol-probe.ts';
 import { execFile, spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -98,15 +100,21 @@ function capture(command: NativeCommand, args: string[], env: NodeJS.ProcessEnv)
 }
 
 export async function checkClaudeNative(command: NativeCommand, env: NodeJS.ProcessEnv, pluginDirectory: string,
-  run = capture) {
+  run = capture, protocolProbe = probeClaudeProtocol) {
   validateClaudeAuthEnvironment(env);
   const childEnv = claudeChildEnv(env);
   let version;
   try { version = claudeCompatibility(await run(command, ['--version'], childEnv)); }
   catch { throw new Error('Claude Code could not be started; install its official CLI first.'); }
-  if (!version.supportsMods) throw new Error('Claude Code 2.1.293 or newer within 2.1.x is required for native Mods routing with these models.');
+  if (!version.supportsMods) throw new Error('Claude Code requires a stable supported version; this build is blocked, too old or outside the supported major. Use plain claude.');
   try { await run(command, ['plugin', 'validate', pluginDirectory], childEnv); }
   catch { throw new Error('Claude rejected the bundled routing plugin. Use plain claude and check native plugin/policy compatibility.'); }
+  if (!version.offlineTested) {
+    try {
+      const evidence = await protocolProbe(command);
+      if (evidence.version !== `${version.version} (Claude Code)`) throw new Error('Version changed');
+    } catch { throw new Error('Claude native protocol probe failed; use plain claude or the last recorded build.'); }
+  }
   let status;
   try { status = await run(command, ['auth', 'status'], childEnv); }
   catch { throw new Error('Claude native login is required; run claude auth login yourself.'); }
@@ -133,7 +141,8 @@ export async function launchSmartClaude(args: string[], env = process.env): Prom
     process.stdout.write(`Claude ${version.version}: native login and plugin validation passed. No model call was submitted.\n`);
     try { createClaudeClassifier(env); process.stdout.write('Direct Jev configuration present (credentials were not tested remotely).\n'); }
     catch { process.stdout.write('Direct Jev configuration is not ready; pinned mode remains available. Run smart-claude setup.\n'); }
-    process.stdout.write(`Offline Mods fixture coverage: ${version.offlineTested ? 'this version' : '2.1.295 only; this version unqualified'}. Full live TUI and quality validation remain pending.\n`);
+    process.stdout.write(`Compatibility minimum: ${cliCompatibilityData.claude.minimum}; latest recorded evidence: ${cliCompatibilityData.claude.latestRecorded}; unrecorded stable builds require local synthetic checks.\n`);
+    process.stdout.write(`Offline Mods fixture coverage: ${version.offlineTested ? 'this version' : 'local synthetic probe passed; release qualification pending'}. Full live TUI and quality validation remain pending.\n`);
     return 0;
   }
   const classifier = parsed.mode === 'pinned' ? undefined : createClaudeClassifier(env);
@@ -147,7 +156,7 @@ export async function launchSmartClaude(args: string[], env = process.env): Prom
     process.stderr.write(`smart-claude: ${parsed.mode} per-turn routing via native Mods. Claude retains tools, approvals and login.\n`);
     if (classifier) process.stderr.write('Jev receives eligible user task text plus up to two bounded previous task excerpts. Automatic model choices are experimental.\n');
     process.stderr.write('Native effort is preserved. Model availability, provider limits and other trusted mods can affect the actual model.\n');
-    if (!version.offlineTested) process.stderr.write(`Claude ${version.version} is not offline-qualified; recorded module tests used 2.1.295.\n`);
+    if (!version.offlineTested) process.stderr.write(`Claude ${version.version} passed local synthetic checks; release qualification remains pending.\n`);
     return await new Promise<number>(done => {
       const child = spawn(command.file, [...command.args, ...nativeClaudeArgs(parsed, pluginDirectory, modelIds)], { stdio: 'inherit', shell: false,
         env: { ...claudeChildEnv(env), MODEL_RUDDER_CLAUDE_ENDPOINT: bridge!.endpoint, MODEL_RUDDER_CLAUDE_TOKEN: token,

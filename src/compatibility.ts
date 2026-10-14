@@ -1,8 +1,10 @@
-// Exact builds with recorded protocol evidence; this is not a semver promise.
-export const protocolTestedCodexVersions = ['0.159.3', '0.160.1', '0.161.0', '0.162.0'] as const;
+import { cliCompatibilityData } from './cli-compatibility-data.ts';
+import { cliCompatibility } from './cli-compatibility.ts';
+export const protocolTestedCodexVersions = cliCompatibilityData.codex.tested;
 export function codexCompatibility(output: string) {
   const version = output.trim().match(/^codex-cli (\d+\.\d+\.\d+(?:[-+][\w.-]+)?)$/)?.[1] ?? null;
-  return { version, protocolTested: version !== null && protocolTestedCodexVersions.some(v => v === version),
+  const policy = cliCompatibility('codex', version);
+  return { ...policy, protocolTested: policy.recorded,
     nativeTuiCertified: false as const };
 }
 
