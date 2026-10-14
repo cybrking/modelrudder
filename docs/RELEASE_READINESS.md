@@ -1,5 +1,11 @@
 # Community release readiness evaluation
 
+## Preview.11 managed Codex and Claude CLI candidates
+
+Stable CLI candidates are checked through isolated provider-specific protocol probes. Exact passing evidence and known-broken blocks ship as compatibility data; unrecorded stable builds must pass a fresh local probe before launch. Explicit candidate installs keep the current selection unless verification passes. Daily cross-platform checks validate promotion evidence and prepare a normal review PR; they do not merge or publish releases.
+
+Local validation on macOS: the community suite passed 193 tests with one platform skip; type checking and workflow lint passed. Codex 0.162.1 and Claude Code 2.1.299 were installed and passed their isolated probes without real authentication or paid inference. PR #20's Node 24/26 client checks passed on Ubuntu, macOS and Windows. Full authenticated TUI behavior, resume/interrupt behavior and model task quality remain unqualified. Release-recorded defaults remain Codex 0.162.0 and Claude Code 2.1.295 until cross-platform candidate evidence is reviewed and promoted.
+
 ## Preview.10 ungated Codex model and effort selection
 
 Codex now applies each valid classifier choice without the reported-confidence cutoff. Automatic effort follows the selected profile: FAST uses Luna/low, BALANCED Luna/medium, DEEP Sol/medium, and MAX Astra/medium. Fixed and observe modes retain their stated execution behavior. Policy clamps, invalid responses, provider failure, timeouts, cancellation, opaque context and per-turn ownership remain enforced. Reported confidence and probabilities remain descriptive metadata. Runtime policy version is 5 and explicitly records `classifier-choice` selection. Claude retains its separate provider-specific policy.
