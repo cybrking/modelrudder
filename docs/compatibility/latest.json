@@ -1,0 +1,200 @@
+{
+  "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+  "evidence": [
+    {
+      "provider": "claude",
+      "version": "2.1.300",
+      "os": "macos-latest",
+      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "native": {
+        "version": "2.1.300 (Claude Code)",
+        "provider": "synthetic loopback only",
+        "realAuthentication": false,
+        "paidInference": false,
+        "interactiveTuiQualified": false,
+        "results": [
+          {
+            "name": "alias-is-not-resolved",
+            "requested": "haiku",
+            "emitted": "haiku"
+          },
+          {
+            "name": "haiku-full-id",
+            "requested": "claude-haiku-5-5",
+            "emitted": "claude-haiku-5-5"
+          },
+          {
+            "name": "sonnet-full-id",
+            "requested": "claude-sonnet-5-5",
+            "emitted": "claude-sonnet-5-5"
+          },
+          {
+            "name": "opus-full-id",
+            "requested": "claude-opus-5-5",
+            "emitted": "claude-opus-5-5"
+          },
+          {
+            "name": "haiku-obeys-native-allowlist",
+            "requested": "claude-haiku-5-5",
+            "emitted": "claude-sonnet-5-5"
+          },
+          {
+            "name": "opus-obeys-native-allowlist",
+            "requested": "claude-opus-5-5",
+            "emitted": "claude-sonnet-5-5"
+          }
+        ]
+      }
+    },
+    {
+      "provider": "claude",
+      "version": "2.1.300",
+      "os": "ubuntu-latest",
+      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "native": {
+        "version": "2.1.300 (Claude Code)",
+        "provider": "synthetic loopback only",
+        "realAuthentication": false,
+        "paidInference": false,
+        "interactiveTuiQualified": false,
+        "results": [
+          {
+            "name": "alias-is-not-resolved",
+            "requested": "haiku",
+            "emitted": "haiku"
+          },
+          {
+            "name": "haiku-full-id",
+            "requested": "claude-haiku-5-5",
+            "emitted": "claude-haiku-5-5"
+          },
+          {
+            "name": "sonnet-full-id",
+            "requested": "claude-sonnet-5-5",
+            "emitted": "claude-sonnet-5-5"
+          },
+          {
+            "name": "opus-full-id",
+            "requested": "claude-opus-5-5",
+            "emitted": "claude-opus-5-5"
+          },
+          {
+            "name": "haiku-obeys-native-allowlist",
+            "requested": "claude-haiku-5-5",
+            "emitted": "claude-sonnet-5-5"
+          },
+          {
+            "name": "opus-obeys-native-allowlist",
+            "requested": "claude-opus-5-5",
+            "emitted": "claude-sonnet-5-5"
+          }
+        ]
+      }
+    },
+    {
+      "provider": "claude",
+      "version": "2.1.300",
+      "os": "windows-latest",
+      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "native": {
+        "version": "2.1.300 (Claude Code)",
+        "provider": "synthetic loopback only",
+        "realAuthentication": false,
+        "paidInference": false,
+        "interactiveTuiQualified": false,
+        "results": [
+          {
+            "name": "alias-is-not-resolved",
+            "requested": "haiku",
+            "emitted": "haiku"
+          },
+          {
+            "name": "haiku-full-id",
+            "requested": "claude-haiku-5-5",
+            "emitted": "claude-haiku-5-5"
+          },
+          {
+            "name": "sonnet-full-id",
+            "requested": "claude-sonnet-5-5",
+            "emitted": "claude-sonnet-5-5"
+          },
+          {
+            "name": "opus-full-id",
+            "requested": "claude-opus-5-5",
+            "emitted": "claude-opus-5-5"
+          },
+          {
+            "name": "haiku-obeys-native-allowlist",
+            "requested": "claude-haiku-5-5",
+            "emitted": "claude-sonnet-5-5"
+          },
+          {
+            "name": "opus-obeys-native-allowlist",
+            "requested": "claude-opus-5-5",
+            "emitted": "claude-sonnet-5-5"
+          }
+        ]
+      }
+    },
+    {
+      "provider": "codex",
+      "version": "0.162.1",
+      "os": "macos-latest",
+      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "native": {
+        "ok": true,
+        "version": "0.162.1",
+        "checks": [
+          "remote-capability",
+          "stdio-capability",
+          "stdio-initialize",
+          "fresh-thread-start",
+          "model-setting",
+          "read-only-permissions"
+        ],
+        "inferenceCalls": 0,
+        "nativeTuiCertified": false
+      }
+    },
+    {
+      "provider": "codex",
+      "version": "0.162.1",
+      "os": "ubuntu-latest",
+      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "native": {
+        "ok": true,
+        "version": "0.162.1",
+        "checks": [
+          "remote-capability",
+          "stdio-capability",
+          "stdio-initialize",
+          "fresh-thread-start",
+          "model-setting",
+          "read-only-permissions"
+        ],
+        "inferenceCalls": 0,
+        "nativeTuiCertified": false
+      }
+    },
+    {
+      "provider": "codex",
+      "version": "0.162.1",
+      "os": "windows-latest",
+      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "native": {
+        "ok": true,
+        "version": "0.162.1",
+        "checks": [
+          "remote-capability",
+          "stdio-capability",
+          "stdio-initialize",
+          "fresh-thread-start",
+          "model-setting",
+          "read-only-permissions"
+        ],
+        "inferenceCalls": 0,
+        "nativeTuiCertified": false
+      }
+    }
+  ]
+}
