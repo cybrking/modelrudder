@@ -326,7 +326,7 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
       onFailure: reason => { process.stderr.write(`smart-codex: relay disconnected (${reason}); no turn is retried.\n`); },
       classifier });
     process.stderr.write(`smart-codex: ${parsed.mode} routing; effort mode ${parsed.runtimePolicy.effortMode}; baseline medium. Plain codex is unchanged.\n`);
-    process.stderr.write(`Policy ${parsed.runtimePolicy.version} (${parsed.runtimePolicy.hash.slice(0, 12)}); confidence threshold ${parsed.runtimePolicy.policy.confidenceThreshold}.\n`);
+    process.stderr.write(`Policy ${parsed.runtimePolicy.version} (${parsed.runtimePolicy.hash.slice(0, 12)}); selection ${parsed.runtimePolicy.selectionRule}; reported confidence is informational.\n`);
     if (log.path) process.stderr.write(`Live usage in another terminal: smart-codex monitor ${log.path}\n`);
     if (parsed.mode !== 'pinned') process.stderr.write(`Jev receives user tasks and up to two earlier task excerpts${env.SMART_CODEX_CLASSIFIER === 'hosted' ? ' through your configured gateway' : ''}. Auto routing is experimental.\n`);
     return await new Promise<number>(done => {

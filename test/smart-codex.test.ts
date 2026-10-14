@@ -92,11 +92,9 @@ test('matching recognized settings are not reported as overrides', async () => {
   assert.equal(metadata[0].collaborationSettingsOverridden, false);
 });
 
-test('observe, uncertainty, malformed decisions, and outages use baseline', async () => {
+test('observe, malformed decisions, and outages use baseline', async () => {
   for (const extra of [
     { mode: 'observe' },
-    { classifier: async () => ({ profile: 'FAST', confidence: .2 }) },
-    { classifier: async () => ({ profile: 'MAX', confidence: .79 }) },
     { classifier: async () => ({ profile: 'bogus', confidence: .99 }) },
     { classifier: async () => { throw new Error('secret'); } },
   ]) {
@@ -105,7 +103,7 @@ test('observe, uncertainty, malformed decisions, and outages use baseline', asyn
   }
 });
 
-test('confident MAX routes to Astra medium; observe retains Sol and Astra can be pinned', async () => {
+test('valid MAX routes to Astra medium; observe retains Sol and Astra can be pinned', async () => {
   const classifier = async () => ({ profile: 'MAX', confidence: null, reportedConfidence: .8 });
   const auto = setup({ classifier }); await auto.relay.client(task());
   assert.equal(auto.upstream[0].params.model, 'gpt-6-astra');

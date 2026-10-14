@@ -8,14 +8,14 @@ Spend your strongest model on the tasks that need it. ModelRudder adds experimen
 
 Use your own native provider account and your own TypeSafe Jev API key. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef support is not included.
 
-Choose the launcher for your native coding tool. The preview.9 installer includes both; you only need the native CLI you intend to use.
+Choose the launcher for your native coding tool. The preview.10 installer includes both; you only need the native CLI you intend to use.
 
 | Native tool | ModelRudder launcher | Experimental automatic routing |
 | --- | --- | --- |
 | Claude Code | `smart-claude` | Haiku / Sonnet / Opus |
 | Codex | `smart-codex` | Luna / Sol / Astra |
 
-Both launchers choose a model for each eligible new user turn and keep that choice through its tool loop. Native tools, approvals and workspace permissions remain in place. ModelRudder is an independent project with no claimed provider endorsement.
+Both launchers choose a model for each eligible new user turn and keep that choice through its tool loop. Codex applies valid Jev choices without a confidence gate, including the profile's reasoning effort; reported confidence is informational. Native tools, approvals and workspace permissions remain in place. ModelRudder is an independent project with no claimed provider endorsement.
 
 ## Requirements
 
@@ -32,7 +32,7 @@ Copy this entire prompt into Codex. It will install ModelRudder and open the loc
 
 ```text
 Install ModelRudder on this computer so I can use model routing in Codex.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.10
 Read the README and docs/AGENT_INSTALL.md at that release tag and follow them.
 
 Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
@@ -63,7 +63,7 @@ Copy this entire prompt into Claude Code. It will install ModelRudder and open t
 
 ```text
 Install ModelRudder on this computer so I can use model routing in Claude Code.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.9
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.10
 Read docs/AGENT_INSTALL.md and docs/CLAUDE_CODE.md at that release tag
 and follow them.
 

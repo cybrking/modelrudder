@@ -28,7 +28,7 @@ function setup(options: Parameters<typeof createRuntimePolicy>[0] = {}, classifi
   return { runtimePolicy, relay, upstream, metadata, calls: () => calls };
 }
 
-test('effort modes execute medium for fixed/observe and low only for confident auto FAST', async () => {
+test('effort modes execute medium for fixed/observe and low for valid auto FAST', async () => {
   const defaults = parseSmartCodexArgs([], '/');
   const defaultRun = setup({ mode: defaults.mode, effortMode: defaults.runtimePolicy.effortMode });
   await defaultRun.relay.client(request());
@@ -48,7 +48,7 @@ test('effort modes execute medium for fixed/observe and low only for confident a
     assert.equal(r.metadata[0].effortMode, effortMode);
     assert.equal(r.metadata[0].effortOverridden, effort === 'low');
     assert.equal(r.metadata[0].collaborationSettingsOverridden, true); // Sol composer switches to Luna.
-    assert.equal(r.metadata[0].policyVersion, '4');
+    assert.equal(r.metadata[0].policyVersion, '5');
     assert.equal(r.calls(), 1); r.relay.close();
   }
 });
@@ -73,9 +73,8 @@ test('model observe and pinned keep medium regardless of effort mode', async () 
   }
 });
 
-test('uncertainty, invalid classifications, outages, deadlines and policy clamps preserve medium', async () => {
-  for (const raw of [{ profile: 'FAST', confidence: null, reportedConfidence: .79 },
-    { profile: 'FAST', confidence: null }, { profile: 'INVALID', confidence: .99 }, new Error('PRIVATE')]) {
+test('invalid classifications, outages, deadlines and policy clamps preserve medium', async () => {
+  for (const raw of [{ profile: 'INVALID', confidence: .99 }, new Error('PRIVATE')]) {
     const r = setup({ effortMode: 'auto' }, raw); await r.relay.client(request());
     assert.equal(r.upstream[0].params.model, 'gpt-6.1-sol');
     assert.equal(r.upstream[0].params.effort, 'medium'); r.relay.close();
@@ -149,7 +148,7 @@ test('effort proposals/settings appear in monitor and exports; historical and un
   const report = createUsageReport(usage.snapshot());
   assert.equal(report.routing.latestRequestedEffort, 'medium'); assert.equal(report.routing.proposedEffort, 'low');
   assert.equal(report.routing.effortMode, 'observe'); assert.equal(report.routing.effortReason, 'observe');
-  assert.equal(report.routing.latestVerifiedEffectiveEffort, null); assert.equal(report.routing.policyVersion, '4');
+  assert.equal(report.routing.latestVerifiedEffectiveEffort, null); assert.equal(report.routing.policyVersion, '5');
   assert.match(formatSessionUsage(usage.snapshot()), /Last route\s+Luna \/ medium/);
   assert.match(formatUsageReport(report), /Effort: proposed low; executed setting medium; mode observe/);
   assert.ok(!JSON.stringify(report).includes('PRIVATE')); r.relay.close();
@@ -163,14 +162,14 @@ test('effort proposals/settings appear in monitor and exports; historical and un
   usage.route(old.latestRoute); assert.ok(!JSON.stringify(usage.snapshot()).includes('PRIVATE'));
 });
 
-test('classifier evidence survives relay, private accounting and shareable report without changing the gate', async () => {
+test('classifier evidence survives relay, private accounting and shareable report while low-confidence choices select both model and effort', async () => {
   const probabilities = { FAST: .51, BALANCED: .48, DEEP: .01, MAX: 0 };
   const r = setup({ effortMode: 'auto' }, { profile: 'FAST', confidence: null, reportedConfidence: .47,
     probabilities, servedModel: 'jev-1.13.0', private: 'PRIVATE_PROVIDER_PAYLOAD' });
   await r.relay.client(request());
-  assert.equal(r.upstream[0].params.model, 'gpt-6.1-sol');
-  assert.equal(r.upstream[0].params.effort, 'medium');
-  assert.equal(r.metadata[0].reason, 'uncertain_classification');
+  assert.equal(r.upstream[0].params.model, 'gpt-6-luna');
+  assert.equal(r.upstream[0].params.effort, 'low');
+  assert.equal(r.metadata[0].reason, 'experimental_route');
   assert.deepEqual(r.metadata[0].probabilities, probabilities);
   assert.equal(r.metadata[0].servedModel, 'jev-1.13.0');
   const usage = createSessionUsage(); usage.route(r.metadata[0]);
@@ -180,7 +179,7 @@ test('classifier evidence survives relay, private accounting and shareable repor
   const report = createUsageReport(usage.snapshot());
   assert.deepEqual(report.routing.probabilities, probabilities);
   assert.equal(report.routing.servedModel, 'jev-1.13.0');
-  assert.match(formatSessionUsage(usage.snapshot()), /Low Jev confidence \(47%\); kept baseline/);
+  assert.match(formatSessionUsage(usage.snapshot()), /Auto choice \(Jev confidence 47%\)/);
   assert.ok(!formatSessionUsage(usage.snapshot()).includes('Profile probabilities'));
   assert.match(formatUsageReport(report), /Jev served model: jev-1.13.0/);
   assert.ok(!JSON.stringify(report).includes('PRIVATE'));
@@ -202,4 +201,21 @@ test('doctor reports selected effort mode without model execution', async () => 
     : args[0] === 'login' ? 'Logged in using ChatGPT' : args[0] === '--help' ? '--remote <ADDR>' : '--stdio', stderr: '' }),
   createRuntimePolicy({ mode: 'pinned', effortMode: 'observe' }));
   assert.equal(result.ok, true); assert.match(result.text, /Interactive effort mode: observe/);
+});
+
+
+test('valid model and effort choices do not depend on confidence concentration', async () => {
+  for (const profile of ['FAST', 'BALANCED', 'DEEP', 'MAX'] as Profile[]) {
+    for (const score of [0, .2, .79, null]) {
+      const r = setup({ effortMode: 'auto' }, { profile, confidence: null,
+        ...(score === null ? {} : { reportedConfidence: score }) });
+      await r.relay.client(request());
+      assert.equal(r.upstream[0].params.model, routes[profile].model);
+      assert.equal(r.upstream[0].params.effort, routes[profile].effort);
+      assert.equal(r.upstream[0].params.collaborationMode.settings.reasoning_effort, routes[profile].effort);
+      assert.equal(r.metadata[0].reason, 'experimental_route');
+      assert.equal(r.metadata[0].reportedConfidence, score);
+      r.relay.close();
+    }
+  }
 });

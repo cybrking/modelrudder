@@ -8,7 +8,7 @@ Claude may show:
 ModelRudder Routing this turn to Claude Sonnet 5.5 (Uncertain classification; using fallback).
 ```
 
-The classifier returned a result, but its confidence score was missing or below the routing threshold (0.80 by default). Automatic mode therefore uses the fallback: **Claude Sonnet 5.5** for Claude or **GPT-6.1 Sol** for Codex under the default configuration. Routing has not stopped; the next eligible message is evaluated again. This score is a routing signal, not an 80% guarantee that the answer will be correct. Classifier outages have a separate “classifier unavailable” reason.
+Claude uses **Claude Sonnet 5.5** as its default fallback when classifier confidence is missing or below 0.80. Historical Codex policies through version 4 also applied a confidence cutoff. Starting with preview.10 (policy 5), Codex applies every valid Jev choice regardless of reported confidence, including its profile’s reasoning effort. Invalid or unavailable classifier results still use the configured fallback; unavailable context retains its existing context fallback. Confidence is informational and does not guarantee answer quality. The next eligible turn gets a new decision.
 
 “Native model retained (Unclassified context)” means something different: the adapter cannot safely classify the available context, for example after resuming unobserved history. It leaves the native model unchanged. Observe mode also leaves the native model unchanged, and pinned mode uses your explicit model.
 

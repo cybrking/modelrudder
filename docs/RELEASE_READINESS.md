@@ -1,5 +1,13 @@
 # Community release readiness evaluation
 
+## Preview.10 ungated Codex model and effort selection
+
+Codex now applies each valid classifier choice without the reported-confidence cutoff. Automatic effort follows the selected profile: FAST uses Luna/low, BALANCED Luna/medium, DEEP Sol/medium, and MAX Astra/medium. Fixed and observe modes retain their stated execution behavior. Policy clamps, invalid responses, provider failure, timeouts, cancellation, opaque context and per-turn ownership remain enforced. Reported confidence and probabilities remain descriptive metadata. Runtime policy version is 5 and explicitly records `classifier-choice` selection. Claude retains its separate provider-specific policy.
+
+The user approved this experimental release after 443 live synthetic Jev classifier calls. The stock ungated question matched acceptable agent-authored joint model/effort labels on 28/31 development and 30/30 reserved examples (58/61 overall); its existing confidence-gated policy matched 49/61. These are routing-label comparisons, not executed-task success, calibrated adequacy or measured savings. The classifier rubric and exposed model/effort combinations are not expanded in this release. General task-quality qualification remains pending.
+
+Local validation on macOS with Node 26: 186 tests passed and one Windows-only test skipped; all 80 routing checks, type checking and the production dependency audit passed (zero vulnerabilities). The standalone installer installed into disposable paths, and both launchers reported preview.10 and displayed help. The Codex 0.162.0 native protocol smoke passed without inference. Runtime ID: `0.1.0-preview.10-e070f1dd340cf10c`. Cross-platform Community client CI must pass before publication; its final results accompany the release. No private capture data or experiment payloads are packaged.
+
 ## Preview.9 managed native CLI versions
 
 Scope: isolate ModelRudder from plain native CLI updates. Managed installation checks an exact recorded version and its shipped native smoke tests before selecting it, retains the previous selection, and provides explicit verified rollback. Missing pins produce installation instructions. Claude's managed child disables native auto-updates. Runtime and native rollback remain separate operations.

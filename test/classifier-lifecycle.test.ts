@@ -36,11 +36,12 @@ test('cancellation reaches a stalled transport and does not trip the circuit', a
   assert.equal(called, false);
 });
 
-test('invalid access opens cooldown immediately; calibrated and experimental scores stay separate', async () => {
+test('invalid access opens cooldown immediately; reported scores remain informational', async () => {
   let calls = 0;
   const classifier = createClassifierLifecycle(async () => { calls++; throw new ClassificationError('access_denied'); }, 100);
   await assert.rejects(classifier({ input: 'task' }), { code: 'access_denied' });
   await assert.rejects(classifier({ input: 'task' }), { code: 'circuit_open' }); assert.equal(calls, 1);
-  assert.equal(recommendRoute(decision as any, defaultPolicy, routes, 'calibrated').recommendation.profile, 'DEEP');
-  assert.equal(recommendRoute(decision as any, defaultPolicy, routes, 'reported').recommendation.profile, 'FAST');
+  const selected = recommendRoute(decision as any, defaultPolicy, routes);
+  assert.equal(selected.recommendation.profile, 'FAST');
+  assert.equal(selected.confidence, .99);
 });

@@ -35,7 +35,7 @@ export async function runDoctor(env: Record<string, string | undefined>, probe?:
     `Policy: ${effective.version}; SHA-256 ${effective.hash}`,
     `Context eligibility: ${effective.contextEligibility}; native references, media, resumed/forked and unobserved histories use the medium baseline unless pinned.`,
     `Interactive effort mode: ${effective.effortMode}; baseline medium; FAST Luna proposal low, other profiles medium. Model observe, pinned and fallback use medium.`,
-    `Fallback: ${effective.routes[effective.policy.fallback].model}; threshold ${effective.policy.confidenceThreshold} (uncalibrated); Jev timeout ${effective.classificationTimeoutMs} ms`];
+    `Fallback: ${effective.routes[effective.policy.fallback].model}; selection ${effective.selectionRule}; confidence informational; Jev timeout ${effective.classificationTimeoutMs} ms`];
   let ok = Number(process.versions.node.split('.')[0]) >= 24;
   lines.push(`TypeSafe credential: ${env.TYPESAFE_API_KEY?.trim() ? 'present' : 'missing'}`);
   try {

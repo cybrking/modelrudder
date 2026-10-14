@@ -187,13 +187,13 @@ export function createTurnRelay(options: {
           previousUserTasks: previous, currentTask: text,
         }) }, controller.signal));
         proposed = decision.profile;
-        const recommendation = recommendRoute(decision, runtime.policy, runtime.routes, 'reported');
+        const recommendation = recommendRoute(decision, runtime.policy, runtime.routes);
         confidence = recommendation.confidence;
         probabilities = decision.probabilities ?? null;
         servedModel = decision.servedModel ?? null;
-        if (runtime.mode === 'auto' && recommendation.qualified) {
-          selected = proposed; reason = 'experimental_route';
-        } else reason = runtime.mode === 'observe' ? 'observe' : 'uncertain_classification';
+        if (runtime.mode === 'auto') {
+          selected = recommendation.recommendation.profile; reason = 'experimental_route';
+        } else reason = 'observe';
       } catch (error) { reason = classifierFailureReason(error); }
     } else if (runtime.mode !== 'pinned' && hasMedia) reason = 'media_baseline';
     else if (runtime.mode !== 'pinned' && (!text.trim() || text.length > 100_000)) reason = 'unsupported_input_baseline';
@@ -209,7 +209,7 @@ export function createTurnRelay(options: {
     const candidate = proposed === null ? null : enforce(proposed, runtime.policy, runtime.routes).route;
     const { effort, effortReason, proposedEffort } = turnEffort({ mode: runtime.mode, effortMode: runtime.effortMode,
       candidate, selected: enforce(selected, runtime.policy, runtime.routes).route,
-      qualified: confidence !== null && confidence >= runtime.policy.confidenceThreshold, reason });
+      reason });
     // Collaboration mode settings take precedence over top-level model/effort.
     const updated = { ...params, model, effort };
     if (params.collaborationMode?.settings) {

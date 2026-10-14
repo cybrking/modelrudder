@@ -178,11 +178,11 @@ test('bounded context reasons and policy version survive accounting/reporting wi
     const usage = createSessionUsage(); usage.route(h.routes[0]);
     const snapshot = usage.snapshot(); const report = createUsageReport(snapshot);
     assert.equal(report.routing.reason, fresh ? 'reference_context_baseline' : 'unclassified_context_baseline');
-    assert.equal(report.routing.effortReason, report.routing.reason); assert.equal(report.routing.policyVersion, '4');
+    assert.equal(report.routing.effortReason, report.routing.reason); assert.equal(report.routing.policyVersion, '5');
     assert.equal(report.routing.latestRequestedEffort, 'medium'); assert.equal(report.routing.proposedProfile, null);
     assert.equal(report.classifier.calls, 0); assert.ok(!JSON.stringify(snapshot).includes('PRIVATE'));
     assert.ok(!JSON.stringify(report).includes('PRIVATE'));
-    for (const version of ['1', '2', '3', '4']) {
+    for (const version of ['1', '2', '3', '4', '5']) {
       snapshot.latestRoute!.policyVersion = version; assert.equal(createUsageReport(snapshot).routing.policyVersion, version);
     }
     snapshot.latestRoute!.policyVersion = 'PRIVATE'; assert.equal(createUsageReport(snapshot).routing.policyVersion, null);
