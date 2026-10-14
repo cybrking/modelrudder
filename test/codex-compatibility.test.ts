@@ -20,7 +20,7 @@ test('compatibility keeps historical builds and rejects untested versions and ma
   for (const version of ['0.159.3', '0.160.1', '0.161.0']) {
     assert.equal(codexCompatibility(`codex-cli ${version}`).protocolTested, true);
   }
-  for (const output of ['codex-cli 0.163.0', 'codex-cli 0.162.1', 'codex-cli 0.162.0-beta.1',
+  for (const output of ['codex-cli 0.163.0', 'codex-cli 0.162.2', 'codex-cli 0.162.0-beta.1',
     'codex-cli 0.162.0+modified', 'another-cli 0.162.0', 'codex-cli 0.162.0\nextra output', '']) {
     assert.equal(codexCompatibility(output).protocolTested, false, output);
   }
