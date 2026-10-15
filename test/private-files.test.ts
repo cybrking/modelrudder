@@ -4,7 +4,17 @@ import assert from 'node:assert/strict';
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { isPrivatePathSync, protectPrivatePathSync } from '../src/private-files.ts';
+import { isPrivatePath, isPrivatePathSync, protectPrivatePath, protectPrivatePathSync } from '../src/private-files.ts';
+
+test('canceled asynchronous privacy checks fail closed before filesystem mutation', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'router-private-cancel-'));
+  const controller = new AbortController(); controller.abort();
+  try {
+    const path = join(root, 'missing');
+    assert.equal(await isPrivatePath(path, false, controller.signal), false);
+    await assert.rejects(protectPrivatePath(path, false, controller.signal), { name: 'AbortError' });
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 
 test('private storage verifies ownership permissions and refuses wrong types or aliases', () => {
   const root = mkdtempSync(join(tmpdir(), 'router-private-'));
@@ -48,3 +58,4 @@ test('Windows private storage rejects explicit access for Everyone and repairs i
     assert.equal(isPrivatePathSync(file), true);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
