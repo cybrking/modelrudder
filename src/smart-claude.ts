@@ -130,7 +130,10 @@ export async function launchSmartClaude(args: string[], env = process.env): Prom
   ({ args, env } = classifierOverride(args, env));
   if (args[0] === 'classifier') {
     if (args.length !== 2 || args[1] !== 'status') throw new Error('Usage: classifier status');
-    const status = await classifierStatus(env); process.stdout.write(status.text); return status.ok ? 0 : 1;
+    const status = await classifierStatus(env); process.stdout.write(status.text);
+    try { createClaudeClassifier(env); }
+    catch { process.stdout.write('Claude requires enabled direct Jev or local Tev; hosted gateway is unsupported. Run setup --classifier jev or setup --classifier tev.\n'); return 1; }
+    return status.ok ? 0 : 1;
   }
   if (args[0] === 'report') return runClaudeReport(args.slice(1), claudeUsageDirectory(env));
   if (args.length === 1 && ['--help', '-h'].includes(args[0])) { process.stdout.write(smartClaudeHelp); return 0; }

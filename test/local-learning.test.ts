@@ -22,11 +22,14 @@ test('local capture is opt-in, private, separate from usage metadata, and never 
         usage.route(metadata);
         disabled.write(task, usage.snapshot().latestRoute);
         capture.write(task, usage.snapshot().latestRoute);
+        assert.equal(capture.saved, 0, 'capture does not block turn forwarding');
       } });
     await relay.client({ id: 1, method: 'thread/start', params: {} });
     relay.server({ id: 1, result: { thread: { id: 'PRIVATE_THREAD' } } });
     await relay.client({ id: 2, method: 'turn/start', params: { threadId: 'PRIVATE_THREAD',
       input: [{ type: 'text', text: 'PRIVATE_TASK_TEXT' }] } });
+    assert.equal(upstream.length, 2);
+    await capture.flush();
     assert.equal(disabled.saved, 0);
     assert.equal(capture.saved, 1);
     assert.equal(upstream.length, 2);
@@ -39,12 +42,13 @@ test('local capture is opt-in, private, separate from usage metadata, and never 
     assert.ok(!JSON.stringify(usage.snapshot()).includes('PRIVATE_TASK_TEXT'));
     assert.ok(isPrivatePathSync(path));
     capture.write({ task: 'replacement', previousUserTasks: [], opaqueContext: false }, usage.snapshot().latestRoute);
+    await capture.flush();
     assert.equal(capture.failed, true);
     assert.equal(readFileSync(path, 'utf8'), raw);
   } finally { rmSync(folder, { recursive: true, force: true }); }
 });
 
-test('unsafe capture directory fails without throwing or touching its destination', () => {
+test('unsafe capture directory fails without throwing or touching its destination', async () => {
   const folder = mkdtempSync(join(tmpdir(), 'rudder-learning-'));
   try {
     const target = join(folder, 'target'); writeFileSync(target, 'unchanged');
@@ -52,6 +56,7 @@ test('unsafe capture directory fails without throwing or touching its destinatio
     const capture = createLocalLearning(link);
     const usage = createSessionUsage(); usage.route({ model: 'gpt-6.1-sol', reason: 'pinned' });
     capture.write({ task: 'task', previousUserTasks: [], opaqueContext: false }, usage.snapshot().latestRoute);
+    await capture.flush();
     assert.equal(capture.failed, true);
     assert.equal(capture.saved, 0);
     assert.equal(readFileSync(target, 'utf8'), 'unchanged');

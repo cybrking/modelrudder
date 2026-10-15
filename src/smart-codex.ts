@@ -367,6 +367,7 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
     });
   } finally {
     await relay?.close(); await rm(directory, { recursive: true, force: true });
+    await learning.flush();
     usage.finish(); publish();
     log.close();
     process.stderr.write(`${formatSessionUsage(usage.snapshot(), {

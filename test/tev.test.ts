@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
@@ -167,4 +168,16 @@ test('local usage never receives Jev pricing and reports preserve Tev identity',
   assert.match(formatSessionUsage(snapshot), /Tev \(local\)/);
   const report = createUsageReport(snapshot);
   assert.equal(report.classifier.provider, 'tev'); assert.equal(report.classifier.estimatedUsd, null);
+});
+
+
+test('Claude classifier status rejects the Codex-only hosted gateway', () => {
+  const result = spawnSync(process.execPath, ['src/smart-claude.ts', 'classifier', 'status'], {
+    encoding: 'utf8', env: { ...process.env, SMART_CODEX_CLASSIFIER: 'hosted',
+      ALLOW_JEV_CLASSIFICATION: 'true', ALLOW_CLASSIFICATION: 'true',
+      SMART_CODEX_GATEWAY_URL: 'https://example.com/classify', SMART_CODEX_GATEWAY_TOKEN: 'x'.repeat(32) },
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /hosted gateway is unsupported/);
+  assert.match(result.stdout, /setup --classifier/);
 });
