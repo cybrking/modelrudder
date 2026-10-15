@@ -27,6 +27,6 @@ export type Policy = {
   confidenceThreshold: number;
   fallback: Profile;
 };
-export type Classifier = (request: Request, signal?: AbortSignal) => Promise<unknown>;
+export type Classifier = ((request: Request, signal?: AbortSignal) => Promise<unknown>) & { metadata?: { provider: string; version: string } };
 export type Execution = { text: string; success: boolean; inputTokens: number; outputTokens: number };
 export type Executor = (request: Request, route: Route) => Promise<Execution>;

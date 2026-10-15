@@ -25,7 +25,7 @@ export const claudeContextReasons = ['media_baseline', 'reference_context_baseli
 export type ClaudeContextReason = typeof claudeContextReasons[number];
 export type ClaudeTask = { sessionId: string; turnId: string; task: string; contextReason: ClaudeContextReason | null };
 export type ClaudeDecision = { model: ClaudeModel; reason: string; proposed: Profile | null; reportedConfidence: number | null };
-export const claudePolicy = Object.freeze({ version: 'claude-native-mods-v1', fallback: 'sonnet', confidenceThreshold: 0.8, routes: claudeRoutes, modelIds: defaultClaudeModelIds, effort: 'native', classifier: claudeClassifierVersion });
+export const claudePolicy = Object.freeze({ version: 'claude-native-mods-v2', fallback: 'sonnet', routes: claudeRoutes, modelIds: defaultClaudeModelIds, effort: 'native', classifier: claudeClassifierVersion });
 export const claudePolicyHash = createHash('sha256').update(JSON.stringify(claudePolicy)).digest('hex');
 const record = (raw: unknown): raw is Record<string, any> => Boolean(raw) && typeof raw === 'object' && !Array.isArray(raw);
 const id = (raw: unknown): raw is string => typeof raw === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(raw);
@@ -91,9 +91,8 @@ export function createClaudeRouter(options: { mode: ClaudeRoutingMode; model: Cl
               const result = parseDecision(await classify({ input: JSON.stringify({ previousUserTasks: (history.get(task.sessionId) ?? []).map(item => item.text), currentTask: task.task }) }, controller.signal));
               const score = result.reportedConfidence ?? result.confidence;
               classifierUsage = result.usage;
-              const qualified = score !== null && score >= claudePolicy.confidenceThreshold;
-              decision = { model: options.mode === 'auto' && qualified ? claudeRoutes[result.profile] : 'sonnet',
-                reason: options.mode === 'observe' ? 'observe' : qualified ? 'experimental_route' : 'uncertain_classification',
+              decision = { model: options.mode === 'auto' ? claudeRoutes[result.profile] : 'sonnet',
+                reason: options.mode === 'observe' ? 'observe' : 'experimental_route',
                 proposed: result.profile, reportedConfidence: score };
             } catch (error) { decision.reason = classifierFailureReason(error); }
           } else if (options.mode !== 'pinned' && !task.contextReason && !task.task.trim()) decision.reason = 'unsupported_input_baseline';
@@ -104,7 +103,7 @@ export function createClaudeRouter(options: { mode: ClaudeRoutingMode; model: Cl
             if (history.size > 32) history.delete(history.keys().next().value!);
           }
           options.onRoute?.({ ...decision, mode: options.mode, policyVersion: claudePolicy.version, policyHash: runtimeHash,
-            classifierVersion: classified ? claudeClassifierVersion : null, classifierUsage,
+            classifierVersion: classified ? options.classifier?.metadata?.version ?? claudeClassifierVersion : null, classifierUsage,
             routingLatencyMs: Math.max(0, performance.now() - started) });
           return decision;
         } finally { state.settled = true; parent?.removeEventListener('abort', cancel); }

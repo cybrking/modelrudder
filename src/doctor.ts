@@ -4,7 +4,8 @@ import { nativeDiagnosticEnv as doctorChildEnv } from './native-command.ts';
 import { codexCompatibility, protocolTestedCodexVersions, routingQualification } from './compatibility.ts';
 import { execFile } from 'node:child_process';
 import { readLiveConfig } from './live-config.ts';
-import { readClassifierConfig } from './classifier.ts';
+import { classifierStatus } from './setup.ts';
+import { readClassifierConfig, classificationEnabled } from './classifier.ts';
 import { createRuntimePolicy, routerVersion } from './runtime-policy.ts';
 import type { RuntimePolicy } from './runtime-policy.ts';
 import type { NativeCommand } from './native-command.ts';
@@ -31,21 +32,23 @@ export async function runDoctor(env: Record<string, string | undefined>, probe?:
     `Policy: ${effective.version}; SHA-256 ${effective.hash}`,
     `Context eligibility: ${effective.contextEligibility}; native references, media, resumed/forked and unobserved histories use the medium baseline unless pinned.`,
     `Interactive effort mode: ${effective.effortMode}; baseline medium; FAST Luna proposal low, other profiles medium. Model observe, pinned and fallback use medium.`,
-    `Fallback: ${effective.routes[effective.policy.fallback].model}; selection ${effective.selectionRule}; confidence informational; Jev timeout ${effective.classificationTimeoutMs} ms`];
+    `Fallback: ${effective.routes[effective.policy.fallback].model}; selection ${effective.selectionRule}; confidence informational; classifier timeout ${effective.classificationTimeoutMs} ms`];
   let ok = Number(process.versions.node.split('.')[0]) >= 24;
-  lines.push(`TypeSafe credential: ${env.TYPESAFE_API_KEY?.trim() ? 'present' : 'missing'}`);
+  if (env.SMART_CODEX_CLASSIFIER !== 'tev') lines.push(`TypeSafe credential: ${env.TYPESAFE_API_KEY?.trim() ? 'present' : 'missing'}`);
   try {
     const config = readLiveConfig(env);
-    lines.push(`Text Jev classification: ${config.allowClassification ? 'enabled' : 'disabled'}`);
+    lines.push(`Text classification: ${config.allowClassification ? 'enabled' : 'disabled'}`);
   } catch (error) {
     lines.push(`Configuration: ${(error as Error).message}`);
   }
   let interactiveReady = !effective.policy.allowClassification;
-  if (effective.policy.allowClassification && env.ALLOW_JEV_CLASSIFICATION === 'true') {
+  if (effective.policy.allowClassification && classificationEnabled(env)) {
     try { readClassifierConfig(env); interactiveReady = true; } catch { /* Report readiness below without credentials. */ }
   }
-  lines.push(`Classifier transport: ${env.SMART_CODEX_CLASSIFIER === 'hosted' ? 'hosted gateway; endpoint and customer token withheld' : 'direct Jev'}`);
-  lines.push(`Interactive Jev classification: ${!effective.policy.allowClassification ? 'disabled; no credentials required' : interactiveReady ? 'configured' : 'requires ALLOW_JEV_CLASSIFICATION=true and TYPESAFE_API_KEY or hosted gateway credentials; alternatively use --routing pinned'}`);
+  const status = await classifierStatus(env); lines.push(status.text);
+  if (effective.policy.allowClassification) interactiveReady &&= status.ok;
+  lines.push(`Classifier transport: ${env.SMART_CODEX_CLASSIFIER === 'tev' ? 'local Tev' : env.SMART_CODEX_CLASSIFIER === 'hosted' ? 'hosted gateway; endpoint and customer token withheld' : 'direct Jev'}`);
+  lines.push(`Interactive classification: ${!effective.policy.allowClassification ? 'disabled; no credentials required' : interactiveReady ? 'configured' : 'requires provider setup; run setup --classifier jev or setup --classifier tev; alternatively use --routing pinned'}`);
   ok &&= interactiveReady;
   try {
     let run = probe;
@@ -82,7 +85,7 @@ export async function runDoctor(env: Record<string, string | undefined>, probe?:
   lines.push(`Compatibility minimum: ${cliCompatibilityData.codex.minimum}; latest recorded evidence: ${cliCompatibilityData.codex.latestRecorded}; unrecorded stable builds within the supported major require a local probe. Blocked versions are rejected.`);
   lines.push(`Compatibility: recorded protocol evidence for ${protocolTestedCodexVersions.join(', ')}; native TUI release certification remains pending.`);
   lines.push(`Automatic routing qualification: ${routingQualification.status}; task quality and confidence calibration remain unverified. Customer onboarding baseline: observe.`);
-  lines.push('Diagnostics do not call Jev or execute a model; account model access and native TUI behavior remain unverified.');
+  lines.push('Diagnostics do not submit classification inference or execute a model; account model access and native TUI behavior remain unverified.');
   return { ok, text: `${lines.join('\n')}\n` };
 }
 

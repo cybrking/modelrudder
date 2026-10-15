@@ -17,6 +17,7 @@ function snapshot() {
     inputTokens: 100, cachedInputTokens: 20, cacheWriteInputTokens: 10, outputTokens: 50, reasoningOutputTokens: 10,
   } } } });
   u.route({ model: 'gpt-6-luna', proposed: 'FAST', reportedConfidence: .99, reason: 'experimental_route',
+    policyVersion: '5', selectionRule: 'classifier-choice',
     routingLatencyMs: 35.5, modelOverridden: true, effortOverridden: false, collaborationSettingsOverridden: false });
   u.finish();
   return u.snapshot();
@@ -29,12 +30,21 @@ test('report preserves observed tokens and uncertainty without inventing outcome
   assert.equal(report.routing.latestRequestedModel, 'gpt-6-luna');
   assert.equal(report.routing.latestVerifiedEffectiveModel, null);
   assert.equal(report.routing.latencyMs, 35.5);
+  assert.equal(report.routing.selectionRule, 'classifier-choice');
   assert.equal(report.routing.modelOverridden, true);
   assert.equal(report.outcomes.acceptedTasks, null);
   assert.equal(report.outcomes.actualSubscriptionMoneySaved, null);
   assert.equal(report.referenceComparison.coveredRateDifferenceAfterReportedClassifierUsd,
     s.solReferenceUsd - s.apiEquivalentUsd - s.jev.estimatedUsd);
   assert.match(formatUsageReport(report), /not a counterfactual baseline run or measured savings/);
+  assert.match(formatUsageReport(report), /confidence role: informational only, not a selection gate/);
+});
+
+test('older records without a selection rule report confidence semantics as unknown', () => {
+  const s: any = snapshot(); delete s.latestRoute.selectionRule;
+  const report = createUsageReport(s);
+  assert.equal(report.routing.selectionRule, null);
+  assert.match(formatUsageReport(report), /confidence role: unknown/);
 });
 
 test('export allowlist omits arbitrary content and unsafe routing values', () => {

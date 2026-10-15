@@ -1,14 +1,8 @@
 # Routing troubleshooting
 
-## What “uncertain classification” means
+## Why Claude uses Sonnet as a fallback
 
-Claude may show:
-
-```text
-ModelRudder Routing this turn to Claude Sonnet 5.5 (Uncertain classification; using fallback).
-```
-
-Claude uses **Claude Sonnet 5.5** as its default fallback when classifier confidence is missing or below 0.80. Historical Codex policies through version 4 also applied a confidence cutoff. Starting with preview.10 (policy 5), Codex applies every valid Jev choice regardless of reported confidence, including its profile’s reasoning effort. Invalid or unavailable classifier results still use the configured fallback; unavailable context retains its existing context fallback. Confidence is informational and does not guarantee answer quality. The next eligible turn gets a new decision.
+Claude routes every valid automatic classification regardless of whether reported confidence is low or missing. It uses **Claude Sonnet 5.5** when classification is invalid or unavailable. Confidence remains descriptive metadata, not a measure of answer quality. The next eligible task gets a fresh routing decision.
 
 “Native model retained (Unclassified context)” means something different: the adapter cannot safely classify the available context, for example after resuming unobserved history. It leaves the native model unchanged. Observe mode also leaves the native model unchanged, and pinned mode uses your explicit model.
 

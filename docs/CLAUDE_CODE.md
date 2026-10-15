@@ -12,7 +12,7 @@ ModelRudder's Codex adapter classifies an eligible new user turn, applies a cons
 | Route each observed eligible user turn | `turn/start` | `prompt.submit` + `turn.start` + `turn.step` |
 | Keep route through tool loop | One setting per native turn | Decision keyed by native `turnId`; stream forwarded unchanged |
 | Auto / observe / pinned | Supported | Supported |
-| Classifier | Direct Jev or existing hosted gateway | Direct Jev with a separate Claude rubric |
+| Classifier | Direct Jev, local Tev or existing hosted gateway | Direct Jev or local Tev with a separate Claude rubric |
 | Conservative opaque/media/history handling | Baseline | Native selection retained; no automatic downgrade |
 | Subagents and background helpers | Native | Native; `agentId` and unobserved steps untouched |
 | Effort routing | Fixed / observe / auto | Native effort preserved; no Claude effort classifier |
@@ -20,7 +20,7 @@ ModelRudder's Codex adapter classifies an eligible new user turn, applies a cons
 
 The family mapping is FAST → Haiku, BALANCED/DEEP → Sonnet, MAX → Opus. Claude's `turn.step` API does not resolve family aliases, so the adapter sends explicit model IDs: `claude-haiku-5-5`, `claude-sonnet-5-5` and `claude-opus-5-5`. These were checked against the official current model guide and a synthetic native-provider probe. To deliberately pin another version within the same family, configure `SMART_CLAUDE_HAIKU_MODEL`, `SMART_CLAUDE_SONNET_MODEL` or `SMART_CLAUDE_OPUS_MODEL` in the shared private environment file. Cross-family overrides and arbitrary endpoints are rejected; account availability still belongs to Claude.
 
-The reported-confidence threshold is 0.8, as an **experimental gate**, not a probability of task success. Invalid, unavailable or uncertain classification keeps the baseline. Families and rubric are not calibrated coding-quality guarantees.
+Every valid Claude classification selects its mapped model in automatic mode, regardless of reported confidence. Confidence is retained as descriptive metadata, not treated as a probability of task success. Invalid or unavailable classification keeps the baseline. Families and rubric are not calibrated coding-quality guarantees.
 
 Claude's native fallback or an incoming model change during the tool loop takes precedence. The mod releases its override for the remainder of that turn instead of repeatedly forcing a model Claude moved away from. No model/tool request is retried by ModelRudder. In auto mode a new eligible turn gets a new routing decision, so the native `/model` selection is not a persistent pin; use pinned mode for that.
 
@@ -30,9 +30,9 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 - A managed official Claude Code **2.1.295** installation via `smart-claude native install`, requiring npm/network access once. The managed launcher disables native auto-updates for its child process; plain Claude remains independent.
 - A separately installed official Claude CLI for native login; use `claude auth login` with a `claude.ai` account yourself if needed. This login is reused by the managed CLI; the plain CLI can update independently
 - Your own direct Jev credentials and explicit `ALLOW_JEV_CLASSIFICATION=true` for observe/auto
-- The official `v0.1.0-preview.11` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
+- The official `v0.1.0-preview.12` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
 
-For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.11 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
+For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.12 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
 
 Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.9 release containing both Claude multi-turn fixes.
 
@@ -96,7 +96,7 @@ Logs are private metadata files in the installed state directory's `claude-logs`
 
 ## Verification and remaining limits
 
-- Node regression fixtures cover classification, confidence gating, privacy, cancellation, duplicate routing, context bounds, HTTP authentication, argument handling and separate usage records.
+- Node regression fixtures cover classification independent of confidence, privacy, cancellation, duplicate routing, context bounds, HTTP authentication, argument handling and separate usage records.
 - The actual official Claude Code **2.1.295** binary passed static plugin validation and the plugin's no-inference test suite in an isolated, unsigned-in environment.
 - An isolated native-provider wire probe verified that full-ID rewrites reach the synthetic local provider, while a Sonnet-only native model allowlist overrides disallowed Haiku/Opus rewrites. This used a fake key and entirely synthetic responses, not real Anthropic inference. Family aliases alone failed this check and are not used on `turn.step`.
 - Dual-launcher release/install/rollback/uninstall tests pass, including Windows bootstrap fixtures. Full authenticated Claude terminal journeys remain unqualified.
@@ -124,6 +124,12 @@ The Agent SDK has separate authentication terms. This integration runs native Cl
 
 ## Routing notices
 
-Notices display the configured model ID as a readable name and version, for example `Claude Sonnet 5.5`. Dated IDs also show the snapshot date; custom IDs retain the exact ID. “Uncertain classification; using fallback” means the classifier score is missing or below the 0.80 threshold, so auto uses Sonnet. It does not disable later classification. See the [copyable routing examples](ROUTING_EXAMPLES.md#three-routing-tests-for-claude-code) and [routing troubleshooting](TROUBLESHOOTING.md).
+Notices display the configured model ID as a readable name and version, for example `Claude Sonnet 5.5`. Dated IDs also show the snapshot date; custom IDs retain the exact ID. Preview.12 applies every valid classifier choice in auto mode; low or missing reported confidence alone does not select the fallback. Invalid or unavailable classification uses Sonnet, and ineligible context follows its context policy. Historical releases could display “Uncertain classification; using fallback” for a confidence cutoff. See the [copyable routing examples](ROUTING_EXAMPLES.md#three-routing-tests-for-claude-code) and [routing troubleshooting](TROUBLESHOOTING.md).
 
 Managed native selection, explicit upgrades and rollback are described in [Native versions](NATIVE_VERSIONS.md). An existing installation must create its managed pin once after upgrading to preview.9. Native installation and its synthetic verification do not require a Jev key or copy provider credentials.
+
+## Local Tev (preview.12)
+
+Preview.12 supports `smart-claude setup --classifier tev`, `smart-claude classifier status` and `smart-claude --classifier tev --routing observe`. See [classifier setup](CLASSIFIER_CHOICES.md). Tev uses the Claude rubric; native effort remains unchanged. Earlier release instructions above describe the hosted Jev path. Local metadata checks and synthetic bridge tests do not certify live Claude TUI or routing quality.
+
+See the [live qualification procedure and current evidence](CLAUDE_LIVE_QUALIFICATION.md) for the authenticated terminal checks that remain.

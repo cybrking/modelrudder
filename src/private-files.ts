@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { chmodSync, lstatSync } from 'node:fs';
 
 // Paths travel through an environment variable, never PowerShell source or a shell command.
@@ -59,4 +59,24 @@ export function isPrivatePathSync(path: string, directory = false): boolean {
       ? aclCommand(checkAcl, path) === 'true'
       : (lstatSync(path).mode & 0o077) === 0;
   } catch { return false; }
+}
+
+async function aclCommandAsync(script: string, path: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], {
+      encoding: 'utf8', timeout: 15_000, windowsHide: true,
+      env: { ...process.env, MODEL_RUDDER_ACL_PATH: path },
+    }, (error, stdout) => error ? reject(error) : resolve(stdout.trim()));
+  });
+}
+export async function isPrivatePath(path: string, directory = false): Promise<boolean> {
+  if (process.platform !== 'win32') return isPrivatePathSync(path, directory);
+  try { return matchingPath(path, directory) && await aclCommandAsync(checkAcl, path) === 'true'; }
+  catch { return false; }
+}
+export async function protectPrivatePath(path: string, directory = false): Promise<void> {
+  if (process.platform !== 'win32') return protectPrivatePathSync(path, directory);
+  if (!matchingPath(path, directory)) throw new Error('Private storage must be a real file or directory.');
+  await aclCommandAsync(protectAcl, path);
+  if (!await isPrivatePath(path, directory)) throw new Error('Unable to enforce private Windows storage permissions.');
 }

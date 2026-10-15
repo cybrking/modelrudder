@@ -32,7 +32,7 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
   if (!record(raw) || raw.version !== 1 || typeof raw.ended !== 'boolean' || typeof raw.partial !== 'boolean' ||
       !record(raw.byModel) || !record(raw.jev) || !count(raw.compactions) ||
       !['calls', 'unknownCalls', 'inputTokens', 'outputTokens'].every(k => count(raw.jev[k])) ||
-      raw.jev.unknownCalls > raw.jev.calls || !amount(raw.jev.estimatedUsd) ||
+      raw.jev.unknownCalls > raw.jev.calls || !(raw.classifierProvider === 'tev' ? raw.jev.estimatedUsd === null : amount(raw.jev.estimatedUsd)) ||
       !amount(raw.apiEquivalentUsd) || !amount(raw.solReferenceUsd) ||
       raw.priceBasis !== '2026-10-01 standard short context') throw new Error('Invalid usage snapshot');
   const tokens = tokenCounts(raw.tokens);
@@ -49,9 +49,10 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
     }
   }
   if (!tokenFields.every(k => Number.isSafeInteger(sum[k]) && sum[k] === tokens[k])) throw new Error('Invalid usage snapshot');
-  const classifierUsd = raw.jev.inputTokens * jevInputPrice / 1e6;
+  if (raw.classifierProvider !== undefined && !['jev', 'tev'].includes(raw.classifierProvider)) throw new Error('Invalid usage snapshot');
+  const classifierUsd = raw.classifierProvider === 'tev' ? null : raw.jev.inputTokens * jevInputPrice / 1e6;
   if (!matchesCost(raw.apiEquivalentUsd, equivalent) || !matchesCost(raw.solReferenceUsd, solReference) ||
-      !matchesCost(raw.jev.estimatedUsd, classifierUsd)) throw new Error('Invalid usage snapshot');
+      (classifierUsd !== null && !matchesCost(raw.jev.estimatedUsd, classifierUsd))) throw new Error('Invalid usage snapshot');
   const r = record(raw.latestRoute) ? raw.latestRoute : null;
   let probabilities: ProfileProbabilities | null = null;
   let servedModel: string | null = null;
@@ -72,7 +73,8 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
       decisionId, decisionCount: count(raw.decisionCount) ? raw.decisionCount : null,
       policyVersion: ['1', '2', '3', '4', '5'].includes(r?.policyVersion) ? r!.policyVersion as string : null,
       policyHash: typeof r?.policyHash === 'string' && /^[a-f0-9]{64}$/.test(r.policyHash) ? r.policyHash : null,
-      classifierVersion: r?.classifierVersion === 'jev-latest:rubric-2026-10-01' ? r.classifierVersion : null,
+      selectionRule: r?.selectionRule === 'classifier-choice' ? r.selectionRule : null,
+      classifierVersion: typeof r?.classifierVersion === 'string' && /^(?:jev-latest|tev[0-9]+:[a-zA-Z0-9._-]{1,64}):rubric-2026-10-01$/.test(r.classifierVersion) ? r.classifierVersion : null,
       probabilities, servedModel,
       latestRequestedModel: requestedModel, latestVerifiedEffectiveModel: null,
       latestRequestedEffort: r?.effort === 'low' || r?.effort === 'medium' ? r.effort as string : null,
@@ -89,6 +91,7 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
       collaborationSettingsOverridden: r && typeof r.collaborationSettingsOverridden === 'boolean' ? r.collaborationSettingsOverridden : null,
     },
     classifier: {
+      provider: raw.classifierProvider === 'tev' ? 'tev' : 'jev',
       calls: raw.jev.calls as number, unknownUsageCalls: raw.jev.unknownCalls as number,
       reportedInputTokens: raw.jev.inputTokens as number, reportedOutputTokens: raw.jev.outputTokens as number,
       estimatedUsd: classifierUsd,
@@ -97,7 +100,7 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
       priceBasis: raw.priceBasis as string,
       pricedUsageApiEquivalentUsd: equivalent,
       sameObservedTokensAtSolUsd: solReference,
-      coveredRateDifferenceAfterReportedClassifierUsd: solReference - equivalent - classifierUsd,
+      coveredRateDifferenceAfterReportedClassifierUsd: classifierUsd === null ? null : solReference - equivalent - classifierUsd,
       interpretation: 'Same-token rate comparison only; not a counterfactual baseline run or measured savings.',
     },
     compactions: raw.compactions as number,
@@ -161,14 +164,15 @@ export function formatUsageReport(r: UsageReport) {
     `Latest requested model: ${r.routing.latestRequestedModel ?? 'unknown'}. Verified effective model: unknown.`,
     `Effort: proposed ${r.routing.proposedEffort ?? 'unknown'}; executed setting ${r.routing.latestRequestedEffort ?? 'unknown'}; mode ${r.routing.effortMode ?? 'unknown'}; ${r.routing.effortReason ?? 'unknown'}. Verified effective effort: unknown.`,
     `Decision: ${r.routing.decisionId ?? 'unknown'}; policy ${r.routing.policyVersion ?? 'unknown'} / ${r.routing.policyHash ?? 'unknown'}.`,
+    `Selection rule: ${r.routing.selectionRule ?? 'unknown'}; confidence role: ${r.routing.selectionRule === 'classifier-choice' ? 'informational only, not a selection gate' : 'unknown'}.`,
     `Routing reason: ${r.routing.reason}; reported confidence: ${r.routing.reportedConfidence ?? 'unknown'}.`,
-    `Jev served model: ${r.routing.servedModel ?? 'unknown'}.`,
+    `Classifier served model: ${r.routing.servedModel ?? 'unknown'}.`,
     `Profile probabilities: ${r.routing.probabilities ? Object.entries(r.routing.probabilities).map(([profile, probability]) => `${profile} ${probability.toFixed(3)}`).join('; ') : 'unknown'}.`,
     `Latest routing latency: ${r.routing.latencyMs === null ? 'unknown' : `${r.routing.latencyMs.toFixed(1)} ms`}.`,
     `Recognized incoming settings overridden: model ${r.routing.modelOverridden ?? 'unknown'}, effort ${r.routing.effortOverridden ?? 'unknown'}, collaboration ${r.routing.collaborationSettingsOverridden ?? 'unknown'}.`, '',
-    `Classifier: ${r.classifier.calls} calls, ${r.classifier.unknownUsageCalls} with unknown usage; reported usage estimate ${money(r.classifier.estimatedUsd)}.`, '',
+    `Classifier: ${r.classifier.calls} calls, ${r.classifier.unknownUsageCalls} with unknown usage; reported usage estimate ${r.classifier.estimatedUsd === null ? 'unknown (local compute unpriced)' : money(r.classifier.estimatedUsd)}.`, '',
     `Priced usage API equivalent: ${money(r.referenceComparison.pricedUsageApiEquivalentUsd)}. Same observed tokens at Sol: ${money(r.referenceComparison.sameObservedTokensAtSolUsd)}.`,
-    `Covered rate difference after reported classifier: ${money(r.referenceComparison.coveredRateDifferenceAfterReportedClassifierUsd)}.`,
+    `Covered rate difference after reported classifier: ${r.referenceComparison.coveredRateDifferenceAfterReportedClassifierUsd === null ? 'unknown' : money(r.referenceComparison.coveredRateDifferenceAfterReportedClassifierUsd)}.`,
     r.referenceComparison.interpretation, `Rate basis: ${r.referenceComparison.priceBasis}.`, '',
     'Accepted tasks, review time, success rate, subscription dollars saved and tokens avoided: unknown.', '',
     ...(r.outcomes.latestUserReportedOutcome ? [`Latest decision user report: ${r.outcomes.latestUserReportedOutcome.result}; review minutes ${r.outcomes.latestUserReportedOutcome.reviewMinutes ?? 'unknown'}. This is a user label, not independent validation.`, ''] : []),

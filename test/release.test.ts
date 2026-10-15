@@ -7,7 +7,7 @@ import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildRelease, digest, legacyReleaseFiles, releaseFiles, validateRelease } from '../scripts/release.ts';
+import { buildRelease, digest, legacyReleaseFiles, managedNativeReleaseFiles, releaseFiles, validateRelease } from '../scripts/release.ts';
 import { installRelease, rollbackRelease, uninstallRelease, defaultInstallOptions } from '../src/install-cli.ts';
 const run = promisify(execFile);
 const project = fileURLToPath(new URL('../', import.meta.url));
@@ -59,6 +59,9 @@ test('release is reproducible, has exact allowlist, and rejects traversal/tamper
   const a = await buildRelease(project); const b = await buildRelease(project);
   assert.deepEqual(a, b);
   assert.deepEqual(Object.keys(a.files), releaseFiles);
+  const previousManifest = structuredClone(a);
+  previousManifest.files = Object.fromEntries(managedNativeReleaseFiles.map(path => [path, a.files[path]]));
+  assert.doesNotThrow(() => validateRelease(sealRelease(previousManifest)));
   assert.ok(!releaseFiles.some(path => /\.env|\.smart-codex|evals\/|artifacts\//.test(path)));
   const changed = structuredClone(a); changed.files['src/config.ts'] += '\n';
   assert.throws(() => validateRelease(changed), /checksum/);

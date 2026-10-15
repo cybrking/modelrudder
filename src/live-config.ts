@@ -1,5 +1,5 @@
 import { StringDecoder } from 'node:string_decoder';
-import { readClassifierConfig } from './classifier.ts';
+import { readClassifierConfig, classificationEnabled } from './classifier.ts';
 
 export class LiveInputError extends Error {}
 
@@ -11,7 +11,7 @@ export function readLiveConfig(env: Record<string, string | undefined>) {
   if (flag !== undefined && flag !== 'true' && flag !== 'false') {
     throw new LiveInputError('ALLOW_JEV_CLASSIFICATION must be true or false');
   }
-  const allowClassification = flag === 'true';
+  const allowClassification = classificationEnabled(env);
   const apiKey = env.TYPESAFE_API_KEY?.trim() ?? '';
   if (allowClassification) {
     try { readClassifierConfig(env); } catch (error) { throw new LiveInputError((error as Error).message); }

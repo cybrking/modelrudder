@@ -2,12 +2,14 @@
 
 Use the copy-and-paste prompt for [Codex](../README.md#install-with-codex) or [Claude Code](../README.md#install-with-claude-code). Use this guide for manual installation or as the detailed procedure for your coding agent. It covers prerequisites, release installation, private configuration, authentication and removal.
 
+For classifier choice, see [Jev and local Tev](CLASSIFIER_CHOICES.md). Preview.12 includes both providers. After installing, use `setup --classifier jev` for hosted routing or `setup --classifier tev` for a compatible local service. The detailed private-key steps below apply only to Jev.
+
 ## Claude Code release installation
 
-The published **v0.1.0-preview.11** standalone installer bundles both `smart-codex` and `smart-claude`, despite its `smart-codex-...-install.mjs` filename. No checkout or source build is required. Older Codex-only installers do not include Claude support.
+The published **v0.1.0-preview.12** standalone installer bundles both `smart-codex` and `smart-claude`, despite its `smart-codex-...-install.mjs` filename. No checkout or source build is required. Older Codex-only installers do not include Claude support.
 
 1. Check Node.js 24+, npm/network access for a managed native installation, and a separately installed official Claude CLI for `claude auth login`. Codex is not required for `smart-claude`. Use [Claude Code's official setup instructions](https://code.claude.com/docs/en/setup) for missing prerequisites. Preserve any existing plain Claude installation. On Windows/WSL, keep Node, Claude and ModelRudder in the same environment.
-2. Follow [Download and verify a release](#2-download-and-verify-a-release) using [v0.1.0-preview.11](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.11). Verify the checksum, run the standalone installer and preserve existing user PATH entries. Verify `smart-claude --help` (`smart-claude.cmd` on Windows), then run `smart-claude native install` and `smart-claude native status`. This installs and checks the release-recorded Claude 2.1.295 separately from plain Claude.
+2. Follow [Download and verify a release](#2-download-and-verify-a-release) using [v0.1.0-preview.12](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.12). Verify the checksum, run the standalone installer and preserve existing user PATH entries. Verify `smart-claude --help` (`smart-claude.cmd` on Windows), then run `smart-claude native install` and `smart-claude native status`. This installs and checks the release-recorded Claude 2.1.300 separately from plain Claude.
 3. Run `smart-claude setup` to open the shared private configuration, or `smart-claude setup --no-open` to print its path. Follow the [private-key precautions](#3-prepare-the-private-key-file) below, using `smart-claude` in place of `smart-codex`. The user enters their own key and enables direct Jev classification after reviewing [Claude's data flow](CLAUDE_CODE.md#eligibility-privacy-and-failure-behavior). Do not read the file, enable consent or make classifier requests on their behalf.
 4. Check native login with `claude auth status`; guide the user through `claude auth login` if needed. Preserve existing credentials and explain conflicting authentication without replacing it. Run `smart-claude doctor` for version, plugin and native-login checks without submitting a model request.
 5. Give the user `smart-claude --routing observe` to run in a fresh terminal after private setup. Native plugin trust and organization policy remain authoritative; do not bypass them. After observing results, the user can try `smart-claude --routing auto`. Pinned mode (`smart-claude --model sonnet`) needs no Jev key or consent. All actual Claude tasks, including pinned turns, consume the user's Claude allowance.
@@ -15,7 +17,7 @@ The published **v0.1.0-preview.11** standalone installer bundles both `smart-cod
 
 Both launchers use the existing private `SMART_CODEX_ENV_FILE` configuration and managed installation paths. Installing does not replace plain `claude`, log in, create API keys, or enable Jev consent. Existing configuration and state survive upgrades and uninstall; rollback to a Codex-only release removes the managed Claude launcher until a dual-launcher release is activated again.
 
-Recorded offline module tests cover Claude Code 2.1.295; they do not establish live TUI behavior or routing quality. See [Claude support and verification limits](CLAUDE_CODE.md).
+Recorded compatibility evidence includes Claude Code 2.1.295 and 2.1.300; they do not establish live TUI behavior or routing quality. See [Claude support and verification limits](CLAUDE_CODE.md).
 
 The remaining prerequisite, setup and login examples use Codex. Release verification, installation paths and recovery are shared by both launchers.
 
@@ -23,7 +25,7 @@ The remaining prerequisite, setup and login examples use Codex. Release verifica
 
 Run `node --version` and `npm --version`. ModelRudder requires **Node.js 24 or newer** and npm/network access to install its separate native CLI. Install missing Node/npm from [Node.js](https://nodejs.org/en/download). A separately installed official Codex CLI is required for the `codex login` flow. Install it if missing using [OpenAI’s official instructions](https://github.com/openai/codex#quickstart). Preserve any existing plain Codex installation; its version no longer determines ModelRudder compatibility.
 
-After installing the ModelRudder release, run `smart-codex native install` and `smart-codex native status`. The default is the release-recorded Codex **0.162.0**. Recorded history and explicit blocks are in `src/cli-compatibility-data.ts`. Explicit stable candidates within the supported major must pass checks before activation; unsupported or known-broken builds are rejected before download. See [managed native versions](NATIVE_VERSIONS.md) for migration and rollback. On macOS/Linux inspect Node/npm with `command -v`; on Windows use `Get-Command node,npm`.
+After installing the ModelRudder release, run `smart-codex native install` and `smart-codex native status`. The default is the release-recorded Codex **0.162.1**. Recorded history and explicit blocks are in `src/cli-compatibility-data.ts`. Explicit stable candidates within the supported major must pass checks before activation; unsupported or known-broken builds are rejected before download. See [managed native versions](NATIVE_VERSIONS.md) for migration and rollback. On macOS/Linux inspect Node/npm with `command -v`; on Windows use `Get-Command node,npm`.
 
 **Windows:** use Windows 11 and a real PowerShell terminal. OpenAI supports a native Windows sandbox, which may require its own administrator-approved setup; ModelRudder's installation is per user. Follow [OpenAI's Windows sandbox instructions](https://learn.chatgpt.com/docs/windows/windows-sandbox). Native ModelRudder transport and installer support do not certify the complete interactive Windows TUI.
 

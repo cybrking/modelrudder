@@ -1,6 +1,6 @@
 # ModelRudder command reference
 
-Complete the [installation and private configuration steps](AGENT_INSTALL.md) first. Both launchers share the same Jev configuration. Claude uses a session-local Mods adapter; Codex uses a local app-server relay.
+Complete the [installation and private configuration steps](AGENT_INSTALL.md) first. Both launchers share the saved routing-provider configuration. See [classifier choices](CLASSIFIER_CHOICES.md) for setup and session switching between Jev and local Tev in preview.12. Claude uses a session-local Mods adapter; Codex uses a local app-server relay.
 
 ## Routing modes and defaults
 
@@ -8,7 +8,7 @@ Complete the [installation and private configuration steps](AGENT_INSTALL.md) fi
 - **Observe:** ModelRudder recommends a route without switching the native model. Fresh sessions start on Sonnet for Claude or Sol for Codex.
 - **Pinned:** Use an explicit model without Jev classification. An explicit `--model` selects pinned mode unless `--routing` is also supplied.
 
-Observe and auto both send eligible task text and bounded earlier task excerpts to Jev and consume its usage. Pinned tasks still use the native provider's allowance.
+Observe and auto send eligible task text and bounded earlier excerpts to the selected routing provider: hosted Jev or local Tev. Pinned tasks still use the native provider's allowance.
 
 Bare `smart-codex` is equivalent to `smart-codex --routing auto --effort-mode auto`; bare `smart-claude` is equivalent to `smart-claude --routing auto`. These flags make the defaults explicit. Plain `codex` and `claude` do not enable ModelRudder routing.
 
@@ -75,7 +75,7 @@ Outcome markers and cleanup are Codex-specific commands. Outcome markers are you
 
 ## Data and privacy
 
-In auto/observe mode, direct classification sends the current eligible text task and up to two bounded earlier task excerpts to TypeSafe. Anything pasted into that text, including source code or secrets, is included. The adapters do not automatically send repository files, assistant output or attachments to the classifier. Native Codex and Claude Code send their normal model inputs to their providers under your own account terms. Claude requires the direct classifier; the current hosted gateway has only a Codex rubric.
+In auto/observe mode, direct classification sends the current eligible text task and up to two bounded earlier task excerpts to TypeSafe. Anything pasted into that text, including source code or secrets, is included. The adapters do not automatically send repository files, assistant output or attachments to the classifier. Native Codex and Claude Code send their normal model inputs to their providers under your own account terms. Claude supports direct Jev or local Tev using its own rubric; the hosted gateway has only a Codex rubric.
 
 The child process does not receive the Jev key from ModelRudder's classifier environment. Each native tool manages its own login. Claude's mod contacts a launcher-local authenticated loopback bridge; it does not proxy Claude model requests or obtain Claude credentials. Local reports contain routing/usage metadata rather than task text; configuration and logs remain on your machine. Review provider policies before sending confidential content. The community client has no ModelRudder telemetry or hosted billing requirement.
 

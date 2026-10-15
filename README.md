@@ -6,23 +6,69 @@ Spend your strongest model on the tasks that need it. ModelRudder adds experimen
 
 **Free local community preview · MIT licensed · macOS, Linux/WSL and Windows preview**
 
-Use your own native provider account and your own TypeSafe Jev API key. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef support is not included.
+Use your own native provider account. Choose hosted Jev with your own TypeSafe key or local Tev without a Jev key. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef support is not included.
 
-Choose the launcher for your native coding tool. The preview.11 installer includes both; you only need the native CLI you intend to use.
+Choose the launcher for your native coding tool. The preview.12 installer includes both; you only need the native CLI you intend to use.
 
 | Native tool | ModelRudder launcher | Experimental automatic routing |
 | --- | --- | --- |
 | Claude Code | `smart-claude` | Haiku / Sonnet / Opus |
 | Codex | `smart-codex` | Luna / Sol / Astra |
 
-Both launchers choose a model for each eligible new user turn and keep that choice through its tool loop. Codex applies valid Jev choices without a confidence gate, including the profile's reasoning effort; reported confidence is informational. Native tools, approvals and workspace permissions remain in place. ModelRudder is an independent project with no claimed provider endorsement.
+Both launchers choose a model for each eligible new user turn and keep that choice through its tool loop. Codex applies valid classifier choices without a confidence gate, including the profile's reasoning effort; reported confidence is informational. Native tools, approvals and workspace permissions remain in place. ModelRudder is an independent project with no claimed provider endorsement.
+
+## Choose your routing classifier: Jev or Tev
+
+Choose **Jev or local Tev** during setup and use your native launcher normally afterward. The classifier recommends the model and, for Codex, reasoning effort; your native coding tool still executes the task. A small evaluation is not grounds to exclude either option.
+
+| Choice | Why choose it? | Current availability |
+| --- | --- | --- |
+| Jev | Hosted classification without running a local classifier service | Integrated in both launchers; requires a TypeSafe key and consent to send eligible task text |
+| Tev (`tev1:latest`) | Local classification, with no Jev key for that local classifier | Available in preview.12 for both launchers; native Claude live qualification remains pending |
+
+Local Tev needs a running local service and suitable machine resources. Local classification does not make native Codex or Claude execution offline, or remove their account requirements and usage limits. See [classifier choices and evaluation evidence](docs/CLASSIFIER_CHOICES.md) for the measured tradeoffs and integration status.
+
+### Natural-language instructions: choose Jev
+
+Use the installation prompt for your native tool below, with this preference:
+
+```text
+Use Jev as my ModelRudder routing classifier. Follow the installation guide
+for my selected release and native coding tool. Open the private configuration
+in a local editor so I can enter my TypeSafe key and enable classification.
+Do not read or print credentials. Preserve my native subscription login.
+Run doctor without submitting model tasks, then give me the observe-mode
+command and explain how to switch to automatic routing.
+```
+
+### Natural-language instructions: choose local Tev
+
+Use this prompt with Codex or Claude Code to install preview.12 with local Tev.
+
+```text
+Set up ModelRudder with local tev1:latest as my routing provider.
+Use https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.12.
+Read its README, docs/AGENT_INSTALL.md and docs/CLASSIFIER_CHOICES.md.
+Download the release installer and SHA256SUMS, verify its checksum, then
+install for my user account and preserve existing PATH entries. Preserve native
+CLIs, login, permissions, keys and existing unrelated configuration.
+
+Check whether my local service supports /api/tags and /v1/systemone and has
+tev1:latest. Explain missing prerequisites; do not download a model or install
+a persistent service without my agreement. Do not configure a Jev key.
+Run smart-codex setup --classifier tev (or smart-claude for Claude), then
+classifier status and doctor. Explain that the saved choice affects both
+launchers and native task execution still uses my provider account.
+Give me the observe-mode command. Do not submit inference automatically.
+Never silently substitute a hosted classifier if local Tev is unavailable.
+```
 
 ## Requirements
 
 - Node.js 24+, npm and network access for the managed native CLI installation.
 - macOS, Linux/WSL, or Windows 11 with PowerShell. Native Windows support is a preview.
 - Your own Claude or ChatGPT account and the corresponding official CLI for native login.
-- Your own [TypeSafe Jev key](https://console.typesafe.ai/keys) for observe/auto routing. Pinned mode works without Jev.
+- For hosted routing: your own [TypeSafe Jev key](https://console.typesafe.ai/keys). For local routing: a compatible local Tev service and `tev1:latest`. Pinned mode needs neither classifier.
 
 The installer creates separate managed native CLI versions and reuses your native login. Plain Claude and Codex can update independently. See the [installation guide](docs/AGENT_INSTALL.md) and [native version management](docs/NATIVE_VERSIONS.md).
 
@@ -32,7 +78,7 @@ Copy this entire prompt into Codex. It will install ModelRudder and open the loc
 
 ```text
 Install ModelRudder on this computer so I can use model routing in Codex.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.11
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.12
 Read the README and docs/AGENT_INSTALL.md at that release tag and follow them.
 
 Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
@@ -63,7 +109,7 @@ Copy this entire prompt into Claude Code. It will install ModelRudder and open t
 
 ```text
 Install ModelRudder on this computer so I can use model routing in Claude Code.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.11
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.12
 Read docs/AGENT_INSTALL.md and docs/CLAUDE_CODE.md at that release tag
 and follow them.
 
@@ -98,7 +144,7 @@ If an editor cannot open, Claude Code can give you the file path to open manuall
 
 ## Start using ModelRudder
 
-After installation, private key setup and a successful doctor check, open a fresh terminal and run the launcher for your tool:
+After installation, routing-provider setup and a successful doctor check, open a fresh terminal and run the launcher for your tool:
 
 ```sh
 smart-claude
@@ -117,7 +163,7 @@ smart-claude --routing observe
 smart-codex --routing observe --effort-mode fixed
 ```
 
-Both observe and auto send eligible task text to Jev and consume its usage. To switch from observe to auto, exit and start a new session with the bare launcher command above.
+Both observe and auto send eligible task text to your selected routing provider and consume its resources. To switch from observe to auto, exit and start a new session with the bare launcher command above.
 
 For pinned models, reports and detailed routing behavior, see the [command reference](docs/COMMANDS.md). Try the [routing examples](docs/ROUTING_EXAMPLES.md) or consult [troubleshooting](docs/TROUBLESHOOTING.md) if a route is unexpected.
 
@@ -159,9 +205,11 @@ The installer updates both launchers and retains your existing Jev key. The agen
 
 ## Data and privacy
 
-Observe and auto modes send eligible task text and up to two bounded earlier task excerpts to TypeSafe. Anything pasted into that text, including code or secrets, is included. Enter your Jev key privately in the local editor; never paste it into agent chat.
+With Jev selected, observe and auto send eligible task text and up to two bounded earlier task excerpts to TypeSafe. With Tev selected, that classification text goes only to the configured local loopback service; native execution still uses its normal provider. Anything pasted into that text, including code or secrets, is included. Enter your Jev key privately in the local editor; never paste it into agent chat.
 
 Native Claude and Codex use your provider account normally. Provider charges and usage limits still apply; no subscription limit is bypassed. ModelRudder has no client telemetry. See [data flow and local reports](docs/COMMANDS.md#data-and-privacy).
+
+For a local Codex learning experiment, `SMART_CODEX_LEARNING_DIR` explicitly enables private task capture separate from usage reports. It saves user task text, up to two earlier task excerpts, and routing metadata for review; it does not upload feedback or train automatically. See [local learning](docs/LOCAL_LEARNING.md). Leave it unset to disable capture.
 
 ## Preview status
 
