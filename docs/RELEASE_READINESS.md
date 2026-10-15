@@ -1,5 +1,12 @@
 # Community release readiness evaluation
 
+## Preview.12 selectable Jev and local Tev
+
+Both launchers support a saved routing-provider selection, a per-session override and metadata-only status checks. Tev uses a loopback-only adapter with each native tool's own rubric. Hosted Jev consent remains separate; local failures use the existing model fallback without hosted substitution. Existing configuration and native CLI pins survive upgrades. Local Tev compute cost is unpriced rather than charged at Jev rates. Opt-in local learning records remain private and do not upload or train automatically.
+
+The release candidate retains the managed CLI compatibility policy and the reviewed compatibility data from current main. On macOS, 204 tests passed with one Windows-only skip and type checking passed after integration. Five actual local Tev classifier calls passed before integration, covering both rubrics; they did not execute coding tasks. Full authenticated Claude qualification is pending: a real terminal launched and preserved manual permissions, but reported expired native login before any coding task was submitted. No successful live coding journey is claimed.
+
+
 ## Preview.11 managed Codex and Claude CLI candidates
 
 Stable CLI candidates are checked through isolated provider-specific protocol probes. Exact passing evidence and known-broken blocks ship as compatibility data; unrecorded stable builds must pass a fresh local probe before launch. Explicit candidate installs keep the current selection unless verification passes. Daily cross-platform checks validate promotion evidence and prepare a normal review PR; they do not merge or publish releases.

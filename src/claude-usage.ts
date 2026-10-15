@@ -8,7 +8,7 @@ export function claudeUsageDirectory(env: NodeJS.ProcessEnv = process.env) {
   return env.SMART_CODEX_STATE_DIR ? join(env.SMART_CODEX_STATE_DIR, 'claude-logs') : fileURLToPath(new URL('../.smart-claude/', import.meta.url));
 }
 type Counts = { input_tokens: number; output_tokens: number; cache_read_input_tokens: number; cache_creation_input_tokens: number };
-export function createClaudeUsage(directory?: string) {
+export function createClaudeUsage(directory?: string, classifierProvider: 'jev' | 'tev' = 'jev') {
   const tokens: Counts = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
   let routes = 0, completed = 0, aborted = 0, unknownUsage = 0, classifications = 0, jevInput = 0, jevOutput = 0, ended = false;
   let lastRoute: Record<string, unknown> | null = null, lastActualModel: string | null = null;
@@ -21,7 +21,7 @@ export function createClaudeUsage(directory?: string) {
     fd = openSync(path, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
     fchmodSync(fd, 0o600); if (process.platform === 'win32') protectPrivatePathSync(path);
   } catch { if (fd !== undefined) closeSync(fd); fd = undefined; path = undefined; }
-  const snapshot = () => ({ format: 'modelrudder-claude-1', ended, routes, completed, aborted, unknownUsage,
+  const snapshot = () => ({ classifierProvider, format: 'modelrudder-claude-1', ended, routes, completed, aborted, unknownUsage,
     classifications, jevInput, jevOutput, tokens: { ...tokens }, lastActualModel, lastRoute });
   const publish = () => {
     if (fd === undefined) return;
@@ -54,7 +54,7 @@ export function createClaudeUsage(directory?: string) {
 export function formatClaudeUsage(s: ReturnType<ReturnType<typeof createClaudeUsage>['snapshot']>) {
   return `Claude routing: ${s.routes} decisions, ${s.classifications} classifications; ${s.completed} completed turns (${s.aborted} interrupted).\n` +
     `Reported tokens: ${s.tokens.input_tokens} input + ${s.tokens.cache_read_input_tokens} cache read + ${s.tokens.cache_creation_input_tokens} cache write; ${s.tokens.output_tokens} output.\n` +
-    `Jev reported tokens: ${s.jevInput} input, ${s.jevOutput} output. Usage may be partial (${s.unknownUsage} turns without counts, ${Math.max(0, s.routes - s.completed)} without completion reports); no quota/savings estimate.\n`;
+    `Classifier reported tokens: ${s.jevInput} input, ${s.jevOutput} output. Usage may be partial (${s.unknownUsage} turns without counts, ${Math.max(0, s.routes - s.completed)} without completion reports); no quota/savings estimate.\n`;
 }
 export function runClaudeReport(args: string[], directory = claudeUsageDirectory(), out = (text: string) => process.stdout.write(text)) {
   if (args.length) throw new Error('Claude report accepts no options.');

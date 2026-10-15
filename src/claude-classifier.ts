@@ -1,5 +1,4 @@
-import { createJevClassifier } from './adapters/jev.ts';
-import { readClassifierConfig } from './classifier.ts';
+import { readClassifierConfig, classificationEnabled, createConfiguredClassifier } from './classifier.ts';
 
 export const claudeClassifierVersion = 'jev-latest:claude-rubric-2026-10-08';
 export const claudeClassificationTimeoutMs = 5000;
@@ -23,10 +22,10 @@ export function claudeJevInput(input: string) {
 }
 
 export function createClaudeClassifier(env: NodeJS.ProcessEnv) {
-  if (env.ALLOW_JEV_CLASSIFICATION !== 'true') throw new Error('Configure ALLOW_JEV_CLASSIFICATION=true and your own Jev key, or use --routing pinned.');
+  if (!classificationEnabled(env)) throw new Error('Configure ALLOW_JEV_CLASSIFICATION=true for Jev or ALLOW_CLASSIFICATION=true for Tev using setup --classifier jev|tev, or use --routing pinned.');
   const config = readClassifierConfig(env);
   // The current gateway protocol does not carry a provider/rubric identifier.
   // Silently sending Claude tasks to its Codex rubric would be incorrect.
-  if (config.provider !== 'direct') throw new Error('Claude routing currently requires SMART_CODEX_CLASSIFIER=direct; the hosted gateway uses a Codex rubric.');
-  return createJevClassifier({ apiKey: config.apiKey, timeoutMs: claudeClassificationTimeoutMs, buildInput: claudeJevInput });
+  if (config.provider === 'hosted') throw new Error('Claude routing requires direct Jev or local Tev; the hosted gateway uses a Codex rubric.');
+  return createConfiguredClassifier(env, claudeClassificationTimeoutMs, claudeJevInput, 'claude-rubric-2026-10-08');
 }

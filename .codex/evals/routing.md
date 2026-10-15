@@ -1,6 +1,6 @@
 # Routing lifecycle regression evaluation
 
-Defined October 9, 2026, before running `npm run eval:routing`.
+Defined October 9, 2026, before running `npm run eval:routing`. The current Claude and Codex policies both apply valid classifier choices regardless of reported confidence.
 
 Scope: both local adapters, with synthetic classifier responses and native event fixtures. These evaluate routing correctness and disclosure boundaries, not classifier accuracy or task quality. The command reuses the actual runtime regression tests; it does not introduce a second implementation of the routing policy.
 
@@ -16,7 +16,7 @@ Run on Node 24 or 26 with local loopback access. Every test in the five selected
 | Named evaluation | Fixtures and grader |
 | --- | --- |
 | successive-user-turns | `claude-mod.test.ts`: three distinct user tasks with consumed prompt receipts must each classify exactly once, select Haiku/Opus/Haiku, and hold the choice across tool steps. Previous task excerpts must be bounded. |
-| execution-mode-contract | `claude-routing.test.ts`, `claude-mod.test.ts`, `effort-routing.test.ts`: auto applies qualified choices; observe executes its baseline/native choice; pinned never classifies. Effort and stream forwarding must match the adapter contract. |
+| execution-mode-contract | `claude-routing.test.ts`, `claude-mod.test.ts`, `effort-routing.test.ts`: auto applies every valid choice regardless of reported confidence; observe executes its baseline/native choice; pinned never classifies. Effort and stream forwarding must match the adapter contract. |
 | opaque-context | `claude-mod.test.ts`, `context-eligibility.test.ts`: media, references, resume, compaction, hidden instructions and unobserved input must not authorize a downgrade or disclose hidden text. Fresh creation or Claude `/clear` restores only observed context eligibility. |
 | cancellation-and-late-results | `claude-routing.test.ts`, `claude-mod.test.ts`, `turn-lifecycle.test.ts`: interrupted/deleted/closed turns must cancel once, never execute late results, and never mutate a newer turn. Aborted Claude tasks must leave classifier context. |
 | fallback-and-native-control | `claude-routing.test.ts`, `claude-mod.test.ts`: uncertainty, timeout, invalid output and provider failure must use fallback without replay; native model changes and version fallback must remain authoritative. |

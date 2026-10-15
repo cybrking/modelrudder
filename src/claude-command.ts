@@ -32,7 +32,7 @@ export function claudeChildEnv(source: NodeJS.ProcessEnv, platform: NodeJS.Platf
   const env = { ...source };
   for (const key of Object.keys(env)) {
     const name = platform === 'win32' ? key.toUpperCase() : key;
-    if (name === 'TYPESAFE_API_KEY' || name === 'ALLOW_JEV_CLASSIFICATION' || name === 'ROUTER_MODE' ||
+    if (name === 'TYPESAFE_API_KEY' || name === 'ALLOW_CLASSIFICATION' || name === 'ALLOW_JEV_CLASSIFICATION' || name === 'ROUTER_MODE' ||
         name.startsWith('SMART_CODEX_') || name.startsWith('SMART_CLAUDE_') || name.startsWith('MODEL_RUDDER_') ||
         ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'].includes(name)) delete env[key];
   }

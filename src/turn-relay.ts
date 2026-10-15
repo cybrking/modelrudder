@@ -3,6 +3,7 @@ import { createClassifierLifecycle, classifierFailureReason } from './classifier
 import { enforce, parseDecision } from './policy.ts';
 import { classifierVersion, createRuntimePolicy, type RuntimePolicy } from './runtime-policy.ts';
 import type { Classifier, Profile, ProfileProbabilities } from './types.ts';
+import type { LearningTask } from './local-learning.ts';
 
 export type RoutingMode = 'auto' | 'observe' | 'pinned';
 export type RpcMessage = Record<string, any>;
@@ -15,7 +16,7 @@ export function createTurnRelay(options: {
   runtimePolicy?: RuntimePolicy;
   upstream: (message: RpcMessage) => void;
   downstream: (message: RpcMessage) => void;
-  onRoute?: (metadata: Record<string, unknown>) => void;
+  onRoute?: (metadata: Record<string, unknown>, task: LearningTask) => void;
   onThread?: (id: string) => void;
 }) {
   const runtime = createRuntimePolicy(options.runtimePolicy ?? { mode: options.mode, model: options.model });
@@ -228,17 +229,19 @@ export function createTurnRelay(options: {
       runtime.policy.allowedModels.includes(value) && value !== model;
     const effortOverridden = (value: unknown) => typeof value === 'string' &&
       ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'ultra'].includes(value) && value !== effort;
-    options.onRoute?.({ threadId: thread, mode: runtime.mode, proposed, reportedConfidence: confidence, model, effort, reason,
+    options.onRoute?.({ threadId: thread, mode: runtime.mode, selectionRule: runtime.selectionRule,
+      proposed, reportedConfidence: confidence, model, effort, reason,
       probabilities, servedModel,
       effortMode: runtime.effortMode, proposedEffort, effortReason,
       policyVersion: runtime.version, policyHash: runtime.hash,
-      classifierVersion: classified ? classifierVersion : null,
+      classifierVersion: classified ? options.classifier?.metadata?.version ?? classifierVersion : null,
       routingLatencyMs: Math.max(0, performance.now() - routingStarted),
       modelOverridden: modelOverridden(params.model),
       effortOverridden: effortOverridden(params.effort),
       collaborationSettingsOverridden: modelOverridden(params.collaborationMode?.settings?.model) ||
         effortOverridden(params.collaborationMode?.settings?.reasoning_effort),
-    });
+    }, { task: text, previousUserTasks: [...previous],
+      opaqueContext: Boolean(contextReason(thread)) || params.input.some((item: RpcMessage) => item.type !== 'text') });
     options.upstream({ ...message, params: updated });
   }
   return { client, server, close() {

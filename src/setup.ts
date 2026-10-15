@@ -1,5 +1,10 @@
 import { spawn } from 'node:child_process';
-import { mkdir, lstat, writeFile } from 'node:fs/promises';
+import { mkdir, lstat, writeFile, readFile, rename, rm } from 'node:fs/promises';
+import { parseEnv } from 'node:util';
+import { randomUUID } from 'node:crypto';
+import { createInterface } from 'node:readline/promises';
+import { inspectTev } from './adapters/tev.ts';
+import { readClassifierConfig, classificationEnabled, classifierNotice } from './classifier.ts';
 import { dirname, resolve } from 'node:path';
 import { defaultInstallOptions } from './install-cli.ts';
 import { isPrivatePathSync, protectPrivatePathSync } from './private-files.ts';
@@ -31,11 +36,47 @@ async function openEditor(path: string): Promise<void> {
 }
 
 export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.env,
-  out = (text: string) => process.stdout.write(text), editor = openEditor): Promise<number> {
-  if (args.length && !(args.length === 1 && args[0] === '--no-open')) throw new Error('Setup accepts only --no-open.');
+  out = (text: string) => process.stdout.write(text), editor = openEditor, inspect = inspectTev): Promise<number> {
+  let provider: string | undefined;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--no-open') continue;
+    if (args[i] === '--classifier' && !provider && ['jev', 'tev'].includes(args[i + 1])) provider = args[++i];
+    else throw new Error('Setup accepts only --no-open and --classifier jev|tev.');
+  }
   const file = resolve(env.SMART_CODEX_ENV_FILE || defaultInstallOptions().envFile);
   let existing;
   try { existing = await lstat(file); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+  if (!provider && !existing && !args.includes('--no-open') && process.stdin.isTTY && process.stdout.isTTY) {
+    const terminal = createInterface({ input: process.stdin, output: process.stdout });
+    try {
+      out('Choose a routing provider: Jev (hosted; private key and task transmission) or Tev (local service; no Jev key). Native execution still uses your provider account.\n');
+      const choice = (await terminal.question('Routing provider [jev / tev / later]: ')).trim().toLowerCase();
+      if (choice === 'jev' || choice === 'tev') provider = choice;
+      else if (choice !== 'later' && choice !== '') throw new Error('Setup choice must be jev, tev or later.');
+    } finally { terminal.close(); }
+  }
+  const oldText = existing ? await readFileChecked(file) : setupTemplate;
+  const saved = parseEnv(oldText);
+  if (provider) {
+    const selected = provider === 'jev' ? 'direct' : 'tev';
+    if (env.SMART_CODEX_CLASSIFIER && env.SMART_CODEX_CLASSIFIER !== saved.SMART_CODEX_CLASSIFIER && env.SMART_CODEX_CLASSIFIER !== selected && env.SMART_CODEX_CLASSIFIER !== provider) {
+      throw new Error('Setup blocked by an environment classifier override; unset SMART_CODEX_CLASSIFIER and retry. Configuration unchanged.');
+    }
+    if (env.ALLOW_CLASSIFICATION === 'false' && saved.ALLOW_CLASSIFICATION !== 'false') throw new Error('Setup blocked by ALLOW_CLASSIFICATION=false in the environment. Configuration unchanged.');
+    if (provider === 'jev' && saved.SMART_CODEX_CLASSIFIER === 'tev' &&
+      (!(env.TYPESAFE_API_KEY ?? saved.TYPESAFE_API_KEY)?.trim() || (env.ALLOW_JEV_CLASSIFICATION ?? saved.ALLOW_JEV_CLASSIFICATION) !== 'true')) {
+      out(`Jev is not ready; Tev selection preserved. Open ${file} privately, enter TYPESAFE_API_KEY and set ALLOW_JEV_CLASSIFICATION=true after reviewing hosted data flow, then rerun setup --classifier jev. Never paste the key into chat.\n`);
+      if (!args.includes('--no-open')) await editor(file);
+      return 1;
+    }
+    if (provider === 'tev') {
+      const config = readClassifierConfig({ ...saved, ...env, SMART_CODEX_CLASSIFIER: 'tev' });
+      if (config.provider !== 'tev') throw new Error('Invalid Tev configuration');
+      const status = await inspect(config.url, config.model);
+      out(`${status.message}\n`);
+      if (!status.ready) return 1;
+    }
+  }
   if (existing) {
     if (!existing.isFile() || existing.isSymbolicLink() || !isPrivatePathSync(file)) throw new Error('Existing configuration must be a private regular file; it was not modified.');
   } else {
@@ -47,9 +88,59 @@ export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.
     await writeFile(file, setupTemplate, { flag: 'wx', mode: 0o600 });
     protectPrivatePathSync(file);
   }
+  if (provider) {
+    const updates = { SMART_CODEX_CLASSIFIER: provider === 'jev' ? 'direct' : 'tev', ALLOW_CLASSIFICATION: 'true' };
+    let next = oldText;
+    for (const [key, value] of Object.entries(updates)) {
+      next = next.replace(new RegExp('^(?:export\\s+)?' + key + '\\s*=.*(?:\\r?\\n|$)', 'gm'), '');
+      next += `${next.endsWith('\n') ? '' : '\n'}${key}=${value}\n`;
+    }
+    const parsed = parseEnv(next);
+    if (Object.entries(updates).some(([key, value]) => parsed[key] !== value)) throw new Error('Setup cannot safely update this configuration; edit it privately.');
+    for (const [key, value] of Object.entries(saved)) {
+      if (!(key in updates) && parsed[key] !== value) throw new Error('Setup cannot safely update this configuration; edit it privately.');
+    }
+    const temp = `${file}.${randomUUID()}.tmp`;
+    try {
+      await writeFile(temp, next, { flag: 'wx', mode: 0o600 }); protectPrivatePathSync(temp);
+      await rename(temp, file);
+    } finally { await rm(temp, { force: true }); }
+    out(`Saved ${provider === 'tev' ? 'Tev (local)' : 'Jev (hosted)'} for both launchers. Restart sessions to apply. Native login and unrelated settings preserved.\n`);
+    if (provider === 'tev') {
+      out(`Local configuration: ${file}\n`);
+      out('Local classification enabled. No Jev key or hosted fallback. Start with smart-codex --routing observe or smart-claude --routing observe. Claude live qualification remains pending.\n');
+      return 0;
+    }
+  }
+  if (!provider && (env.SMART_CODEX_CLASSIFIER ?? saved.SMART_CODEX_CLASSIFIER) === 'tev') {
+    out(`Local configuration: ${file}\nExisting Tev selection preserved. No Jev key is required. Use classifier status to check readiness; setup --classifier jev switches to hosted routing.\n`);
+    if (!args.includes('--no-open')) await editor(file);
+    return 0;
+  }
   out('Local configuration: ' + file + '\nJev signup and API keys: https://console.typesafe.ai/keys\n');
-  out(existing ? 'Existing configuration preserved.\n' : 'Created a minimal configuration; classification remains disabled.\n');
+  out(provider ? 'Hosted classification still requires your explicit Jev consent.\n' : existing ? 'Existing configuration preserved.\n' : 'Created a minimal configuration; classification remains disabled.\n');
   out('Enter your key only in this file. After reviewing the README data flow, change ALLOW_JEV_CLASSIFICATION to true. Never paste the key into agent chat.\n');
   if (!args.includes('--no-open')) { await editor(file); out('Requested the local editor. If no window opens, open the configuration path manually.\n'); }
   return 0;
+}
+
+async function readFileChecked(file: string) {
+  const info = await lstat(file);
+  if (!info.isFile() || info.isSymbolicLink() || !isPrivatePathSync(file)) throw new Error('Existing configuration must be a private regular file; it was not modified.');
+  return readFile(file, 'utf8');
+}
+
+export async function classifierStatus(env: NodeJS.ProcessEnv): Promise<{ ok: boolean; text: string }> {
+  try {
+    const config = readClassifierConfig(env);
+    const enabled = classificationEnabled(env);
+    let detail = 'Credentials configured; not tested remotely.';
+    let ready = true;
+    if (config.provider === 'tev') {
+      const status = await inspectTev(config.url, config.model); detail = status.message; ready = status.ready;
+    }
+    return { ok: enabled && ready, text: `${classifierNotice(env)}\nClassification: ${enabled ? 'enabled' : 'disabled; complete setup or use pinned mode'}.\n${detail}\nSelection uses the effective environment (explicit exports override the shared file); --classifier overrides one session. No inference submitted.\n` };
+  } catch {
+    return { ok: false, text: 'Routing provider configuration is invalid or incomplete. Run setup --classifier jev or setup --classifier tev. Pinned mode remains available.\n' };
+  }
 }

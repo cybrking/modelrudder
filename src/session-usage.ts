@@ -27,23 +27,23 @@ function cost(t: Tokens, prices: readonly number[]) {
     t.cacheWrite * prices[2] + t.output * prices[3]) / 1e6;
 }
 
-export function createSessionUsage() {
+export function createSessionUsage(classifierProvider: 'jev' | 'tev' = 'jev') {
   const requests = new Map<unknown, string>();
   const turnRequests = new Map<unknown, string>();
-  const threads = new Map<string, { previous?: Tokens; model?: string; active?: string; fresh: boolean }>();
+  const threads = new Map<string, { previous?: Tokens; model?: string; active?: string }>();
   const byModel: Record<string, Tokens> = {};
   const calls = new Map<number, 'pending' | 'unknown' | 'reported'>();
   let jevInput = 0, jevOutput = 0, partial = false, compactions = 0, ended = false;
   const compactionIds = new Set<string>();
   let decisionCount = 0;
-  let latestRoute: { decisionId: string; policyVersion: string | null; policyHash: string | null; classifierVersion: string | null;
+  let latestRoute: { decisionId: string; policyVersion: string | null; policyHash: string | null; selectionRule: string | null; classifierVersion: string | null;
     model: string; proposed: string | null; confidence: number | null; reason: string;
     probabilities: ProfileProbabilities | null; servedModel: string | null;
     effort: Effort | null; proposedEffort: Effort | null; effortMode: EffortMode | null; effortReason: string | null;
     routingLatencyMs: number | null; modelOverridden: boolean | null;
     effortOverridden: boolean | null; collaborationSettingsOverridden: boolean | null } | null = null;
   const state = (id: string) => {
-    if (!threads.has(id)) threads.set(id, { fresh: false });
+    if (!threads.has(id)) threads.set(id, {});
     return threads.get(id)!;
   };
   return {
@@ -66,9 +66,9 @@ export function createSessionUsage() {
         const kind = requests.get(message.id); requests.delete(message.id);
         const id = message.result?.thread?.id;
         if (typeof id === 'string') {
-          const s = state(id); s.fresh = kind === 'thread/start';
+          const s = state(id);
           s.model = message.result.model ?? message.result.thread.model;
-          if (s.fresh) s.previous = zero();
+          if (kind === 'thread/start') s.previous = zero();
         }
       }
       const p = message.params;
@@ -124,7 +124,8 @@ export function createSessionUsage() {
       latestRoute = { decisionId: randomUUID(),
         policyVersion: ['1', '2', '3', '4', '5'].includes(metadata.policyVersion as string) ? metadata.policyVersion as string : null,
         policyHash: typeof metadata.policyHash === 'string' && /^[a-f0-9]{64}$/.test(metadata.policyHash) ? metadata.policyHash : null,
-        classifierVersion: metadata.classifierVersion === 'jev-latest:rubric-2026-10-01' ? metadata.classifierVersion : null,
+        selectionRule: metadata.selectionRule === 'classifier-choice' ? metadata.selectionRule : null,
+        classifierVersion: typeof metadata.classifierVersion === 'string' && /^(?:jev-latest|tev[0-9]+:[a-zA-Z0-9._-]{1,64}):rubric-2026-10-01$/.test(metadata.classifierVersion) ? metadata.classifierVersion : null,
         model: String(metadata.model), proposed: typeof metadata.proposed === 'string' ? metadata.proposed : null,
         confidence: typeof metadata.reportedConfidence === 'number' ? metadata.reportedConfidence : null,
         reason: routingReasons.includes(metadata.reason as typeof routingReasons[number]) ? metadata.reason as string : 'unknown',
@@ -157,13 +158,13 @@ export function createSessionUsage() {
         }
       }
       const unknownJevCalls = [...calls.values()].filter(status => status !== 'reported').length;
-      const jevUsd = jevInput * jevInputPrice / 1e6;
-      const estimatedDifferenceUsd = partial || unknownJevCalls ? null : baseline - equivalent - jevUsd;
-      return { version: 1, ended, partial, tokens: total, byModel: structuredClone(byModel), compactions,
+      const jevUsd = classifierProvider === 'tev' ? null : jevInput * jevInputPrice / 1e6;
+      const estimatedDifferenceUsd = partial || unknownJevCalls || jevUsd === null ? null : baseline - equivalent - jevUsd;
+      return { version: 1, classifierProvider, ended, partial, tokens: total, byModel: structuredClone(byModel), compactions,
         decisionCount, latestRoute: latestRoute ? structuredClone(latestRoute) : null,
         jev: { calls: calls.size, unknownCalls: unknownJevCalls, inputTokens: jevInput, outputTokens: jevOutput, estimatedUsd: jevUsd },
         apiEquivalentUsd: equivalent, solReferenceUsd: baseline, estimatedDifferenceUsd,
-        coveredDifferenceUsd: baseline - equivalent - jevUsd,
+        coveredDifferenceUsd: jevUsd === null ? null : baseline - equivalent - jevUsd,
         tokenSavings: null, subscriptionMoneySaved: null, priceBasis: '2026-10-01 standard short context' };
     },
   };
@@ -187,7 +188,7 @@ export function formatSessionUsage(s: UsageSnapshot, options: { emphasis?: boole
   if (models.length === 1) lines.push(row('Model', modelName(models[0][0])));
   else models.forEach(([model, t], index) => lines.push(row(index === 0 ? 'Models' : '',
     `${modelName(model).padEnd(14)}${number(t.input)} in / ${number(t.output)} out`)));
-  lines.push(row('Jev', `${count(s.jev.calls, 'call')} / ${money(s.jev.estimatedUsd)} estimated`));
+  lines.push(row(s.classifierProvider === 'tev' ? 'Tev (local)' : 'Jev', `${count(s.jev.calls, 'call')} / ${s.jev.estimatedUsd === null ? 'local compute cost unpriced' : money(s.jev.estimatedUsd) + ' estimated'}`));
   if (s.jev.unknownCalls) lines.push(row('', `${count(s.jev.unknownCalls, 'call')} with unknown usage`));
   lines.push(row('API equiv.', !hasPricedUsage && (s.tokens.input || s.tokens.output)
     ? 'Unavailable (model attribution missing)' : `${money(s.apiEquivalentUsd, s.apiEquivalentUsd > 0 && s.apiEquivalentUsd < 0.0001 ? 6 : 4)} (priced usage)`));
@@ -201,9 +202,9 @@ export function formatSessionUsage(s: UsageSnapshot, options: { emphasis?: boole
     const confidence = typeof route.confidence === 'number' && Number.isFinite(route.confidence) &&
       route.confidence >= 0 && route.confidence <= 1 ? `${Math.round(route.confidence * 100)}%` : null;
     const reason = {
-      uncertain_classification: `Low Jev confidence${confidence ? ` (${confidence})` : ''}; kept baseline`,
+      uncertain_classification: `Low classifier confidence${confidence ? ` (${confidence})` : ''}; kept baseline`,
       classifier_failed: 'Classifier unavailable; kept baseline',
-      experimental_route: `Auto choice${confidence ? ` (Jev confidence ${confidence})` : ''}`,
+      experimental_route: `Classifier choice${confidence ? ` (reported confidence ${confidence}; ${route.selectionRule === 'classifier-choice' ? 'informational' : 'gate unknown'})` : ''}`,
       observe: 'Observe mode; kept baseline', pinned: 'Pinned model',
       reference_context_baseline: 'Referenced context; kept baseline',
       unclassified_context_baseline: 'History not classified; kept baseline',

@@ -50,8 +50,22 @@ test('auto routes every eligible new turn, observe uses baseline, pinned never c
   }
 });
 
-test('uncertainty, invalid output and classifier failures use Sonnet without retrying', async () => {
-  for (const classify of [async () => result('FAST', 0.79), async () => ({ profile: 'BAD', confidence: 1 }), async () => { throw new Error('SECRET task credential'); }]) {
+test('low confidence remains informational while invalid output and classifier failures use Sonnet', async () => {
+  for (const { classified, score } of [
+    { classified: result('FAST', 0.01), score: 0.01 },
+    { classified: { profile: 'FAST', confidence: null }, score: null },
+  ]) {
+    const records = [];
+    const router = createClaudeRouter({ mode: 'auto', model: 'sonnet', classifier: async () => classified, onRoute: r => records.push(r) });
+    const decision = await router.route(task());
+    assert.equal(decision.model, 'haiku');
+    assert.equal(decision.reason, 'experimental_route');
+    assert.equal(decision.reportedConfidence, score);
+    assert.equal(records[0].reportedConfidence, score);
+    router.close();
+  }
+
+  for (const classify of [async () => ({ profile: 'BAD', confidence: 1 }), async () => { throw new Error('SECRET task credential'); }]) {
     let calls = 0; const records = [];
     const router = createClaudeRouter({ mode: 'auto', model: 'sonnet', classifier: async (...args) => { calls++; return classify(...args); }, onRoute: r => records.push(r) });
     const decision = await router.route(task());

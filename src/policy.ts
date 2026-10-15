@@ -17,7 +17,7 @@ export function parseProbabilities(raw: unknown, profile: unknown): ProfileProba
 }
 
 export function parseServedModel(raw: unknown): string {
-  if (typeof raw !== 'string' || raw !== raw.trim() || !/^jev-[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(raw)) {
+  if (typeof raw !== 'string' || raw !== raw.trim() || !/^(?:jev-[A-Za-z0-9][A-Za-z0-9._-]{0,63}|tev[0-9]+:[a-zA-Z0-9][a-zA-Z0-9._-]{0,63})$/.test(raw)) {
     throw new Error('Invalid classifier served model');
   }
   return raw;

@@ -149,7 +149,9 @@ test('effort proposals/settings appear in monitor and exports; historical and un
   assert.equal(report.routing.latestRequestedEffort, 'medium'); assert.equal(report.routing.proposedEffort, 'low');
   assert.equal(report.routing.effortMode, 'observe'); assert.equal(report.routing.effortReason, 'observe');
   assert.equal(report.routing.latestVerifiedEffectiveEffort, null); assert.equal(report.routing.policyVersion, '5');
+  assert.equal(report.routing.selectionRule, 'classifier-choice');
   assert.match(formatSessionUsage(usage.snapshot()), /Last route\s+Luna \/ medium/);
+  assert.match(formatSessionUsage(usage.snapshot()), /Classifier choice \(reported confidence 99%; informational\)/);
   assert.match(formatUsageReport(report), /Effort: proposed low; executed setting medium; mode observe/);
   assert.ok(!JSON.stringify(report).includes('PRIVATE')); r.relay.close();
   const old: any = usage.snapshot();
@@ -179,9 +181,9 @@ test('classifier evidence survives relay, private accounting and shareable repor
   const report = createUsageReport(usage.snapshot());
   assert.deepEqual(report.routing.probabilities, probabilities);
   assert.equal(report.routing.servedModel, 'jev-1.13.0');
-  assert.match(formatSessionUsage(usage.snapshot()), /Auto choice \(Jev confidence 47%\)/);
+  assert.match(formatSessionUsage(usage.snapshot()), /Classifier choice \(reported confidence 47%; informational\)/);
   assert.ok(!formatSessionUsage(usage.snapshot()).includes('Profile probabilities'));
-  assert.match(formatUsageReport(report), /Jev served model: jev-1.13.0/);
+  assert.match(formatUsageReport(report), /Classifier served model: jev-1.13.0/);
   assert.ok(!JSON.stringify(report).includes('PRIVATE'));
   const old: any = usage.snapshot(); delete old.latestRoute.probabilities; delete old.latestRoute.servedModel;
   assert.equal(createUsageReport(old).routing.probabilities, null);
