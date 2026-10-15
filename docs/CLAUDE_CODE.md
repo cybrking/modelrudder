@@ -124,7 +124,7 @@ The Agent SDK has separate authentication terms. This integration runs native Cl
 
 ## Routing notices
 
-Notices display the configured model ID as a readable name and version, for example `Claude Sonnet 5.5`. Dated IDs also show the snapshot date; custom IDs retain the exact ID. “Uncertain classification; using fallback” means the classifier score is missing or below the 0.80 threshold, so auto uses Sonnet. It does not disable later classification. See the [copyable routing examples](ROUTING_EXAMPLES.md#three-routing-tests-for-claude-code) and [routing troubleshooting](TROUBLESHOOTING.md).
+Notices display the configured model ID as a readable name and version, for example `Claude Sonnet 5.5`. Dated IDs also show the snapshot date; custom IDs retain the exact ID. Preview.12 applies every valid classifier choice in auto mode; low or missing reported confidence alone does not select the fallback. Invalid or unavailable classification uses Sonnet, and ineligible context follows its context policy. Historical releases could display “Uncertain classification; using fallback” for a confidence cutoff. See the [copyable routing examples](ROUTING_EXAMPLES.md#three-routing-tests-for-claude-code) and [routing troubleshooting](TROUBLESHOOTING.md).
 
 Managed native selection, explicit upgrades and rollback are described in [Native versions](NATIVE_VERSIONS.md). An existing installation must create its managed pin once after upgrading to preview.9. Native installation and its synthetic verification do not require a Jev key or copy provider credentials.
 
