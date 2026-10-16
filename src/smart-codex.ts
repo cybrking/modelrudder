@@ -54,6 +54,7 @@ An explicit --model/-m selects pinned mode unless --routing is supplied.
 Model observe, pinned and fallback turns stay medium. Selection is fixed per turn.
 Auto overrides the /model picker at new turns.
 Choose --classifier jev|tev for one session; classifier status checks configuration.
+Run smart-codex setup to see your saved provider and switch between Jev and Tev.
 Plain codex is unchanged. The selected classifier receives each task and up to two earlier task
 excerpts from this launcher; images, files, and assistant output are not sent.
 Requires Codex CLI with --remote support, ChatGPT login, Node 24+, and configured

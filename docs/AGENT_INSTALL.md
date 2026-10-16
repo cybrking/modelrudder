@@ -4,14 +4,29 @@ Use the copy-and-paste prompt for [Codex](../README.md#install-with-codex) or [C
 
 For classifier choice, see [Jev and local Tev](CLASSIFIER_CHOICES.md). Preview.12 includes both providers. After installing, use `setup --classifier jev` for hosted routing or `setup --classifier tev` for a compatible local service. The detailed private-key steps below apply only to Jev.
 
+## Provider selection for agent-assisted installs
+
+The complete README install prompts cover all four combinations:
+
+| Native tool | Hosted Jev setup | Local Tev setup | Verify the saved choice |
+| --- | --- | --- | --- |
+| Codex | `smart-codex setup --classifier jev` | `smart-codex setup --classifier tev` | `smart-codex classifier status`, then `smart-codex doctor` |
+| Claude Code | `smart-claude setup --classifier jev` | `smart-claude setup --classifier tev` | `smart-claude classifier status`, then `smart-claude doctor` |
+
+Ask the user to choose Jev or Tev unless they have already specified one. Install and check the managed native runtime for their selected tool before completing the provider setup below. Agent-run setup should use the explicit flag from the table: a noninteractive process cannot operate the terminal menu. Both launchers save to the same private configuration, so explain that a provider switch affects both in new sessions.
+
+For Jev, private key entry and hosted consent remain user actions. If setup opens an editor or retains Tev pending Jev credentials, wait for the user to finish, then rerun the same explicit Jev setup command and check status. For Tev, resolve local prerequisites before running setup; a missing service/model leaves the saved provider unchanged. Never fall back to the other provider without the user's choice. Use fresh launcher processes for status and doctor so they reload the saved file. Report the actual provider and whether classification is enabled; setup's exit code or a successful editor launch alone is insufficient.
+
+Do not mark the installation ready if native login, private key entry, consent, local service/model setup, or a conflicting environment override remains unresolved. Describe the remaining action and retain existing credentials/settings. Status and doctor do not submit classifier inference or native model tasks; passing them is not live qualification.
+
 ## Claude Code release installation
 
 The published **v0.1.0-preview.12** standalone installer bundles both `smart-codex` and `smart-claude`, despite its `smart-codex-...-install.mjs` filename. No checkout or source build is required. Older Codex-only installers do not include Claude support.
 
 1. Check Node.js 24+, npm/network access for a managed native installation, and a separately installed official Claude CLI for `claude auth login`. Codex is not required for `smart-claude`. Use [Claude Code's official setup instructions](https://code.claude.com/docs/en/setup) for missing prerequisites. Preserve any existing plain Claude installation. On Windows/WSL, keep Node, Claude and ModelRudder in the same environment.
 2. Follow [Download and verify a release](#2-download-and-verify-a-release) using [v0.1.0-preview.12](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.12). Verify the checksum, run the standalone installer and preserve existing user PATH entries. Verify `smart-claude --help` (`smart-claude.cmd` on Windows), then run `smart-claude native install` and `smart-claude native status`. This installs and checks the release-recorded Claude 2.1.300 separately from plain Claude.
-3. Run `smart-claude setup` to open the shared private configuration, or `smart-claude setup --no-open` to print its path. Follow the [private-key precautions](#3-prepare-the-private-key-file) below, using `smart-claude` in place of `smart-codex`. The user enters their own key and enables direct Jev classification after reviewing [Claude's data flow](CLAUDE_CODE.md#eligibility-privacy-and-failure-behavior). Do not read the file, enable consent or make classifier requests on their behalf.
-4. Check native login with `claude auth status`; guide the user through `claude auth login` if needed. Preserve existing credentials and explain conflicting authentication without replacing it. Run `smart-claude doctor` for version, plugin and native-login checks without submitting a model request.
+3. Follow [provider selection](#provider-selection-for-agent-assisted-installs) and [provider configuration](#3-choose-and-configure-a-routing-provider) below, using `smart-claude` in place of `smart-codex`. Run `smart-claude setup --classifier jev` or `smart-claude setup --classifier tev` for the user's choice. Only the Jev path needs a private key and hosted consent; the Tev path needs a compatible running local service and model. Preserve the previous selection if setup cannot complete. Do not read credentials, grant hosted consent or make inference requests on the user's behalf.
+4. Check native login with `claude auth status`; guide the user through `claude auth login` if needed. Preserve existing credentials and explain conflicting authentication without replacing it. Run `smart-claude classifier status` to confirm the chosen provider is enabled, then `smart-claude doctor` for version, plugin and native-login checks without submitting a model request.
 5. Give the user `smart-claude --routing observe` to run in a fresh terminal after private setup. Native plugin trust and organization policy remain authoritative; do not bypass them. After observing results, the user can try `smart-claude --routing auto`. Pinned mode (`smart-claude --model sonnet`) needs no Jev key or consent. All actual Claude tasks, including pinned turns, consume the user's Claude allowance.
 6. Report the OS, Node/Claude versions, release ID, checksum result, installed paths, PATH readiness and doctor findings. Identify private setup and interactive checks still left for the user. Follow the shared [recovery instructions](#5-report-and-retain-recovery-options) below.
 
@@ -57,19 +72,34 @@ The standalone installer contains the runtime and its dependency; it needs no re
 
 Use the paths printed by the installer as authoritative. Add only the printed launcher directory to the user's PATH, preserving existing entries. Open a fresh terminal and verify `smart-codex --help`. Do not replace plain `codex`, overwrite an unmanaged launcher, or modify machine-wide PATH.
 
-## 3. Prepare the private key file
+## 3. Choose and configure a routing provider
+
+For interactive use, `smart-codex setup` (or `smart-claude setup`) shows the saved provider and a Jev/Tev menu in builds that include the provider picker. Agent-run commands and releases without the picker should use the explicit `--classifier` commands below. `setup --no-open` alone preserves existing settings or creates a disabled template; it does not choose or activate Tev.
+
+### Local Tev
+
+Use a running service with `/api/tags`, `/v1/systemone`, and `tev1:latest`, normally at `http://127.0.0.1:11434`. An arbitrary OpenAI-compatible chat endpoint is insufficient. If the service or model is absent, explain the prerequisites and get agreement before downloading a model or installing a persistent service. See [local configuration](CLASSIFIER_CHOICES.md) for a custom numeric loopback origin or supported tagged Tev model.
+
+```sh
+smart-codex setup --classifier tev
+smart-codex classifier status
+```
+
+Use `smart-claude` for Claude. Successful setup saves `SMART_CODEX_CLASSIFIER=tev` and `ALLOW_CLASSIFICATION=true` for both launchers without requesting a Jev key or enabling hosted consent. A failed metadata check leaves the previous provider unchanged. Never silently substitute Jev. Setup/status inspect `/api/tags` only: model presence does not prove `/v1/systemone` inference compatibility or warm-model readiness. Proceed to native login and doctor below; do not run the Jev key steps for a Tev installation.
+
+### Hosted Jev and private key entry
+
+```sh
+smart-codex setup --classifier jev
+```
+
+Ready Jev credentials and consent are reused. Otherwise setup prints the private configuration path and requests a local editor. If switching from Tev without ready Jev credentials/consent, setup retains Tev until the user completes private entry; rerun the command afterward. To prepare a disabled template or print its path without opening an editor:
 
 ```sh
 smart-codex setup --no-open
 ```
 
-This creates a minimal configuration with classification disabled if absent and prints the configuration path. An existing file is retained. No setting is enabled by creating the file. When the user is ready:
-
-```sh
-smart-codex setup
-```
-
-Setup requests an editor and catches immediate startup failures. If no window appears, open the printed configuration path manually; a successful launch request does not establish that an editor window opened. The user enters credentials in their local editor. If the editor cannot open, give the user the printed path so they can open it manually; do not read the file into agent context. The template includes these settings:
+This creates a minimal disabled configuration only if absent; an existing file is retained. If no editor window appears after interactive setup, open the printed path manually; a successful launch request does not establish that a window opened. The user enters credentials in their local editor. Do not read the file into agent context. The template includes these settings:
 
 ```dotenv
 TYPESAFE_API_KEY=
@@ -77,7 +107,7 @@ ALLOW_JEV_CLASSIFICATION=false
 SMART_CODEX_CLASSIFIER=direct
 ```
 
-`SMART_CODEX_CLASSIFIER`, `SMART_CODEX_ENV_FILE` and the macOS/Linux `~/.config/smart-codex/env` path are shared legacy names used by **both** launchers. Keep these names as written; Claude currently requires `SMART_CODEX_CLASSIFIER=direct`. Leaving `ALLOW_JEV_CLASSIFICATION=false` keeps Jev disabled; pinned mode remains available.
+`SMART_CODEX_CLASSIFIER`, `SMART_CODEX_ENV_FILE` and the macOS/Linux `~/.config/smart-codex/env` path are shared legacy names used by **both** launchers. Keep these names as written. Direct Jev uses `SMART_CODEX_CLASSIFIER=direct`; local Tev uses `tev`. Claude supports these two choices, but not the Codex-only hosted gateway. Leaving `ALLOW_JEV_CLASSIFICATION=false` keeps Jev disabled; pinned mode remains available.
 
 The [official Jev quickstart](https://docs.typesafe.ai/introduction/quickstart) links to the [TypeSafe key dashboard](https://console.typesafe.ai/keys), which offers account login/signup if needed. Provider fees are separate from the free client and the user's Codex subscription. The user enters their own key and explicitly changes `ALLOW_JEV_CLASSIFICATION` to `true`. Consent enables sending eligible task text and bounded earlier excerpts to TypeSafe as described in the README. Do not enable consent on their behalf, store keys in shell history or a repository, or automatically submit a classification request to check the key. Existing exported environment variables take precedence; do not print them when diagnosing configuration.
 
@@ -90,16 +120,17 @@ Use `codex login status` to check native login. If a ChatGPT login is missing, h
 Run:
 
 ```sh
+smart-codex classifier status
 smart-codex doctor
 ```
 
-Doctor is a prerequisite/protocol check, not proof of task quality, paid-access eligibility or full TUI operation. Give the user this command to run interactively after they finish key setup:
+Confirm that classifier status names the chosen provider and reports classification enabled. Jev status checks configured credentials/consent without verifying the key remotely; Tev status checks local metadata without inference. Doctor is a prerequisite/protocol check, not proof of task quality, paid-access eligibility or full TUI operation. Give the user this command to run interactively after they finish the selected provider's setup:
 
 ```sh
 smart-codex --routing observe --effort-mode fixed
 ```
 
-Observe mode calls Jev for recommendations while Sol executes the task. It can consume both providers' allowances and is therefore a **user-run** test. Have the user inspect tools/approvals, interruption and normal task completion before considering experimental auto mode. Leaving Jev disabled allows `smart-codex --routing pinned --model gpt-6.1-sol`; submitting a pinned task still uses the user's OpenAI allowance.
+Observe mode calls the selected classifier for recommendations while Sol executes the task. Jev consumes hosted classifier resources; Tev consumes local resources. Native execution uses the user's OpenAI allowance in either case, so this is a **user-run** test. Have the user inspect tools/approvals, interruption and normal task completion before considering experimental auto mode. Pinned mode needs neither classifier: `smart-codex --routing pinned --model gpt-6.1-sol`; submitting a pinned task still uses the user's OpenAI allowance.
 
 Resume an existing thread with `smart-codex resume THREAD_ID`. Codex 0.160.1 rejects permission overrides such as `--sandbox` and `--ask-for-approval` when resuming a remote task; use the thread’s retained permissions. Plain Codex updates do not change the managed pin. A missing or invalid pin produces an actionable `native install` instruction.
 

@@ -35,8 +35,27 @@ async function openEditor(path: string): Promise<void> {
   await startEditor(command, args);
 }
 
+type SetupChoice = 'jev' | 'tev' | 'edit' | 'keep';
+
+async function promptSetup(current: string, out: (text: string) => void): Promise<SetupChoice> {
+  const terminal = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    out(`Routing provider: ${current}\n\n1. Jev — hosted; sends eligible task text to TypeSafe; requires your key and consent\n2. Tev — local; requires a running Tev service and tev1:latest\n3. Edit private configuration\n\nThis choice applies to new Codex and Claude sessions. Native execution still uses your provider account.\n`);
+    while (true) {
+      const choice = (await terminal.question('Choose [1/2/3], or Enter to keep current settings: ')).trim().toLowerCase();
+      if (choice === '1' || choice === 'jev') return 'jev';
+      if (choice === '2' || choice === 'tev') return 'tev';
+      if (choice === '3' || choice === 'edit') return 'edit';
+      if (['', 'keep', 'later', 'q'].includes(choice)) return 'keep';
+      out('Choose 1 for Jev, 2 for Tev, 3 to edit, or Enter to keep current settings.\n');
+    }
+  } finally { terminal.close(); }
+}
+
 export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.env,
-  out = (text: string) => process.stdout.write(text), editor = openEditor, inspect = inspectTev): Promise<number> {
+  out = (text: string) => process.stdout.write(text), editor = openEditor, inspect = inspectTev,
+  prompt: ((current: string, out: (text: string) => void) => Promise<SetupChoice>) | undefined =
+    process.stdin.isTTY && process.stdout.isTTY ? promptSetup : undefined): Promise<number> {
   let provider: string | undefined;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--no-open') continue;
@@ -46,26 +65,26 @@ export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.
   const file = resolve(env.SMART_CODEX_ENV_FILE || defaultInstallOptions().envFile);
   let existing;
   try { existing = await lstat(file); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-  if (!provider && !existing && !args.includes('--no-open') && process.stdin.isTTY && process.stdout.isTTY) {
-    const terminal = createInterface({ input: process.stdin, output: process.stdout });
-    try {
-      out('Choose a routing provider: Jev (hosted; private key and task transmission) or Tev (local service; no Jev key). Native execution still uses your provider account.\n');
-      const choice = (await terminal.question('Routing provider [jev / tev / later]: ')).trim().toLowerCase();
-      if (choice === 'jev' || choice === 'tev') provider = choice;
-      else if (choice !== 'later' && choice !== '') throw new Error('Setup choice must be jev, tev or later.');
-    } finally { terminal.close(); }
-  }
   const oldText = existing ? await readFileChecked(file) : setupTemplate;
   const saved = parseEnv(oldText);
+  if (!provider && !args.includes('--no-open') && prompt) {
+    const current = !existing ? 'Not configured' : saved.SMART_CODEX_CLASSIFIER === 'tev' ? 'Tev (local)'
+      : saved.SMART_CODEX_CLASSIFIER === 'hosted' ? 'Jev (hosted gateway)'
+      : !saved.SMART_CODEX_CLASSIFIER || ['direct', 'jev'].includes(saved.SMART_CODEX_CLASSIFIER) ? 'Jev (hosted)' : 'Unrecognized provider';
+    const choice = await prompt(current, out);
+    if (choice === 'keep') { out('Configuration unchanged.\n'); return 0; }
+    if (choice === 'jev' || choice === 'tev') provider = choice;
+  }
+  const jevReady = Boolean((env.TYPESAFE_API_KEY ?? saved.TYPESAFE_API_KEY)?.trim()) &&
+    (env.ALLOW_JEV_CLASSIFICATION ?? saved.ALLOW_JEV_CLASSIFICATION) === 'true';
   if (provider) {
     const selected = provider === 'jev' ? 'direct' : 'tev';
     if (env.SMART_CODEX_CLASSIFIER && env.SMART_CODEX_CLASSIFIER !== saved.SMART_CODEX_CLASSIFIER && env.SMART_CODEX_CLASSIFIER !== selected && env.SMART_CODEX_CLASSIFIER !== provider) {
       throw new Error('Setup blocked by an environment classifier override; unset SMART_CODEX_CLASSIFIER and retry. Configuration unchanged.');
     }
     if (env.ALLOW_CLASSIFICATION === 'false' && saved.ALLOW_CLASSIFICATION !== 'false') throw new Error('Setup blocked by ALLOW_CLASSIFICATION=false in the environment. Configuration unchanged.');
-    if (provider === 'jev' && saved.SMART_CODEX_CLASSIFIER === 'tev' &&
-      (!(env.TYPESAFE_API_KEY ?? saved.TYPESAFE_API_KEY)?.trim() || (env.ALLOW_JEV_CLASSIFICATION ?? saved.ALLOW_JEV_CLASSIFICATION) !== 'true')) {
-      out(`Jev is not ready; Tev selection preserved. Open ${file} privately, enter TYPESAFE_API_KEY and set ALLOW_JEV_CLASSIFICATION=true after reviewing hosted data flow, then rerun setup --classifier jev. Never paste the key into chat.\n`);
+    if (provider === 'jev' && saved.SMART_CODEX_CLASSIFIER === 'tev' && !jevReady) {
+      out(`Jev is not ready; Tev selection preserved. Open ${file} privately, enter TYPESAFE_API_KEY and set ALLOW_JEV_CLASSIFICATION=true after reviewing hosted data flow, then rerun setup and choose Jev. Never paste the key into chat.\n`);
       if (!args.includes('--no-open')) await editor(file);
       return 1;
     }
@@ -74,7 +93,10 @@ export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.
       if (config.provider !== 'tev') throw new Error('Invalid Tev configuration');
       const status = await inspect(config.url, config.model);
       out(`${status.message}\n`);
-      if (!status.ready) return 1;
+      if (!status.ready) {
+        out('Routing provider unchanged. Run setup again after Tev is ready.\n');
+        return 1;
+      }
     }
   }
   if (existing) {
@@ -111,9 +133,13 @@ export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.
       out('Local classification enabled. No Jev key or hosted fallback. Start with smart-codex --routing observe or smart-claude --routing observe. Claude live qualification remains pending.\n');
       return 0;
     }
+    if (jevReady) {
+      out('Hosted classification enabled. Start a new smart-codex or smart-claude session to use Jev.\n');
+      return 0;
+    }
   }
   if (!provider && (env.SMART_CODEX_CLASSIFIER ?? saved.SMART_CODEX_CLASSIFIER) === 'tev') {
-    out(`Local configuration: ${file}\nExisting Tev selection preserved. No Jev key is required. Use classifier status to check readiness; setup --classifier jev switches to hosted routing.\n`);
+    out(`Local configuration: ${file}\nExisting Tev selection preserved. No Jev key is required. Use classifier status to check readiness; run setup and choose Jev to switch to hosted routing.\n`);
     if (!args.includes('--no-open')) await editor(file);
     return 0;
   }

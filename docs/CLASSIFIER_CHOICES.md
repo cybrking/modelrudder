@@ -11,6 +11,9 @@ ModelRudder's product direction is to offer both classifiers and let users choos
 The local service must expose `/api/tags` and `/v1/systemone` and have `tev1:latest`. The default origin is `http://127.0.0.1:11434`. An arbitrary OpenAI-compatible chat endpoint is not sufficient. Setup checks metadata only; it does not download models, start services, or submit inference.
 
 ```sh
+# Open the menu to view or switch the saved provider.
+smart-codex setup
+
 # Save a shared choice; applies to new Codex and Claude sessions.
 smart-codex setup --classifier tev
 # Or select hosted Jev and privately enter its key/consent:
@@ -28,7 +31,7 @@ Use `smart-claude` in place of `smart-codex` for the same setup/status/override 
 
 Local setup saves `SMART_CODEX_CLASSIFIER=tev` and `ALLOW_CLASSIFICATION=true`. Optional private settings are `SMART_CODEX_TEV_URL` (HTTP numeric loopback origin only, no paths/credentials/redirects) and `SMART_CODEX_TEV_MODEL` (default `tev1:latest`). Hosted Jev accepts `direct` or `jev` and still requires `ALLOW_JEV_CLASSIFICATION=true` plus `TYPESAFE_API_KEY`. Local activation never grants hosted consent. `ALLOW_CLASSIFICATION=false` disables both. Legacy configurations retain their behavior. Codex's existing `hosted` gateway remains supported; Claude does not use its Codex rubric.
 
-A fresh interactive setup offers Jev, Tev or later. `setup --no-open` preserves existing configuration or creates a disabled template without prompting. With no provider selected, classification stays disabled. Pinned use remains available:
+Interactive `setup` always shows the saved provider and offers **1. Jev**, **2. Tev**, and **3. Edit private configuration**, including on existing installations. Enter keeps settings unchanged; on a new installation it exits without creating a file. Ready providers switch without opening an editor. If Jev credentials or consent are missing when switching from Tev, setup preserves Tev and opens the private configuration for completion; rerun setup and choose Jev afterward. `setup --no-open` preserves existing configuration or creates a disabled template without prompting. Explicit `--classifier` selection also skips the menu. Pinned use remains available:
 
 ```sh
 smart-codex --routing pinned --model gpt-6.1-sol

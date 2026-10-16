@@ -23,6 +23,7 @@ export const smartClaudeHelp = `Usage: smart-claude [--routing auto|observe|pinn
        smart-claude report
 
 Choose a session provider with --classifier jev|tev; inspect it with classifier status.
+Run smart-claude setup to see your saved provider and switch between Jev and Tev.
 Runs the native interactive Claude Code CLI with ModelRudder's local Mods adapter.
 Install an isolated verified CLI first: smart-claude native install.
 Regular CLI updates do not change the selected ModelRudder native version.
