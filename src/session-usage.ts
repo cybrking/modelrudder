@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { codexClassifierVersion } from './classifier-contract.ts';
 import { effortModes, effortReasons, routingReasons } from './types.ts';
 import type { Effort, EffortMode, ProfileProbabilities } from './types.ts';
 import { parseProbabilities, parseServedModel } from './policy.ts';
@@ -125,7 +126,7 @@ export function createSessionUsage(classifierProvider: 'jev' | 'tev' = 'jev') {
         policyVersion: ['1', '2', '3', '4', '5'].includes(metadata.policyVersion as string) ? metadata.policyVersion as string : null,
         policyHash: typeof metadata.policyHash === 'string' && /^[a-f0-9]{64}$/.test(metadata.policyHash) ? metadata.policyHash : null,
         selectionRule: metadata.selectionRule === 'classifier-choice' ? metadata.selectionRule : null,
-        classifierVersion: typeof metadata.classifierVersion === 'string' && /^(?:jev-latest|tev[0-9]+:[a-zA-Z0-9._-]{1,64}):rubric-2026-10-01$/.test(metadata.classifierVersion) ? metadata.classifierVersion : null,
+        classifierVersion: codexClassifierVersion(metadata.classifierVersion),
         model: String(metadata.model), proposed: typeof metadata.proposed === 'string' ? metadata.proposed : null,
         confidence: typeof metadata.reportedConfidence === 'number' ? metadata.reportedConfidence : null,
         reason: routingReasons.includes(metadata.reason as typeof routingReasons[number]) ? metadata.reason as string : 'unknown',

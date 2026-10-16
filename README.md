@@ -8,7 +8,7 @@ Spend your strongest model on the tasks that need it. ModelRudder adds experimen
 
 Use your own native provider account. Choose hosted Jev with your own TypeSafe key or local Tev without a Jev key. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef support is not included.
 
-Choose the launcher for your native coding tool. The preview.12 installer includes both; you only need the native CLI you intend to use.
+Choose the launcher for your native coding tool. The preview.13 installer includes both; you only need the native CLI you intend to use.
 
 | Native tool | ModelRudder launcher | Experimental automatic routing |
 | --- | --- | --- |
@@ -55,7 +55,7 @@ Copy this entire prompt into Codex. Say **“Use Jev”** or **“Use Tev”** a
 
 ```text
 Install and set up ModelRudder on this computer for Codex.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.12
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13
 Read the README, docs/AGENT_INSTALL.md and docs/CLASSIFIER_CHOICES.md at
 that same tag. Use its exact asset names and supported commands throughout.
 
@@ -118,7 +118,7 @@ Copy this entire prompt into Claude Code. Say **“Use Jev”** or **“Use Tev�
 
 ```text
 Install and set up ModelRudder on this computer for Claude Code.
-Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.12
+Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13
 Read the README, docs/AGENT_INSTALL.md, docs/CLAUDE_CODE.md and
 docs/CLASSIFIER_CHOICES.md at that same tag. Use its exact asset names and
 supported commands throughout.

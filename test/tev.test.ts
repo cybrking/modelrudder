@@ -8,7 +8,8 @@ import { parseEnv } from 'node:util';
 import { createServer } from 'node:http';
 import { createTevClassifier, inspectTev, localTevEndpoint } from '../src/adapters/tev.ts';
 import { createConfiguredClassifier, readClassifierConfig, classifierOverride, classificationEnabled } from '../src/classifier.ts';
-import { createClaudeClassifier } from '../src/claude-classifier.ts';
+import { createClaudeClassifier, claudeJevInput } from '../src/claude-classifier.ts';
+import { jevInput } from '../src/adapters/jev.ts';
 import { createTurnRelay } from '../src/turn-relay.ts';
 import { createClaudeRouter } from '../src/claude-routing.ts';
 import { parseDecision } from '../src/policy.ts';
@@ -22,6 +23,32 @@ import { claudeChildEnv } from '../src/claude-command.ts';
 const valid = () => ({ model: 'tev1:latest', answers: { route: { type: 'choice', choice: 'FAST', confidence: 0.9,
   probabilities: { FAST: 1, BALANCED: 0, DEEP: 0, MAX: 0 } } }, usage: { input_tokens: 10, output_tokens: 2 } });
 const enabled = { SMART_CODEX_CLASSIFIER: 'tev', ALLOW_CLASSIFICATION: 'true' };
+
+test('Codex Tev has its own versioned rubric while Jev and both Claude providers keep their rubrics', async t => {
+  const requests: any[] = [];
+  t.mock.method(globalThis, 'fetch', async (_url: unknown, init: RequestInit) => {
+    const request = JSON.parse(String(init.body)); requests.push(request);
+    return Response.json({ ...valid(), model: request.model });
+  });
+  const input = JSON.stringify({ previousUserTasks: ['Investigate the failure'], currentTask: 'Continue' });
+  const codexTev = createConfiguredClassifier(enabled);
+  await codexTev({ input });
+  assert.equal(codexTev.metadata.version, 'tev1:latest:codex-rubric-2026-10-16');
+  assert.equal(requests[0].state, input);
+  assert.notDeepEqual(requests[0].questions, jevInput(input).questions);
+  const direct = { SMART_CODEX_CLASSIFIER: 'direct', ALLOW_JEV_CLASSIFICATION: 'true', TYPESAFE_API_KEY: 'fixture' };
+  const codexJev = createConfiguredClassifier(direct);
+  await codexJev({ input });
+  assert.equal(codexJev.metadata.version, 'jev-latest:rubric-2026-10-01');
+  assert.deepEqual(requests[1], { model: 'jev-latest', ...jevInput(input) });
+  for (const env of [enabled, direct]) {
+    const classifier = createClaudeClassifier(env);
+    await classifier({ input });
+    const model = env.SMART_CODEX_CLASSIFIER === 'tev' ? 'tev1:latest' : 'jev-latest';
+    assert.equal(classifier.metadata.version, `${model}:claude-rubric-2026-10-08`);
+    assert.deepEqual(requests.at(-1), { model, ...claudeJevInput(input) });
+  }
+});
 
 test('local Tev has strict loopback configuration and independent activation; legacy Jev consent survives', () => {
   assert.equal(readClassifierConfig(enabled).provider, 'tev');
@@ -141,7 +168,7 @@ test('both native paths use local adapter, distinct rubrics, per-turn choice and
     upstream.length = 0;
     await relay.client({ id: 'turn1', method: 'turn/start', params: { threadId: 'thread1', input: [{ type: 'text', text: 'synthetic' }] } });
     assert.equal(upstream[0].params.model, 'gpt-6-luna'); assert.equal(upstream[0].params.effort, 'low');
-    assert.equal(routes[0].classifierVersion, 'tev1:latest:rubric-2026-10-01'); relay.close();
+    assert.equal(routes[0].classifierVersion, 'tev1:latest:codex-rubric-2026-10-16'); relay.close();
     assert.match(requests[0].questions.route.criteria.FAST, /Luna/);
     let metadata: any;
     const router = createClaudeRouter({ mode: 'auto', model: 'sonnet', classifier: createClaudeClassifier(env), onRoute: m => { metadata = m; } });

@@ -1,6 +1,6 @@
 import { createHostedClassifier } from './adapters/hosted.ts';
 import { createJevClassifier, jevInput } from './adapters/jev.ts';
-import { createTevClassifier, localTevEndpoint, tevModel } from './adapters/tev.ts';
+import { createTevClassifier, localTevEndpoint, tevModel, tevCodexRubric } from './adapters/tev.ts';
 import { httpsEndpoint } from './classifier-contract.ts';
 
 export function readClassifierConfig(env: Record<string, string | undefined>) {
@@ -34,14 +34,14 @@ export function classifierNotice(env: Record<string, string | undefined>) {
 }
 
 export function createConfiguredClassifier(env: Record<string, string | undefined>, timeoutMs?: number,
-  buildInput = jevInput, rubric = 'rubric-2026-10-01') {
+  buildInput?: typeof jevInput, rubric?: string) {
   const config = readClassifierConfig(env);
   const classifier = config.provider === 'tev' ? createTevClassifier({ ...config, timeoutMs, buildInput })
     : config.provider === 'direct' ? createJevClassifier({ apiKey: config.apiKey, timeoutMs, buildInput })
     : createHostedClassifier({ url: config.url, token: config.token, timeoutMs });
   return Object.assign(classifier, { metadata: {
     provider: config.provider === 'tev' ? 'tev' : 'jev',
-    version: `${config.provider === 'tev' ? config.model : 'jev-latest'}:${rubric}`,
+    version: `${config.provider === 'tev' ? config.model : 'jev-latest'}:${rubric ?? (config.provider === 'tev' && !buildInput ? tevCodexRubric : 'rubric-2026-10-01')}`,
   } });
 }
 

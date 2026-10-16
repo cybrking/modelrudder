@@ -47,6 +47,21 @@ test('older records without a selection rule report confidence semantics as unkn
   assert.match(formatUsageReport(report), /confidence role: unknown/);
 });
 
+test('reports retain current and historical Codex rubric versions and redact unsupported values', () => {
+  for (const version of ['tev1:latest:codex-rubric-2026-10-16', 'tev2:pinned:codex-rubric-2026-10-16',
+    'tev1:latest:rubric-2026-10-01', 'jev-latest:rubric-2026-10-01',
+    'jev-latest:codex-rubric-2026-10-16', 'tev1:latest:PRIVATE', 'PRIVATE', 'tev1:latest:codex-rubric-2026-10-16\n']) {
+    const expected = version.includes('PRIVATE') || version.endsWith('\n') || version === 'jev-latest:codex-rubric-2026-10-16' ? null : version;
+    const usage = createSessionUsage('tev');
+    usage.route({ model: 'gpt-6-luna', classifierVersion: version });
+    assert.equal(usage.snapshot().latestRoute?.classifierVersion, expected);
+    assert.equal(createUsageReport(usage.snapshot()).routing.classifierVersion, expected);
+    const untrusted = snapshot();
+    untrusted.latestRoute!.classifierVersion = version;
+    assert.equal(createUsageReport(untrusted).routing.classifierVersion, expected);
+  }
+});
+
 test('export allowlist omits arbitrary content and unsafe routing values', () => {
   const s: any = snapshot();
   s.prompt = 'PRIVATE_PROMPT'; s.timestamp = 'PRIVATE_TIMESTAMP'; s.path = '/PRIVATE_PATH';

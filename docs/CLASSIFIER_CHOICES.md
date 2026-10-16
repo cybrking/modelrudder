@@ -44,6 +44,16 @@ Native tasks still consume the native provider's allowance. Local Tev classifica
 
 ## What the tests actually show
 
+### Preview.13 Codex Tev rubric
+
+Codex's local Tev classifier now uses `codex-rubric-2026-10-16`. FAST requires a clearly mechanical task or straightforward retrieval/explanation; BALANCED covers bounded implementation with a known approach; DEEP covers investigation and substantial technical reasoning; MAX covers broad discovery, difficult interacting systems and demanding completeness. The rubric assesses the work implied by the whole deliverable, including discovery and verification. Short wording and missing details do not establish simplicity, and domain keywords alone do not determine the route.
+
+The four model/effort mappings are unchanged. Jev and both Claude classifier paths retain their existing rubrics. Reports preserve the new version alongside historical versions. No confidence threshold, keyword override, additional context capture or hosted fallback is introduced.
+
+In a 12-description development comparison, the reported terse repository-audit request changed from FAST to MAX, three bounded implementation requests changed from FAST to BALANCED, and all four simple controls stayed FAST. The two phrasings of a duplicate-charge investigation stayed DEEP; a payment-failover architecture request moved from BALANCED to DEEP. These 24 local classifier calls used 11,406 reported input tokens. The sample informed the draft and is not held-out evidence or a task-success rate. See [release readiness](RELEASE_READINESS.md#preview13-codex-tev-rubric) for execution checks and remaining limits.
+
+### Earlier task-outcome comparisons
+
 | Evaluation | Jev-selected execution | Tev-selected execution | Scope |
 | --- | --- | --- | --- |
 | Repository pilot, unchanged scoring | 6/6 accepted attempts | 4/6 accepted attempts | Four unique tasks; only one valid held-out task; installer repeated three times per arm |

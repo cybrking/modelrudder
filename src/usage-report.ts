@@ -1,4 +1,5 @@
 import { routingQualification } from './compatibility.ts';
+import { codexClassifierVersion } from './classifier-contract.ts';
 import { closeSync, constants, fstatSync, openSync, readSync, readdirSync, writeFileSync } from 'node:fs';
 import { isPrivatePathSync, protectPrivatePathSync } from './private-files.ts';
 import { join } from 'node:path';
@@ -74,7 +75,7 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
       policyVersion: ['1', '2', '3', '4', '5'].includes(r?.policyVersion) ? r!.policyVersion as string : null,
       policyHash: typeof r?.policyHash === 'string' && /^[a-f0-9]{64}$/.test(r.policyHash) ? r.policyHash : null,
       selectionRule: r?.selectionRule === 'classifier-choice' ? r.selectionRule : null,
-      classifierVersion: typeof r?.classifierVersion === 'string' && /^(?:jev-latest|tev[0-9]+:[a-zA-Z0-9._-]{1,64}):rubric-2026-10-01$/.test(r.classifierVersion) ? r.classifierVersion : null,
+      classifierVersion: codexClassifierVersion(r?.classifierVersion),
       probabilities, servedModel,
       latestRequestedModel: requestedModel, latestVerifiedEffectiveModel: null,
       latestRequestedEffort: r?.effort === 'low' || r?.effort === 'medium' ? r.effort as string : null,
