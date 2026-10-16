@@ -14,7 +14,7 @@ Bare `smart-codex` is equivalent to `smart-codex --routing auto --effort-mode au
 
 ## Claude Code
 
-Run `smart-claude setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described in the installation guide. Then check readiness and start with recommendations while Claude begins on Sonnet:
+Run `smart-claude setup` to view the saved provider and choose Jev or Tev. Choose Jev and enter your key in the local editor if needed, or choose Tev with your local service running. Then check readiness and start with recommendations while Claude begins on Sonnet:
 
 ```sh
 smart-claude native install
@@ -33,7 +33,7 @@ Auto maps FAST to Haiku, BALANCED/DEEP to Sonnet, and MAX to Opus. Native effort
 
 ## Codex
 
-Run `smart-codex setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described in the installation guide. Then check readiness and start with recommendations while Sol executes:
+Run `smart-codex setup` to view the saved provider and choose Jev or Tev. Choose Jev and enter your key in the local editor if needed, or choose Tev with your local service running. Then check readiness and start with recommendations while Sol executes:
 
 ```sh
 smart-codex native install

@@ -4,6 +4,10 @@
 
 Both launchers support a saved routing-provider selection, a per-session override and metadata-only status checks. Tev uses a loopback-only adapter with each native tool's own rubric. Hosted Jev consent remains separate; local failures use the existing model fallback without hosted substitution. Existing configuration and native CLI pins survive upgrades. Local Tev compute cost is unpriced rather than charged at Jev rates. Opt-in local learning records remain private and do not upload or train automatically.
 
+Interactive setup now shows the saved provider on existing installations as well as new ones, with Jev, Tev, private configuration editing and Enter to keep settings. Ready providers switch without opening an editor; unavailable replacements preserve the current selection. Both natural-language installation prompts cover Jev and Tev, explicit noninteractive setup, private Jev key/consent entry, local Tev prerequisites and provider-specific readiness checks.
+
+October 16 local verification: 210 tests passed with one Windows-only skip; type checking and diff whitespace checks passed. The installed macOS setup menu correctly reprompted after invalid input and exited unchanged on Enter. Configuration and both native CLI selections matched their pre-install fingerprints. The setup/provider-switch tests use fixtures; no real classifier inference or native coding task was submitted for this change. Final cross-platform CI evidence accompanies the published release.
+
 The release candidate retains the managed CLI compatibility policy and the reviewed compatibility data from current main. On macOS, 204 tests passed with one Windows-only skip and type checking passed after integration. Five actual local Tev classifier calls passed before integration, covering both rubrics; they did not execute coding tasks. Full authenticated Claude qualification is pending: a real terminal launched and preserved manual permissions, but reported expired native login before any coding task was submitted. No successful live coding journey is claimed.
 
 

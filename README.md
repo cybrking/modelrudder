@@ -21,6 +21,8 @@ Both launchers choose a model for each eligible new user turn and keep that choi
 
 Choose **Jev or local Tev** during setup and use your native launcher normally afterward. The classifier recommends the model and, for Codex, reasoning effort; your native coding tool still executes the task. A small evaluation is not grounds to exclude either option.
 
+To switch at any time, run `smart-codex setup` or `smart-claude setup`. The menu shows your saved provider: choose **1 for Jev**, **2 for Tev**, **3 to edit private configuration**, or press **Enter to keep your settings**. The saved choice applies to both launchers in new sessions. Tev must be running locally; switching to Jev requires your key and hosted consent.
+
 | Choice | Why choose it? | Current availability |
 | --- | --- | --- |
 | Jev | Hosted classification without running a local classifier service | Integrated in both launchers; requires a TypeSafe key and consent to send eligible task text |
@@ -30,38 +32,13 @@ Local Tev needs a running local service and suitable machine resources. Local cl
 
 ### Natural-language instructions: choose Jev
 
-Use the installation prompt for your native tool below, with this preference:
-
-```text
-Use Jev as my ModelRudder routing classifier. Follow the installation guide
-for my selected release and native coding tool. Open the private configuration
-in a local editor so I can enter my TypeSafe key and enable classification.
-Do not read or print credentials. Preserve my native subscription login.
-Run doctor without submitting model tasks, then give me the observe-mode
-command and explain how to switch to automatic routing.
-```
+Use the complete [Codex](#install-with-codex) or [Claude Code](#install-with-claude-code) prompt below and tell the agent **“Use Jev.”** It will guide you through private key entry and hosted consent; an existing working Jev configuration can be reused.
 
 ### Natural-language instructions: choose local Tev
 
-Use this prompt with Codex or Claude Code to install preview.12 with local Tev.
+Use either complete install prompt below and tell the agent **“Use Tev.”** It will check the local service and model, save Tev for both launchers, and report missing prerequisites without configuring a Jev key or substituting hosted routing.
 
-```text
-Set up ModelRudder with local tev1:latest as my routing provider.
-Use https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.12.
-Read its README, docs/AGENT_INSTALL.md and docs/CLASSIFIER_CHOICES.md.
-Download the release installer and SHA256SUMS, verify its checksum, then
-install for my user account and preserve existing PATH entries. Preserve native
-CLIs, login, permissions, keys and existing unrelated configuration.
-
-Check whether my local service supports /api/tags and /v1/systemone and has
-tev1:latest. Explain missing prerequisites; do not download a model or install
-a persistent service without my agreement. Do not configure a Jev key.
-Run smart-codex setup --classifier tev (or smart-claude for Claude), then
-classifier status and doctor. Explain that the saved choice affects both
-launchers and native task execution still uses my provider account.
-Give me the observe-mode command. Do not submit inference automatically.
-Never silently substitute a hosted classifier if local Tev is unavailable.
-```
+Both prompts handle either provider. If you have not already chosen, the agent asks before changing the saved provider. Native task execution still uses your Codex or Claude account.
 
 ## Requirements
 
@@ -74,73 +51,136 @@ The installer creates separate managed native CLI versions and reuses your nativ
 
 ## Install with Codex
 
-Copy this entire prompt into Codex. It will install ModelRudder and open the local configuration file; you enter your Jev key privately in the editor.
+Copy this entire prompt into Codex. Say **“Use Jev”** or **“Use Tev”** alongside it, or let the agent ask. The agent installs the launcher and completes the selected setup path; Jev key entry and native login may require your participation.
 
 ```text
-Install ModelRudder on this computer so I can use model routing in Codex.
+Install and set up ModelRudder on this computer for Codex.
 Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.12
-Read the README and docs/AGENT_INSTALL.md at that release tag and follow them.
+Read the README, docs/AGENT_INSTALL.md and docs/CLASSIFIER_CHOICES.md at
+that same tag. Use its exact asset names and supported commands throughout.
 
-Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
-credentials and configuration. If plain Codex is missing, install its official
-CLI for native login. After installing ModelRudder, run smart-codex
-native install to install and check its separate, recorded Codex version.
+1. Ask whether I want hosted Jev or local Tev unless I have already chosen.
+   Explain that Jev sends eligible task text and bounded earlier excerpts to
+   TypeSafe; Tev keeps classification local. Codex execution uses my OpenAI
+   account either way. The saved provider is shared with smart-claude, so
+   explain that a switch affects both launchers in new sessions.
 
-Download the release installer and SHA256SUMS, verify the checksum, install
-for my user account, and add its launcher directory to my user PATH without
-removing existing entries. Verify smart-codex --help.
+2. Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
+   credentials, configuration, permissions and PATH entries. Install the
+   official plain Codex CLI if needed for native login. Download this release's
+   standalone installer and SHA256SUMS, verify the exact installer's checksum,
+   then install for my user account. Add only the printed launcher directory
+   to my user PATH and verify smart-codex --help. Do not overwrite an unmanaged
+   launcher. Run smart-codex native install and smart-codex native status to
+   install and check ModelRudder's separate recorded Codex runtime.
 
-Run smart-codex setup to open my private Jev configuration in a local editor.
-Show me https://console.typesafe.ai/keys so I can sign up and get my own key.
-Never read or print the key file or ask me to paste a key into chat. Leave new
-classification disabled until I enter the key and explicitly enable it.
+3. Complete the chosen provider's setup, using an explicit --classifier flag
+   when running commands for me so setup does not depend on a terminal menu.
+   For Jev: run smart-codex setup --classifier jev. Reuse ready credentials
+   and consent; if either is missing, show https://console.typesafe.ai/keys
+   and open the printed private configuration path for me. I enter my own
+   TYPESAFE_API_KEY and explicitly set ALLOW_JEV_CLASSIFICATION=true after
+   reviewing the data flow. Never read or print the key file, ask me to paste
+   a key into chat, or enable hosted consent on my behalf. If setup preserves
+   an existing Tev or gateway selection until direct Jev is ready, rerun the same setup command
+   after I finish private entry. Do not claim Jev is ready just because the
+   editor opened or setup returned successfully.
+   For Tev: check for a compatible local service, normally
+   http://127.0.0.1:11434, with tev1:latest and support for /api/tags and
+   /v1/systemone. Setup metadata checks do not prove inference compatibility.
+   If prerequisites are missing, explain what is needed and get my agreement
+   before downloading a model or installing a persistent service. Run
+   smart-codex setup --classifier tev once the service and model are present.
+   Do not request a Jev key or change hosted consent. Preserve the previous
+   provider if Tev setup fails; never silently substitute Jev.
 
-Check my Codex login without replacing it. If login is needed, guide me through
-the official codex login flow. Run smart-codex doctor, explain anything still
-needed, and give me the command to start in a fresh terminal. Do not submit
-paid model tasks automatically.
+4. Check codex login status without replacing my login. If needed, guide me
+   through the official codex login flow. Run smart-codex classifier status
+   and smart-codex doctor in fresh processes that load the saved configuration.
+   Confirm that status names my chosen provider and reports it enabled.
+   Explain conflicting environment overrides without printing credentials.
+   Do not submit classifier inference or native model tasks automatically.
+
+5. Report the installed release ID, native version, selected provider, setup
+   result and any remaining blocker. Mark setup pending if private key entry,
+   login or service setup remains; passing metadata/doctor checks does not
+   certify a live task. Give me smart-codex --routing observe --effort-mode fixed
+   to run in a fresh terminal, and explain that bare smart-codex enables auto
+   routing. For later switching, use smart-codex setup; if the installed release
+   has no provider menu, use setup --classifier jev or setup --classifier tev.
 ```
 
-If an editor cannot open, Codex can give you the file path to open manually. [Detailed agent instructions](docs/AGENT_INSTALL.md) cover Windows, Linux/WSL and macOS.
+If an editor cannot open, use the printed private path to open it manually. [Detailed agent instructions](docs/AGENT_INSTALL.md) cover Windows, Linux/WSL and macOS.
 
 ## Install with Claude Code
 
-Copy this entire prompt into Claude Code. It will install ModelRudder and open the local configuration file; you enter your Jev key privately in the editor.
+Copy this entire prompt into Claude Code. Say **“Use Jev”** or **“Use Tev”** alongside it, or let the agent ask. Codex is not required. Jev key entry and native Claude login may require your participation.
 
 ```text
-Install ModelRudder on this computer so I can use model routing in Claude Code.
+Install and set up ModelRudder on this computer for Claude Code.
 Use the official release: https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.12
-Read docs/AGENT_INSTALL.md and docs/CLAUDE_CODE.md at that release tag
-and follow them.
+Read the README, docs/AGENT_INSTALL.md, docs/CLAUDE_CODE.md and
+docs/CLASSIFIER_CHOICES.md at that same tag. Use its exact asset names and
+supported commands throughout.
 
-Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
-credentials, configuration and permissions. If plain Claude is missing, install
-its official CLI for native login. After installing ModelRudder, run
-smart-claude native install to install and check its separate Claude version.
-Codex is not required for smart-claude.
+1. Ask whether I want hosted Jev or local Tev unless I have already chosen.
+   Explain that Jev sends eligible task text and bounded earlier excerpts to
+   TypeSafe; Tev keeps classification local. Claude execution uses my native
+   account either way. The saved provider is shared with smart-codex, so
+   explain that a switch affects both launchers in new sessions.
 
-Download the release installer and SHA256SUMS, verify the checksum, install
-for my user account, and add its launcher directory to my user PATH without
-removing existing entries. Use the exact installer filename from the release;
-it includes smart-claude, so no source build is needed. Verify smart-claude
---help. Do not replace plain claude or an unmanaged launcher.
+2. Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
+   credentials, configuration, permissions and PATH entries. Install the
+   official plain Claude CLI if needed for native login. Codex is not required.
+   Download this release's standalone installer and SHA256SUMS and verify the
+   exact installer's checksum. It includes smart-claude despite its
+   smart-codex-...-install.mjs filename. Install for my user account, add only
+   the printed launcher directory to my user PATH, and verify smart-claude
+   --help. Do not overwrite an unmanaged launcher. Run smart-claude native
+   install and smart-claude native status to install and check ModelRudder's
+   separate recorded Claude runtime.
 
-Run smart-claude setup to open my private Jev configuration in a local editor.
-Show me https://console.typesafe.ai/keys so I can sign up and get my own key.
-Never read or print the key file or ask me to paste a key into chat. Leave new
-classification disabled until I enter the key and explicitly enable it.
-Explain that observe/auto sends eligible task text and bounded earlier task
-excerpts to TypeSafe, and requires the direct Jev classifier.
+3. Complete the chosen provider's setup, using an explicit --classifier flag
+   when running commands for me so setup does not depend on a terminal menu.
+   For Jev: run smart-claude setup --classifier jev. Reuse ready credentials
+   and consent; if either is missing, show https://console.typesafe.ai/keys
+   and open the printed private configuration path for me. I enter my own
+   TYPESAFE_API_KEY and explicitly set ALLOW_JEV_CLASSIFICATION=true after
+   reviewing the data flow. Never read or print the key file, ask me to paste
+   a key into chat, or enable hosted consent on my behalf. Use direct Jev;
+   Claude does not support the Codex-only hosted gateway. If setup preserves
+   an existing Tev or gateway selection until direct Jev is ready, rerun the same setup command
+   after I finish private entry. Do not claim Jev is ready just because the
+   editor opened or setup returned successfully.
+   For Tev: check for a compatible local service, normally
+   http://127.0.0.1:11434, with tev1:latest and support for /api/tags and
+   /v1/systemone. Setup metadata checks do not prove inference compatibility.
+   If prerequisites are missing, explain what is needed and get my agreement
+   before downloading a model or installing a persistent service. Run
+   smart-claude setup --classifier tev once the service and model are present.
+   Do not request a Jev key or change hosted consent. Preserve the previous
+   provider if Tev setup fails; never silently substitute Jev.
 
-Check my native Claude login without replacing it. If login is needed, guide
-me through the official claude auth login flow. Run smart-claude doctor and
-explain anything still needed. Preserve native plugin trust and organization
-policy; do not bypass either. Give me smart-claude --routing observe to run
-in a fresh terminal after setup. Do not submit model tasks or classifier
-requests automatically.
+4. Check claude auth status without replacing my login. If needed, guide me
+   through the official claude auth login flow. Run smart-claude classifier
+   status and smart-claude doctor in fresh processes that load the saved
+   configuration. Confirm that status names my chosen provider and reports
+   it enabled. Explain conflicting environment overrides without printing
+   credentials. Preserve native plugin trust and organization policy; do not
+   bypass either. Do not submit classifier inference or native model tasks
+   automatically.
+
+5. Report the installed release ID, native version, selected provider, setup
+   result and any remaining blocker. Mark setup pending if private key entry,
+   login or service setup remains; passing metadata/doctor checks does not
+   certify live Claude behavior or task quality. Give me smart-claude --routing
+   observe to run in a fresh terminal, and explain that bare smart-claude enables
+   auto routing. For later switching, use smart-claude setup; if the installed
+   release has no provider menu, use setup --classifier jev or setup --classifier
+   tev.
 ```
 
-If an editor cannot open, Claude Code can give you the file path to open manually. See the [installation guide](docs/AGENT_INSTALL.md) for manual setup.
+If an editor cannot open, use the printed private path to open it manually. See the [installation guide](docs/AGENT_INSTALL.md) for manual setup.
 
 ## Start using ModelRudder
 

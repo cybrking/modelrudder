@@ -29,26 +29,29 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 - Node.js 24+ for ModelRudder
 - A managed official Claude Code **2.1.295** installation via `smart-claude native install`, requiring npm/network access once. The managed launcher disables native auto-updates for its child process; plain Claude remains independent.
 - A separately installed official Claude CLI for native login; use `claude auth login` with a `claude.ai` account yourself if needed. This login is reused by the managed CLI; the plain CLI can update independently
-- Your own direct Jev credentials and explicit `ALLOW_JEV_CLASSIFICATION=true` for observe/auto
+- For observe/auto: either your own direct Jev credentials and explicit hosted consent, or a compatible local Tev service with `tev1:latest` and local classification enabled through setup
 - The official `v0.1.0-preview.12` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
 
 For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.12 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
 
 Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.9 release containing both Claude multi-turn fixes.
 
-Then prepare your private configuration and check readiness:
+Then select your provider and check readiness. Agents use the explicit setup command for the user's choice:
 
 ```sh
 smart-claude --help
 smart-claude native install
 smart-claude native status
-smart-claude setup
+# Choose one:
+smart-claude setup --classifier jev
+# Or: smart-claude setup --classifier tev
+smart-claude classifier status
 smart-claude doctor
 ```
 
-After entering your own key and enabling direct Jev classification, start a fresh terminal and run `smart-claude --routing observe`. Actual tasks consume provider usage; setup does not run them automatically. Source builds remain available through the [development instructions](../CONTRIBUTING.md#development).
+For Jev, enter your own key and enable hosted consent if needed. For Tev, first start a compatible local service with `/api/tags`, `/v1/systemone` and the selected model; no Jev key is needed. Follow the [provider configuration steps](AGENT_INSTALL.md#3-choose-and-configure-a-routing-provider). Confirm that classifier status names the intended provider and reports it enabled. After setup, start a fresh terminal and run `smart-claude --routing observe`. Actual tasks consume provider usage; setup does not run them automatically. Source builds remain available through the [development instructions](../CONTRIBUTING.md#development).
 
-The installer manages both launchers and uses the existing private configuration path and `SMART_CODEX_ENV_FILE` setting for compatibility. In the local editor, enter your own `TYPESAFE_API_KEY` and change `ALLOW_JEV_CLASSIFICATION` to `true` only after reviewing the data flow; `SMART_CODEX_CLASSIFIER=direct` is already set. Do not paste a key into chat or command arguments. `smart-claude setup --no-open` prepares the minimal disabled configuration without opening an editor. Existing configuration is preserved.
+The installer manages both launchers and uses the existing private configuration path and `SMART_CODEX_ENV_FILE` setting for compatibility. Jev setup uses `SMART_CODEX_CLASSIFIER=direct`; enter your own `TYPESAFE_API_KEY` and set `ALLOW_JEV_CLASSIFICATION=true` in the local editor only after reviewing the data flow. Do not paste a key into chat or command arguments. Tev setup checks model metadata and saves `SMART_CODEX_CLASSIFIER=tev` and `ALLOW_CLASSIFICATION=true` without changing hosted consent. `smart-claude setup --no-open` alone prepares a disabled template if absent or preserves existing settings; it does not activate Tev. Switching from Tev to an unconfigured Jev preserves Tev until private entry is complete and Jev setup is rerun. Menu-enabled builds also offer interactive `smart-claude setup` for later switching; explicit flags work without a menu.
 
 The launcher loads the bundled plugin with `claude --plugin-dir` for that session. It does **not** install the plugin into your account, change Claude settings, create OAuth grants, enable disabled hooks or change organization policy. Claude may ask you to trust the plugin. Mods are privileged code; review the source and trust only code you intend to run. If policy prevents loading the mod, use plain Claude and consult your administrator rather than bypassing it. A launcher exit warning identifies a missing plugin readiness handshake.
 
@@ -80,7 +83,7 @@ Run `smart-claude --help` for the deliberately narrow native-option allowlist. A
 
 ## Eligibility, privacy and failure behavior
 
-Only explicit, observed composer/bridge user text that matches the new turn reaches the classifier. This avoids accidentally classifying helper requests, hidden rewritten prompts or tool results. The text limit in the native adapter is 64,000 characters. Classifier context is only the current task plus up to two earlier 4,000-character user-task excerpts, retained in memory. Anything the user pasted into that text, including code or secrets, is part of the transmission to TypeSafe.
+Only explicit, observed composer/bridge user text that matches the new turn reaches the classifier. This avoids accidentally classifying helper requests, hidden rewritten prompts or tool results. The text limit in the native adapter is 64,000 characters. Classifier context is only the current task plus up to two earlier 4,000-character user-task excerpts, retained in memory. Anything the user pasted into that text, including code or secrets, is sent to TypeSafe with Jev or the configured loopback service with Tev. Native execution still uses Claude's provider.
 
 Media, @-references, additional prompt context, ambiguous/dropped/rewritten prompts, foreign-origin messages, compaction and resumed or reloaded history retain the native model instead of authorizing a downgrade. Auto/observe resumes omit the startup model override, preserving Claude's restored choice. A fresh `/clear` allows fresh text routing again. Referenced files, queued input and non-native instruction attachments can mark history opaque; the attachment content itself is never read or transmitted by the adapter. Claude's engine-authored `instructions` and `nested_memory` announcements are normal project guidance and do not disable subsequent user-task classification. The adapter checks the engine-pinned attachment origin, not its text, and does not send project instructions to the classifier. Independent prompt-rewriting hooks can affect eligibility; interactions with arbitrary third-party mods are not certified.
 
@@ -130,6 +133,6 @@ Managed native selection, explicit upgrades and rollback are described in [Nativ
 
 ## Local Tev (preview.12)
 
-Preview.12 supports `smart-claude setup --classifier tev`, `smart-claude classifier status` and `smart-claude --classifier tev --routing observe`. See [classifier setup](CLASSIFIER_CHOICES.md). Tev uses the Claude rubric; native effort remains unchanged. Earlier release instructions above describe the hosted Jev path. Local metadata checks and synthetic bridge tests do not certify live Claude TUI or routing quality.
+Preview.12 supports `smart-claude setup --classifier tev`, `smart-claude classifier status` and `smart-claude --classifier tev --routing observe`. See [classifier setup](CLASSIFIER_CHOICES.md). Tev uses the Claude rubric; native effort remains unchanged. The installation instructions above cover either Jev or Tev. Local metadata checks and synthetic bridge tests do not certify live Claude TUI or routing quality.
 
 See the [live qualification procedure and current evidence](CLAUDE_LIVE_QUALIFICATION.md) for the authenticated terminal checks that remain.
