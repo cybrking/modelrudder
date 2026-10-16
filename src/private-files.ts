@@ -61,22 +61,25 @@ export function isPrivatePathSync(path: string, directory = false): boolean {
   } catch { return false; }
 }
 
-async function aclCommandAsync(script: string, path: string): Promise<string> {
+async function aclCommandAsync(script: string, path: string, signal?: AbortSignal): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], {
-      encoding: 'utf8', timeout: 15_000, windowsHide: true,
+      encoding: 'utf8', timeout: 15_000, windowsHide: true, signal,
       env: { ...process.env, MODEL_RUDDER_ACL_PATH: path },
     }, (error, stdout) => error ? reject(error) : resolve(stdout.trim()));
   });
 }
-export async function isPrivatePath(path: string, directory = false): Promise<boolean> {
+export async function isPrivatePath(path: string, directory = false, signal?: AbortSignal): Promise<boolean> {
+  if (signal?.aborted) return false;
   if (process.platform !== 'win32') return isPrivatePathSync(path, directory);
-  try { return matchingPath(path, directory) && await aclCommandAsync(checkAcl, path) === 'true'; }
+  try { return matchingPath(path, directory) && await aclCommandAsync(checkAcl, path, signal) === 'true'; }
   catch { return false; }
 }
-export async function protectPrivatePath(path: string, directory = false): Promise<void> {
+export async function protectPrivatePath(path: string, directory = false, signal?: AbortSignal): Promise<void> {
+  signal?.throwIfAborted();
   if (process.platform !== 'win32') return protectPrivatePathSync(path, directory);
   if (!matchingPath(path, directory)) throw new Error('Private storage must be a real file or directory.');
-  await aclCommandAsync(protectAcl, path);
-  if (!await isPrivatePath(path, directory)) throw new Error('Unable to enforce private Windows storage permissions.');
+  await aclCommandAsync(protectAcl, path, signal);
+  if (!await isPrivatePath(path, directory, signal)) throw new Error('Unable to enforce private Windows storage permissions.');
 }
+
