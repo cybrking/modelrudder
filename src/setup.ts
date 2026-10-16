@@ -83,8 +83,9 @@ export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.
       throw new Error('Setup blocked by an environment classifier override; unset SMART_CODEX_CLASSIFIER and retry. Configuration unchanged.');
     }
     if (env.ALLOW_CLASSIFICATION === 'false' && saved.ALLOW_CLASSIFICATION !== 'false') throw new Error('Setup blocked by ALLOW_CLASSIFICATION=false in the environment. Configuration unchanged.');
-    if (provider === 'jev' && saved.SMART_CODEX_CLASSIFIER === 'tev' && !jevReady) {
-      out(`Jev is not ready; Tev selection preserved. Open ${file} privately, enter TYPESAFE_API_KEY and set ALLOW_JEV_CLASSIFICATION=true after reviewing hosted data flow, then rerun setup and choose Jev. Never paste the key into chat.\n`);
+    if (provider === 'jev' && (saved.SMART_CODEX_CLASSIFIER === 'tev' || saved.SMART_CODEX_CLASSIFIER === 'hosted') && !jevReady) {
+      const previous = saved.SMART_CODEX_CLASSIFIER === 'tev' ? 'Tev' : 'Jev gateway';
+      out(`Jev is not ready; ${previous} selection preserved. Open ${file} privately, enter TYPESAFE_API_KEY and set ALLOW_JEV_CLASSIFICATION=true after reviewing hosted data flow, then rerun setup and choose Jev. Never paste the key into chat.\n`);
       if (!args.includes('--no-open')) await editor(file);
       return 1;
     }

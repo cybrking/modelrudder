@@ -82,7 +82,7 @@ that same tag. Use its exact asset names and supported commands throughout.
    TYPESAFE_API_KEY and explicitly set ALLOW_JEV_CLASSIFICATION=true after
    reviewing the data flow. Never read or print the key file, ask me to paste
    a key into chat, or enable hosted consent on my behalf. If setup preserves
-   an existing Tev selection until Jev is ready, rerun the same setup command
+   an existing Tev or gateway selection until direct Jev is ready, rerun the same setup command
    after I finish private entry. Do not claim Jev is ready just because the
    editor opened or setup returned successfully.
    For Tev: check for a compatible local service, normally
@@ -149,7 +149,7 @@ supported commands throughout.
    reviewing the data flow. Never read or print the key file, ask me to paste
    a key into chat, or enable hosted consent on my behalf. Use direct Jev;
    Claude does not support the Codex-only hosted gateway. If setup preserves
-   an existing Tev selection until Jev is ready, rerun the same setup command
+   an existing Tev or gateway selection until direct Jev is ready, rerun the same setup command
    after I finish private entry. Do not claim Jev is ready just because the
    editor opened or setup returned successfully.
    For Tev: check for a compatible local service, normally

@@ -1,6 +1,6 @@
 # Community preview evidence — October 7, 2026
 
-Preview.12 adds selectable hosted Jev/local Tev routing, an interactive setup menu for new and existing installations, and complete provider-specific natural-language installation prompts for Codex and Claude. October 16 local verification passed 209 tests with one Windows-only skip and type checking; installed setup-menu checks preserved configuration and managed native selections. These checks do not establish authenticated Claude task quality or full live TUI qualification. See the preview.12 section of [release readiness](RELEASE_READINESS.md).
+Preview.12 adds selectable hosted Jev/local Tev routing, an interactive setup menu for new and existing installations, and complete provider-specific natural-language installation prompts for Codex and Claude. October 16 local verification passed 210 tests with one Windows-only skip and type checking; installed setup-menu checks preserved configuration and managed native selections. These checks do not establish authenticated Claude task quality or full live TUI qualification. See the preview.12 section of [release readiness](RELEASE_READINESS.md).
 
 Preview.11 adds bounded stable CLI candidate evaluation and cross-platform reviewed evidence promotion. Release qualification remains distinct from local protocol compatibility. See [release readiness](RELEASE_READINESS.md) and [managed CLI updates](UPSTREAM_UPDATES.md).
 

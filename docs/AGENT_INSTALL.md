@@ -15,7 +15,7 @@ The complete README install prompts cover all four combinations:
 
 Ask the user to choose Jev or Tev unless they have already specified one. Install and check the managed native runtime for their selected tool before completing the provider setup below. Agent-run setup should use the explicit flag from the table: a noninteractive process cannot operate the terminal menu. Both launchers save to the same private configuration, so explain that a provider switch affects both in new sessions.
 
-For Jev, private key entry and hosted consent remain user actions. If setup opens an editor or retains Tev pending Jev credentials, wait for the user to finish, then rerun the same explicit Jev setup command and check status. For Tev, resolve local prerequisites before running setup; a missing service/model leaves the saved provider unchanged. Never fall back to the other provider without the user's choice. Use fresh launcher processes for status and doctor so they reload the saved file. Report the actual provider and whether classification is enabled; setup's exit code or a successful editor launch alone is insufficient.
+For Jev, private key entry and hosted consent remain user actions. If setup opens an editor or retains Tev or a gateway pending direct Jev credentials, wait for the user to finish, then rerun the same explicit Jev setup command and check status. For Tev, resolve local prerequisites before running setup; a missing service/model leaves the saved provider unchanged. Never fall back to the other provider without the user's choice. Use fresh launcher processes for status and doctor so they reload the saved file. Report the actual provider and whether classification is enabled; setup's exit code or a successful editor launch alone is insufficient.
 
 Do not mark the installation ready if native login, private key entry, consent, local service/model setup, or a conflicting environment override remains unresolved. Describe the remaining action and retain existing credentials/settings. Status and doctor do not submit classifier inference or native model tasks; passing them is not live qualification.
 
@@ -93,7 +93,7 @@ Use `smart-claude` for Claude. Successful setup saves `SMART_CODEX_CLASSIFIER=te
 smart-codex setup --classifier jev
 ```
 
-Ready Jev credentials and consent are reused. Otherwise setup prints the private configuration path and requests a local editor. If switching from Tev without ready Jev credentials/consent, setup retains Tev until the user completes private entry; rerun the command afterward. To prepare a disabled template or print its path without opening an editor:
+Ready Jev credentials and consent are reused. Otherwise setup prints the private configuration path and requests a local editor. If switching from Tev or a gateway without ready direct Jev credentials/consent, setup retains the previous provider until the user completes private entry; rerun the command afterward. To prepare a disabled template or print its path without opening an editor:
 
 ```sh
 smart-codex setup --no-open

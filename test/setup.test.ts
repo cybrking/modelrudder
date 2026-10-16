@@ -105,6 +105,33 @@ test('keeping settings exits without writing or opening an editor on new and exi
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
+test('choosing direct Jev preserves a working gateway until direct credentials and consent are ready', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'modelrudder-switch-gateway-'));
+  try {
+    const file = join(directory, 'env');
+    const saved = 'SMART_CODEX_CLASSIFIER=hosted\nSMART_CODEX_GATEWAY_URL=https://gateway.example\nSMART_CODEX_GATEWAY_TOKEN=PRIVATE_GATEWAY_FIXTURE\nALLOW_JEV_CLASSIFICATION=true\n';
+    await writeFile(file, saved, { mode: 0o600 }); protectPrivatePathSync(file);
+    const opened: string[] = []; let output = '';
+    const out = (text: string) => { output += text; };
+    const choose = async (current: string): Promise<'jev'> => {
+      assert.equal(current, 'Jev (hosted gateway)'); return 'jev';
+    };
+    assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, out, async path => { opened.push(path); }, undefined, choose), 1);
+    assert.equal(await readFile(file, 'utf8'), saved);
+    assert.deepEqual(opened, [file]);
+    assert.match(output, /gateway selection preserved/);
+    assert.ok(!output.includes('PRIVATE_GATEWAY_FIXTURE'));
+    const ready = saved + 'TYPESAFE_API_KEY=PRIVATE_DIRECT_FIXTURE\n';
+    await writeFile(file, ready);
+    assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, out,
+      async () => { throw new Error('Ready Jev should not open an editor'); }, undefined, choose), 0);
+    const direct = parseEnv(await readFile(file, 'utf8'));
+    assert.equal(direct.SMART_CODEX_CLASSIFIER, 'direct');
+    assert.equal(direct.SMART_CODEX_GATEWAY_TOKEN, 'PRIVATE_GATEWAY_FIXTURE');
+    assert.ok(!output.includes('PRIVATE_DIRECT_FIXTURE'));
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
 test('editing stays available and explicit or noninteractive setup never prompts', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'modelrudder-switch-edit-'));
   try {
