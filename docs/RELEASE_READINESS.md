@@ -1,5 +1,26 @@
 # Community release readiness evaluation
 
+## Preview.13 Codex Tev rubric
+
+Codex Tev uses a separate rubric with explicit boundaries between mechanical work, bounded implementation, investigation and broad discovery. Its version is recorded as `tev1:latest:codex-rubric-2026-10-16` with the default model tag. Jev and Claude rubrics, model/effort mappings, confidence handling and native CLI compatibility data are unchanged.
+
+Local verification on macOS / Node 26: 212 tests passed, one Windows-only skip, and type checking passed. New regressions failed before the change and passed afterward: Tev-specific request/version selection with unchanged Jev and Claude requests, and preservation of current/historical report versions with unsupported values redacted. The full suite also exercises transport, timeout/cancellation, fallback, native permissions and standalone installation/rollback. Cross-platform CI results accompany the release.
+
+Four local calls through the implemented classifier selected MAX for the reported audit request and its `continue` follow-up, FAST for an explicit new security-document typo, and BALANCED for `implement it` following a bounded feature request. These checks use available prior task excerpts; they do not establish continuity after the original goal leaves the two-excerpt context window.
+
+Bounded execution comparison used native Codex 0.162.1 with subscription authentication, tools/host discovery disabled, complete synthetic source supplied in the prompt, and structured replacement-file output. Independent executable graders were frozen before execution and verified against broken fixtures and reference fixes. All three arms received the same task/source contract.
+
+| Fixture | Previous Tev rubric | New Tev rubric | Fixed baseline |
+| --- | --- | --- | --- |
+| Pagination validation and offset fix | Luna/low: passed | Luna/medium: passed | Sol/medium: passed |
+| Tenant/owner access control and update restrictions, clarified contract | Luna/medium: passed | Astra/medium: passed | Sol/medium: passed |
+
+Each cell is one attempt. The original security fixture omitted session field names; one model used `session.ownerId` where the grader assumed `session.userId`. All three original security outcomes are excluded. The clarified fixture is a development rerun, not held-out evidence. The six eligible attempts used 129,929 reported native input/output tokens; all nine invocations including excluded trials used 181,179. Four initial classifier calls selected the comparison routes; the clarification replayed those choices with unchanged routing text. Served native model, effective effort and subscription dollar cost are not observable through this execution interface. These small artifact tasks do not establish full repository/tool/PR performance, or that the additional capacity is necessary.
+
+The standalone preview.13 installer was checksum-verified and installed into disposable paths. Both launchers reported preview.13, the installed classifier reported the new Tev rubric, and existing fixture configuration was unchanged. Runtime ID: `0.1.0-preview.13-cfeea05b54cbbbd2`.
+
+The [classifier comparison](CLASSIFIER_CHOICES.md#preview13-codex-tev-rubric) is exploratory. General task-quality improvement, calibrated confidence, savings and Claude quality are not established by it.
+
 ## Preview.12 selectable Jev and local Tev
 
 Both launchers support a saved routing-provider selection, a per-session override and metadata-only status checks. Tev uses a loopback-only adapter with each native tool's own rubric. Hosted Jev consent remains separate; local failures use the existing model fallback without hosted substitution. Existing configuration and native CLI pins survive upgrades. Local Tev compute cost is unpriced rather than charged at Jev rates. Opt-in local learning records remain private and do not upload or train automatically.
