@@ -1,13 +1,13 @@
 {
-  "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+  "sourceSha": "411222488751692cccf1d8c5a04333c121a18160",
   "evidence": [
     {
       "provider": "claude",
-      "version": "2.1.300",
+      "version": "2.1.301",
       "os": "macos-latest",
-      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "sourceSha": "411222488751692cccf1d8c5a04333c121a18160",
       "native": {
-        "version": "2.1.300 (Claude Code)",
+        "version": "2.1.301 (Claude Code)",
         "provider": "synthetic loopback only",
         "realAuthentication": false,
         "paidInference": false,
@@ -48,11 +48,11 @@
     },
     {
       "provider": "claude",
-      "version": "2.1.300",
+      "version": "2.1.301",
       "os": "ubuntu-latest",
-      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "sourceSha": "411222488751692cccf1d8c5a04333c121a18160",
       "native": {
-        "version": "2.1.300 (Claude Code)",
+        "version": "2.1.301 (Claude Code)",
         "provider": "synthetic loopback only",
         "realAuthentication": false,
         "paidInference": false,
@@ -93,11 +93,11 @@
     },
     {
       "provider": "claude",
-      "version": "2.1.300",
+      "version": "2.1.301",
       "os": "windows-latest",
-      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "sourceSha": "411222488751692cccf1d8c5a04333c121a18160",
       "native": {
-        "version": "2.1.300 (Claude Code)",
+        "version": "2.1.301 (Claude Code)",
         "provider": "synthetic loopback only",
         "realAuthentication": false,
         "paidInference": false,
@@ -138,12 +138,12 @@
     },
     {
       "provider": "codex",
-      "version": "0.162.1",
+      "version": "0.163.0",
       "os": "macos-latest",
-      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "sourceSha": "411222488751692cccf1d8c5a04333c121a18160",
       "native": {
         "ok": true,
-        "version": "0.162.1",
+        "version": "0.163.0",
         "checks": [
           "remote-capability",
           "stdio-capability",
@@ -158,12 +158,12 @@
     },
     {
       "provider": "codex",
-      "version": "0.162.1",
+      "version": "0.163.0",
       "os": "ubuntu-latest",
-      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "sourceSha": "411222488751692cccf1d8c5a04333c121a18160",
       "native": {
         "ok": true,
-        "version": "0.162.1",
+        "version": "0.163.0",
         "checks": [
           "remote-capability",
           "stdio-capability",
@@ -178,12 +178,12 @@
     },
     {
       "provider": "codex",
-      "version": "0.162.1",
+      "version": "0.163.0",
       "os": "windows-latest",
-      "sourceSha": "fcf8639ea7e3ea8da2489565adb578f97248c148",
+      "sourceSha": "411222488751692cccf1d8c5a04333c121a18160",
       "native": {
         "ok": true,
-        "version": "0.162.1",
+        "version": "0.163.0",
         "checks": [
           "remote-capability",
           "stdio-capability",
