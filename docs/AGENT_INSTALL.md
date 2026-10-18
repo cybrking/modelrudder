@@ -2,7 +2,7 @@
 
 Use the copy-and-paste prompt for [Codex](../README.md#install-with-codex) or [Claude Code](../README.md#install-with-claude-code). Use this guide for manual installation or as the detailed procedure for your coding agent. It covers prerequisites, release installation, private configuration, authentication and removal.
 
-Jev is the only routing classifier in this pending source change. Use [source installation](#source-installation) until a release containing it is published. Older preview assets do not include this removal. See [Jev setup](CLASSIFIER_CHOICES.md) for shared configuration and migration from retired local settings.
+Jev is the only supported routing classifier in the published preview.14 release. Older preview assets include retired Tev support; select a release whose notes confirm Jev-only behavior. See [Jev setup](CLASSIFIER_CHOICES.md) for shared configuration and migration from retired local settings.
 
 ## Jev setup for agent-assisted installs
 
@@ -20,7 +20,7 @@ Do not mark installation ready if native login, private key entry, consent, the 
 A published standalone installer bundles both `smart-codex` and `smart-claude`, despite its `smart-codex-...-install.mjs` filename. No checkout or source build is required. Older Codex-only installers do not include Claude support.
 
 1. Check Node.js 24+, npm/network access for a managed native installation, and a separately installed official Claude CLI for `claude auth login`. Codex is not required for `smart-claude`. Use [Claude Code's official setup instructions](https://code.claude.com/docs/en/setup) for missing prerequisites. Preserve any existing plain Claude installation. On Windows/WSL, keep Node, Claude and ModelRudder in the same environment.
-2. Follow [Download and verify a release](#2-download-and-verify-a-release) using a release whose notes explicitly confirm Jev-only support; use source installation while this change is pending. Verify the checksum, run the standalone installer and preserve existing user PATH entries. Verify `smart-claude --help` (`smart-claude.cmd` on Windows), then run `smart-claude native install` and `smart-claude native status`. This installs and checks the release-recorded Claude 2.1.300 separately from plain Claude.
+2. Follow [Download and verify a release](#2-download-and-verify-a-release) using a release whose notes explicitly confirm Jev-only support. Verify the checksum, run the standalone installer and preserve existing user PATH entries. Verify `smart-claude --help` (`smart-claude.cmd` on Windows), then run `smart-claude native install` and `smart-claude native status`. This installs and checks the release-recorded Claude 2.1.300 separately from plain Claude.
 3. Follow [Jev setup](#jev-setup-for-agent-assisted-installs) and [private configuration](#3-configure-jev) below using `smart-claude`. Run `smart-claude setup --classifier jev`. Do not read credentials, grant consent or make inference requests on the user's behalf. Preserve unrelated settings and native credentials.
 
 4. Check native login with `claude auth status`; guide the user through `claude auth login` if needed. Preserve existing credentials and explain conflicting authentication without replacing it. Run `smart-claude classifier status` to confirm the chosen provider is enabled, then `smart-claude doctor` for version, plugin and native-login checks without submitting a model request.
