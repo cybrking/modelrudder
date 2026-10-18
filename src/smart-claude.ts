@@ -19,11 +19,11 @@ export const smartClaudeHelp = `Usage: smart-claude [--routing auto|observe|pinn
        smart-claude native install [VERSION]
        smart-claude native status
        smart-claude native rollback
-       smart-claude setup [--classifier jev|tev] [--no-open]
+       smart-claude setup [--classifier jev] [--no-open]
        smart-claude report
 
-Choose a session provider with --classifier jev|tev; inspect it with classifier status.
-Run smart-claude setup to see your saved provider and switch between Jev and Tev.
+Choose a session provider with --classifier jev; inspect it with classifier status.
+Run smart-claude setup to configure Jev for both launchers.
 Runs the native interactive Claude Code CLI with ModelRudder's local Mods adapter.
 Install an isolated verified CLI first: smart-claude native install.
 Regular CLI updates do not change the selected ModelRudder native version.
@@ -36,7 +36,7 @@ Claude Code retains tools, streaming, login, approvals and workspace permissions
 Subagents/helpers remain native. Unknown, resumed or media context is conservative.
 Model aliases: FAST=Haiku; BALANCED/DEEP=Sonnet; MAX=Opus. Effort stays native.
 Requires Node 24+, Claude Code 2.1.293+ (2.1.x), native claude.ai login,
-and Jev or local Tev configuration for auto/observe. No subscription limit is bypassed.
+and Jev configuration for auto/observe. No subscription limit is bypassed.
 Supported native options: --continue/-c, --resume/-r ID, --fork-session,
 --add-dir DIR (repeatable), --permission-mode manual|plan|acceptEdits,
 --effort low|medium|high|xhigh|max, --verbose.
@@ -133,7 +133,7 @@ export async function launchSmartClaude(args: string[], env = process.env): Prom
     if (args.length !== 2 || args[1] !== 'status') throw new Error('Usage: classifier status');
     const status = await classifierStatus(env); process.stdout.write(status.text);
     try { createClaudeClassifier(env); }
-    catch { process.stdout.write('Claude requires enabled direct Jev or local Tev; hosted gateway is unsupported. Run setup --classifier jev or setup --classifier tev.\n'); return 1; }
+    catch { process.stdout.write('Claude requires enabled direct Jev; hosted gateway is unsupported. Run setup --classifier jev.\n'); return 1; }
     return status.ok ? 0 : 1;
   }
   if (args[0] === 'report') return runClaudeReport(args.slice(1), claudeUsageDirectory(env));
@@ -152,27 +152,19 @@ export async function launchSmartClaude(args: string[], env = process.env): Prom
     process.stdout.write(`Claude ${version.version}: native login and plugin validation passed. No model call was submitted.\n`);
     const status = await classifierStatus(env); process.stdout.write(status.text);
     let configured = status.ok;
-    try { createClaudeClassifier(env); } catch { configured = false; process.stdout.write('Claude requires direct Jev or local Tev; hosted gateway is unsupported.\n'); }
+    try { createClaudeClassifier(env); } catch { configured = false; process.stdout.write('Claude requires direct Jev; hosted gateway is unsupported.\n'); }
     process.stdout.write(`Offline Mods fixture coverage: ${version.offlineTested ? 'this version' : 'local synthetic probe passed; release qualification pending'}. Full live TUI and quality validation remain pending.\n`);
     process.stdout.write(`Compatibility minimum: ${cliCompatibilityData.claude.minimum}; latest recorded evidence: ${cliCompatibilityData.claude.latestRecorded}.\n`);
     return configured ? 0 : 1;
   }
   const classifier = parsed.mode === 'pinned' ? undefined : createClaudeClassifier(env);
-  const usage = createClaudeUsage(claudeUsageDirectory(env), env.SMART_CODEX_CLASSIFIER === 'tev' ? 'tev' : 'jev');
+  const usage = createClaudeUsage(claudeUsageDirectory(env));
   const token = randomBytes(32).toString('hex');
-  let ready = false, localFailureNotice = false;
+  let ready = false;
   let bridge: Awaited<ReturnType<typeof startClaudeBridge>> | undefined;
   try {
     bridge = await startClaudeBridge({ mode: parsed.mode, model: parsed.model, modelIds, classifier, token,
-      onReady() { ready = true; }, onRoute: metadata => {
-        usage.route(metadata);
-        if (env.SMART_CODEX_CLASSIFIER === 'tev') {
-          const failed = typeof metadata.reason === 'string' && metadata.reason.startsWith('classifier_');
-          if (failed && !localFailureNotice) process.stderr.write(`Tev unavailable; using ${metadata.model} for this turn. No task was sent to Jev.\n`);
-          if (!failed && localFailureNotice && metadata.classifierVersion) process.stderr.write('Tev routing recovered.\n');
-          if (failed || metadata.classifierVersion) localFailureNotice = failed;
-        }
-      }, onComplete: usage.complete });
+      onReady() { ready = true; }, onRoute: usage.route, onComplete: usage.complete });
     process.stderr.write(`smart-claude: ${parsed.mode} per-turn routing via native Mods. Claude retains tools, approvals and login.\n`);
     if (classifier) process.stderr.write(`${classifierNotice(env)}\n`);
     process.stderr.write('Native effort is preserved. Model availability, provider limits and other trusted mods can affect the actual model.\n');
@@ -202,7 +194,7 @@ export async function launchSmartClaude(args: string[], env = process.env): Prom
 if (import.meta.main) {
   try { process.exitCode = await launchSmartClaude(process.argv.slice(2)); }
   catch (error) {
-    const message = error instanceof Error && /^(ModelRudder native:|Claude |Invalid Claude |Unsupported Claude |Use plain claude |smart-claude requires |Configure ALLOW_|Setup |Existing configuration|Configuration directory|Could not start editor|Invalid --classifier|Tev endpoint|Invalid Tev|Usage: classifier)/.test(error.message)
+    const message = error instanceof Error && /^(ModelRudder native:|Claude |Invalid Claude |Unsupported Claude |Use plain claude |smart-claude requires |Configure ALLOW_|Setup |Existing configuration|Configuration directory|Could not start editor|Invalid --classifier|Usage: classifier)/.test(error.message)
       ? error.message : 'Could not launch smart-claude; check native Claude installation, login, options and routing-provider setup.';
     process.stderr.write(`${message}\n`); process.exitCode = 1;
   }

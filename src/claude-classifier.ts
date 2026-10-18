@@ -22,10 +22,10 @@ export function claudeJevInput(input: string) {
 }
 
 export function createClaudeClassifier(env: NodeJS.ProcessEnv) {
-  if (!classificationEnabled(env)) throw new Error('Configure ALLOW_JEV_CLASSIFICATION=true for Jev or ALLOW_CLASSIFICATION=true for Tev using setup --classifier jev|tev, or use --routing pinned.');
+  if (!classificationEnabled(env)) throw new Error('Configure ALLOW_JEV_CLASSIFICATION=true for Jev using setup --classifier jev, or use --routing pinned.');
   const config = readClassifierConfig(env);
   // The current gateway protocol does not carry a provider/rubric identifier.
   // Silently sending Claude tasks to its Codex rubric would be incorrect.
-  if (config.provider === 'hosted') throw new Error('Claude routing requires direct Jev or local Tev; the hosted gateway uses a Codex rubric.');
+  if (config.provider === 'hosted') throw new Error('Claude routing requires direct Jev; the hosted gateway uses a Codex rubric.');
   return createConfiguredClassifier(env, claudeClassificationTimeoutMs, claudeJevInput, 'claude-rubric-2026-10-08');
 }

@@ -47,12 +47,12 @@ test('older records without a selection rule report confidence semantics as unkn
   assert.match(formatUsageReport(report), /confidence role: unknown/);
 });
 
-test('reports retain current and historical Codex rubric versions and redact unsupported values', () => {
+test('reports retain only Jev rubric versions and redact unsupported values', () => {
   for (const version of ['tev1:latest:codex-rubric-2026-10-16', 'tev2:pinned:codex-rubric-2026-10-16',
     'tev1:latest:rubric-2026-10-01', 'jev-latest:rubric-2026-10-01',
     'jev-latest:codex-rubric-2026-10-16', 'tev1:latest:PRIVATE', 'PRIVATE', 'tev1:latest:codex-rubric-2026-10-16\n']) {
-    const expected = version.includes('PRIVATE') || version.endsWith('\n') || version === 'jev-latest:codex-rubric-2026-10-16' ? null : version;
-    const usage = createSessionUsage('tev');
+    const expected = version === 'jev-latest:rubric-2026-10-01' ? version : null;
+    const usage = createSessionUsage();
     usage.route({ model: 'gpt-6-luna', classifierVersion: version });
     assert.equal(usage.snapshot().latestRoute?.classifierVersion, expected);
     assert.equal(createUsageReport(usage.snapshot()).routing.classifierVersion, expected);
@@ -146,4 +146,9 @@ test('longitudinal report retains all recorded decisions and labels without priv
     assert.deepEqual(report.outcomes.map((o: any) => o.result), ['accepted', 'rejected']);
     assert.ok(!output.includes('threadId'));
   } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+
+test('legacy provider reports are rejected instead of applying Jev prices', () => {
+  assert.throws(() => createUsageReport({ ...snapshot(), classifierProvider: 'tev' }), /Invalid usage snapshot/);
 });

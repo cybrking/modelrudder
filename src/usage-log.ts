@@ -85,7 +85,7 @@ export function readUsageTail(path: string): UsageSnapshot | undefined {
     const last = lines.at(-1);
     if (!last) return;
     const s = JSON.parse(last);
-    if (s.version !== 1 || typeof s.timestamp !== 'string' || !s.tokens || !s.jev || !s.byModel) throw new Error('Invalid usage log');
+    if ((s.classifierProvider !== undefined && s.classifierProvider !== 'jev') || s.version !== 1 || typeof s.timestamp !== 'string' || !s.tokens || !s.jev || !s.byModel) throw new Error('Invalid usage log');
     return s;
   } finally { closeSync(fd); }
 }

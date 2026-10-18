@@ -32,7 +32,9 @@ export const managedNativeReleaseFiles = previousManagedReleaseFiles;
 export const previousCompatibilityReleaseFiles = [...previousManagedReleaseFiles, 'src/cli-compatibility-data.ts', 'src/cli-compatibility.ts',
   'src/codex-protocol-probe.ts', 'src/claude-protocol-probe.ts'].sort();
 export const learningReleaseFiles = [...previousManagedReleaseFiles, 'src/local-learning.ts'].sort();
-export const releaseFiles = [...previousCompatibilityReleaseFiles, 'src/local-learning.ts', 'src/adapters/tev.ts'].sort();
+export const releaseFiles = [...previousCompatibilityReleaseFiles, 'src/local-learning.ts'].sort();
+// Validate retained releases for explicit recovery; never include their adapter in new builds.
+export const previousTevReleaseFiles = [...previousCompatibilityReleaseFiles, 'src/local-learning.ts', 'src/adapters/tev.ts'].sort();
 export type Release = { format: 1; version: string; id: string; files: Record<string, string>; sha256: string };
 export const digest = (value: string) => createHash('sha256').update(value).digest('hex');
 const payload = (version: string, files: Record<string, string>) => JSON.stringify({ format: 1, version, files });
@@ -41,7 +43,7 @@ export function validateRelease(value: unknown): Release {
   const r = value as Release;
   if (r.format !== 1 || typeof r.version !== 'string' || !/^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/.test(r.version)
     || !r.files || typeof r.files !== 'object' || Array.isArray(r.files)
-    || ![releaseFiles, previousCompatibilityReleaseFiles, learningReleaseFiles, previousManagedReleaseFiles, dualLauncherReleaseFiles, legacyReleaseFiles].some(allowlist => JSON.stringify(Object.keys(r.files)) === JSON.stringify(allowlist))
+    || ![releaseFiles, previousTevReleaseFiles, previousCompatibilityReleaseFiles, learningReleaseFiles, previousManagedReleaseFiles, dualLauncherReleaseFiles, legacyReleaseFiles].some(allowlist => JSON.stringify(Object.keys(r.files)) === JSON.stringify(allowlist))
     || Object.values(r.files).some(content => typeof content !== 'string')) throw new Error('Invalid release manifest or file allowlist.');
   if (r.sha256 !== digest(payload(r.version, r.files)) || r.id !== `${r.version}-${r.sha256.slice(0, 16)}`) throw new Error('Release checksum mismatch.');
   const pkg = JSON.parse(r.files['package.json']);

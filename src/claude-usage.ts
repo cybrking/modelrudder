@@ -8,7 +8,7 @@ export function claudeUsageDirectory(env: NodeJS.ProcessEnv = process.env) {
   return env.SMART_CODEX_STATE_DIR ? join(env.SMART_CODEX_STATE_DIR, 'claude-logs') : fileURLToPath(new URL('../.smart-claude/', import.meta.url));
 }
 type Counts = { input_tokens: number; output_tokens: number; cache_read_input_tokens: number; cache_creation_input_tokens: number };
-export function createClaudeUsage(directory?: string, classifierProvider: 'jev' | 'tev' = 'jev') {
+export function createClaudeUsage(directory?: string) {
   const tokens: Counts = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
   let routes = 0, completed = 0, aborted = 0, unknownUsage = 0, classifications = 0, jevInput = 0, jevOutput = 0, ended = false;
   let lastRoute: Record<string, unknown> | null = null, lastActualModel: string | null = null;
@@ -21,7 +21,7 @@ export function createClaudeUsage(directory?: string, classifierProvider: 'jev' 
     fd = openSync(path, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
     fchmodSync(fd, 0o600); if (process.platform === 'win32') protectPrivatePathSync(path);
   } catch { if (fd !== undefined) closeSync(fd); fd = undefined; path = undefined; }
-  const snapshot = () => ({ classifierProvider, format: 'modelrudder-claude-1', ended, routes, completed, aborted, unknownUsage,
+  const snapshot = () => ({ classifierProvider: 'jev', format: 'modelrudder-claude-1', ended, routes, completed, aborted, unknownUsage,
     classifications, jevInput, jevOutput, tokens: { ...tokens }, lastActualModel, lastRoute });
   const publish = () => {
     if (fd === undefined) return;
@@ -66,7 +66,7 @@ export function runClaudeReport(args: string[], directory = claudeUsageDirectory
     if (!isPrivatePathSync(path) || lstatSync(path).size > 16 * 1024 * 1024) throw new Error();
     const lines = readFileSync(path, 'utf8').split('\n'); lines.pop();
     const s = JSON.parse(lines.at(-1) ?? 'null');
-    if (s?.format !== 'modelrudder-claude-1' || !s.tokens ||
+    if ((s?.classifierProvider !== undefined && s.classifierProvider !== 'jev') || s?.format !== 'modelrudder-claude-1' || !s.tokens ||
       !['routes', 'classifications', 'completed', 'aborted', 'unknownUsage', 'jevInput', 'jevOutput'].every(key => Number.isSafeInteger(s[key]) && s[key] >= 0) ||
       !['input_tokens', 'output_tokens', 'cache_read_input_tokens', 'cache_creation_input_tokens'].every(key => Number.isSafeInteger(s.tokens[key]) && s.tokens[key] >= 0)) throw new Error();
     out(formatClaudeUsage(s)); return 0;
