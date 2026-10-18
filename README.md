@@ -8,7 +8,7 @@ Spend your strongest model on the tasks that need it. ModelRudder adds experimen
 
 Use your own native provider account. ModelRudder uses Jev with your own TypeSafe key and explicit classification consent. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef support is not included.
 
-Choose the launcher for your native coding tool. The installer includes both; you only need the native CLI you intend to use. This Jev-only change is pending publication: use the trusted source checkout below, not older preview assets.
+Choose the launcher for your native coding tool. The preview.14 installer includes both; you only need the native CLI you intend to use. Preview.14 is Jev-only. Download its installer and checksum from the [official releases page](https://github.com/cybrking/modelrudder/releases) and follow the verification steps in [AGENT_INSTALL.md](docs/AGENT_INSTALL.md#2-download-and-verify-a-release).
 
 | Native tool | ModelRudder launcher | Experimental automatic routing |
 | --- | --- | --- |
@@ -40,9 +40,11 @@ Copy this entire prompt into Codex. The agent installs the launcher and prepares
 
 ```text
 Install and set up ModelRudder on this computer for Codex.
-Use the trusted Jev-only source checkout containing these instructions.
-Read its README, docs/AGENT_INSTALL.md and docs/CLASSIFIER_CHOICES.md.
-Follow its source installation steps; this change is not yet published.
+Use the official published ModelRudder release at
+https://github.com/cybrking/modelrudder/releases. Include previews, exclude
+drafts, and choose the newest release by publication date. Read the README,
+docs/AGENT_INSTALL.md and docs/CLASSIFIER_CHOICES.md at that exact release tag.
+Verify the standalone installer against that release's SHA256SUMS before use.
 
 1. Use Jev for routing. Explain that Jev sends eligible task text and bounded
    earlier excerpts to TypeSafe; task execution uses my native OpenAI account.
@@ -51,7 +53,7 @@ Follow its source installation steps; this change is not yet published.
 
 2. Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
    credentials, configuration, permissions and PATH entries. Install the
-   official plain Codex CLI if needed for native login. Follow the source
+   official plain Codex CLI if needed for native login. Follow the release
    installation procedure in docs/AGENT_INSTALL.md for my user account. Add only the printed launcher directory
    to my user PATH and verify smart-codex --help. Do not overwrite an unmanaged
    launcher. Run smart-codex native install and smart-codex native status to
@@ -90,10 +92,12 @@ Copy this entire prompt into Claude Code. Codex is not required. Private Jev key
 
 ```text
 Install and set up ModelRudder on this computer for Claude Code.
-Use the trusted Jev-only source checkout containing these instructions.
-Read its README, docs/AGENT_INSTALL.md, docs/CLAUDE_CODE.md and
-docs/CLASSIFIER_CHOICES.md. Follow its source installation steps; this
-change is not yet published.
+Use the official published ModelRudder release at
+https://github.com/cybrking/modelrudder/releases. Include previews, exclude
+drafts, and choose the newest release by publication date. Read the README,
+docs/AGENT_INSTALL.md, docs/CLAUDE_CODE.md and docs/CLASSIFIER_CHOICES.md at
+that exact release tag. Verify the standalone installer against that release's
+SHA256SUMS before use.
 
 1. Use Jev for routing. Explain that Jev sends eligible task text and bounded
    earlier excerpts to TypeSafe; task execution uses my native Claude account.
@@ -103,7 +107,7 @@ change is not yet published.
 2. Detect my OS and check Node.js 24+ and npm. Preserve existing native CLIs,
    credentials, configuration, permissions and PATH entries. Install the
    official plain Claude CLI if needed for native login. Codex is not required.
-   Follow the source installation procedure in docs/AGENT_INSTALL.md for my
+   Follow the release installation procedure in docs/AGENT_INSTALL.md for my
    user account. The installer includes both launchers. Add only
    the printed launcher directory to my user PATH, and verify smart-claude
    --help. Do not overwrite an unmanaged launcher. Run smart-claude native
@@ -174,7 +178,7 @@ Copy this prompt into **Claude Code or Codex**. Your coding agent can handle the
 Upgrade my existing ModelRudder installation to the newest published release
 from https://github.com/cybrking/modelrudder/releases.
 Require release notes confirming Jev-only support; stop if no such release is
-available and explain that the trusted source installation is needed.
+available, stop and explain that there is no published Jev-only release to install.
 Include preview releases, exclude drafts, and select by publication date.
 Resolve the release once, tell me its exact tag, and use that same release
 for all documentation and downloads. Do not use GitHub's /releases/latest
@@ -200,7 +204,7 @@ Tell me the result, the command to start a fresh session, and the exact
 rollback command using my saved release ID and installation paths.
 ```
 
-The installer updates both launchers and retains your existing Jev key. The agent should report any remaining native Claude/Codex version requirements. Rollback restores the selected release's features, including Tev when that older release supported it. See the [upgrade guide](docs/UPGRADE.md) for manual upgrades, rollback and uninstall.
+The installer updates both launchers and retains your existing Jev key. The agent should report any remaining native Claude/Codex version requirements. Runtime rollback restores the selected release's features; rolling back to a release that supported Tev restores that historical functionality. See the [upgrade guide](docs/UPGRADE.md) for manual upgrades, rollback and uninstall.
 
 ## Data and privacy
 

@@ -8,11 +8,11 @@ Upgrades preserve the existing private key file and local state. You do not need
 
 If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same flags on every installer and maintenance command below. Use your installation's existing paths, rather than creating a second default installation.
 
-The Jev-only source change is pending publication. To install it now, use the trusted checkout and [source installation](AGENT_INSTALL.md#source-installation). A published older preview does not include this removal.
+Preview.14 (`v0.1.0-preview.14`) is the first published Jev-only release. Older preview assets include retired Tev functionality; verify the release notes and checksum before installing.
 
 ## Normal release upgrade
 
-Select the newest published release by publication date from the [official releases list](https://github.com/cybrking/modelrudder/releases), including preview releases and excluding drafts. Require release notes explicitly confirming Jev-only support. If no such release is available, use the trusted source installation; do not install an older preview as a Jev-only upgrade. GitHub's [`/releases/latest` endpoint](https://docs.github.com/en/rest/releases/releases#get-the-latest-release) excludes prereleases, so it is not suitable for this preview channel.
+Select the newest published release by publication date from the [official releases list](https://github.com/cybrking/modelrudder/releases), including preview releases and excluding drafts. Require release notes explicitly confirming Jev-only support. If no such release is available, stop; do not install an older preview or an unreviewed source build as a Jev-only upgrade. GitHub's [`/releases/latest` endpoint](https://docs.github.com/en/rest/releases/releases#get-the-latest-release) excludes prereleases, so it is not suitable for this preview channel.
 
 Resolve the release once and record its exact tag. Read the README and `docs/UPGRADE.md` at that tag for its prerequisites and migration steps. Download its standalone installer and `SHA256SUMS` into a new folder using the exact published asset filenames. Keep the documentation, installer and checksum tied to that same release throughout the upgrade.
 

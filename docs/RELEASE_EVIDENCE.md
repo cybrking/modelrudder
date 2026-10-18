@@ -1,6 +1,6 @@
 # Community preview evidence — October 7, 2026
 
-The Jev-only source change is pending publication. The release records below describe earlier versions, including retired functionality; they do not certify the current change. Current instructions are [Jev-only](CLASSIFIER_CHOICES.md).
+Preview.14 is the first Jev-only release. Earlier records below describe retired functionality and do not certify the current change. Current instructions are [Jev-only](CLASSIFIER_CHOICES.md); qualification details and limits are in [release readiness](RELEASE_READINESS.md#preview14-jev-only-routing).
 
 Preview.13 gives Codex Tev a separate rubric that distinguishes mechanical work, bounded implementation, investigation and broad discovery. It preserves Jev/Claude behavior and records the new rubric version in reports. Local verification passed 212 tests with one Windows-only skip and type checking. The exploratory routing comparison and bounded task-outcome evidence are described in [release readiness](RELEASE_READINESS.md#preview13-codex-tev-rubric-historical); they do not establish general task-quality improvement or savings.
 
