@@ -36,7 +36,7 @@ export const smartCodexHelp = `Usage: smart-codex [--routing auto|observe|pinned
        smart-codex native install [VERSION]
        smart-codex native status
        smart-codex native rollback
-       smart-codex setup [--classifier jev|tev] [--no-open]
+       smart-codex setup [--classifier jev] [--no-open]
        smart-codex account
        smart-codex outcome --result accepted|rejected [--review-minutes N] [--file SESSION.jsonl]
        smart-codex logs cleanup --older-than-days DAYS [--apply]
@@ -53,12 +53,12 @@ An explicit --model/-m selects pinned mode unless --routing is supplied.
 --effort-mode auto (default): experimental FAST Luna/low; other profiles medium.
 Model observe, pinned and fallback turns stay medium. Selection is fixed per turn.
 Auto overrides the /model picker at new turns.
-Choose --classifier jev|tev for one session; classifier status checks configuration.
-Run smart-codex setup to see your saved provider and switch between Jev and Tev.
+Choose --classifier jev for one session; classifier status checks configuration.
+Run smart-codex setup to configure Jev for both launchers.
 Plain codex is unchanged. The selected classifier receives each task and up to two earlier task
 excerpts from this launcher; images, files, and assistant output are not sent.
 Requires Codex CLI with --remote support, ChatGPT login, Node 24+, and configured
-Jev consent/credentials or local Tev setup. Run setup --classifier jev|tev.
+Jev consent and credentials. Run setup --classifier jev.
 Use --help for this help; other interactive Codex options pass through.
 Usage appears on exit; monitor shows live metadata in a second terminal.
 `;
@@ -287,7 +287,7 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
   const parsed = parseSmartCodexArgs(args, process.cwd());
   if (!process.stdin.isTTY || !process.stdout.isTTY) throw new Error('smart-codex requires an interactive terminal; use smart-code for scripts');
   if (parsed.runtimePolicy.policy.allowClassification) {
-    if (!classificationEnabled(env)) throw new Error('Configure ALLOW_JEV_CLASSIFICATION=true for Jev or ALLOW_CLASSIFICATION=true for local Tev using setup --classifier jev|tev, or use --routing pinned');
+    if (!classificationEnabled(env)) throw new Error('Configure ALLOW_JEV_CLASSIFICATION=true for Jev using setup --classifier jev, or use --routing pinned');
     readClassifierConfig(env);
   }
   const command = await requireManagedNative('codex', env);
@@ -312,10 +312,9 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
   const directory = await mkdtemp(join(tmpdir(), 'smart-codex-'));
   let relay: Awaited<ReturnType<typeof startSmartRelay>> | undefined;
   let threadId: string | undefined;
-  const usage = createSessionUsage(env.SMART_CODEX_CLASSIFIER === 'tev' ? 'tev' : 'jev');
+  const usage = createSessionUsage();
   const log = createUsageLog();
   const learning = createLocalLearning(env.SMART_CODEX_LEARNING_DIR);
-  let localFailureNotice = false;
   const publish = () => log.write(usage.snapshot());
   publish();
   const jev = parsed.runtimePolicy.policy.allowClassification
@@ -338,12 +337,6 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
       onClient: message => { if (usage.client(message)) publish(); },
       onServer: message => { if (usage.server(message)) publish(); },
       onRoute: (metadata, task) => {
-        if (env.SMART_CODEX_CLASSIFIER === 'tev') {
-          const failed = typeof metadata.reason === 'string' && metadata.reason.startsWith('classifier_');
-          if (failed && !localFailureNotice) process.stderr.write(`Tev unavailable; using ${metadata.model} / ${metadata.effort} for this turn. No task was sent to Jev.\n`);
-          if (!failed && localFailureNotice && metadata.classifierVersion) process.stderr.write('Tev routing recovered.\n');
-          if (failed || metadata.classifierVersion) localFailureNotice = failed;
-        }
         usage.route(metadata); publish();
         learning.write(task, usage.snapshot().latestRoute);
       },
@@ -391,7 +384,7 @@ if (import.meta.main) {
       'ModelRudder native:', 'Access token', 'Account status requires', 'Account status is unavailable',
       'Native protocol smoke failed', 'Unsupported Codex CLI version', 'smart-codex requires', 'Configure ALLOW_', 'ChatGPT subscription', 'Invalid --routing', 'Invalid --effort-mode',
       'Model must', 'Use plain codex', 'Provider/authentication',
-      'Setup accepts', 'Setup blocked', 'Setup cannot', 'Setup choice', 'Invalid --classifier', 'Tev endpoint', 'Invalid Tev', 'Usage: classifier', 'Existing configuration must', 'Configuration directory must',
+      'Setup accepts', 'Setup blocked', 'Setup cannot', 'Setup choice', 'Invalid --classifier', 'Usage: classifier', 'Existing configuration must', 'Configuration directory must',
       'Could not start editor', 'Codex executable not found', 'Unable to enforce private Windows',
     ].some(prefix => error.message.startsWith(prefix)) ? error.message : 'Could not launch smart-codex; check Codex installation, options, and directory.';
     process.stderr.write(`${message}\n`); process.exitCode = 1;

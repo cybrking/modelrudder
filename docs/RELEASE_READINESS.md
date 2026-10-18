@@ -1,6 +1,12 @@
 # Community release readiness evaluation
 
-## Preview.13 Codex Tev rubric
+## Pending Jev-only source change
+
+Current setup and launchers support Jev only. Earlier Tev validation below is historical evidence and does not describe current functionality or qualify this change. Publication and complete live native journeys are not established by these records. See [Jev setup](CLASSIFIER_CHOICES.md) for migration.
+
+Local validation on macOS / Node 26: 210 tests total, 209 passed and one Windows-only skip; `npm run typecheck` and `git diff --check` passed. Four regression checks were demonstrated failing before their fixes and passing afterward: two setup checks, historical manifest acceptance, and an isolated install/upgrade/rollback lifecycle. The preview.14 package ID is `0.1.0-preview.14-f13cbcb6482c81bc`; its SHA-256 is `f13cbcb6482c81bcecbb0b160d634e11cf2e2915d313c96b74b54a78b7f68ac3`. The standalone installer is `dist/release-preview14/smart-codex-0.1.0-preview.14-f13cbcb6482c81bc-install.mjs` (SHA-256 `ef26c473aa9d7bb358edd45730872e74a20420868148fd22b9a1932b00e63333`). These are unpublished local artifacts; do not install them as official release assets. A synthetic direct Jev request and Codex doctor passed before packaging; no live native TUI or remote CI qualification is recorded. The npm audit endpoint was unreachable from this environment. No publication or user installation has been changed.
+
+## Preview.13 Codex Tev rubric (historical)
 
 Codex Tev uses a separate rubric with explicit boundaries between mechanical work, bounded implementation, investigation and broad discovery. Its version is recorded as `tev1:latest:codex-rubric-2026-10-16` with the default model tag. Jev and Claude rubrics, model/effort mappings, confidence handling and native CLI compatibility data are unchanged.
 
@@ -19,9 +25,9 @@ Each cell is one attempt. The original security fixture omitted session field na
 
 The standalone preview.13 installer was checksum-verified and installed into disposable paths. Both launchers reported preview.13, the installed classifier reported the new Tev rubric, and existing fixture configuration was unchanged. Runtime ID: `0.1.0-preview.13-cfeea05b54cbbbd2`.
 
-The [classifier comparison](CLASSIFIER_CHOICES.md#preview13-codex-tev-rubric) is exploratory. General task-quality improvement, calibrated confidence, savings and Claude quality are not established by it.
+The historical classifier comparison above is exploratory. General task-quality improvement, calibrated confidence, savings and Claude quality are not established by it.
 
-## Preview.12 selectable Jev and local Tev
+## Preview.12 selectable Jev and local Tev (historical)
 
 Both launchers support a saved routing-provider selection, a per-session override and metadata-only status checks. Tev uses a loopback-only adapter with each native tool's own rubric. Hosted Jev consent remains separate; local failures use the existing model fallback without hosted substitution. Existing configuration and native CLI pins survive upgrades. Local Tev compute cost is unpriced rather than charged at Jev rates. Opt-in local learning records remain private and do not upload or train automatically.
 

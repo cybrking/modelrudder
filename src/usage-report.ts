@@ -33,7 +33,7 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
   if (!record(raw) || raw.version !== 1 || typeof raw.ended !== 'boolean' || typeof raw.partial !== 'boolean' ||
       !record(raw.byModel) || !record(raw.jev) || !count(raw.compactions) ||
       !['calls', 'unknownCalls', 'inputTokens', 'outputTokens'].every(k => count(raw.jev[k])) ||
-      raw.jev.unknownCalls > raw.jev.calls || !(raw.classifierProvider === 'tev' ? raw.jev.estimatedUsd === null : amount(raw.jev.estimatedUsd)) ||
+      raw.jev.unknownCalls > raw.jev.calls || !amount(raw.jev.estimatedUsd) ||
       !amount(raw.apiEquivalentUsd) || !amount(raw.solReferenceUsd) ||
       raw.priceBasis !== '2026-10-01 standard short context') throw new Error('Invalid usage snapshot');
   const tokens = tokenCounts(raw.tokens);
@@ -50,10 +50,10 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
     }
   }
   if (!tokenFields.every(k => Number.isSafeInteger(sum[k]) && sum[k] === tokens[k])) throw new Error('Invalid usage snapshot');
-  if (raw.classifierProvider !== undefined && !['jev', 'tev'].includes(raw.classifierProvider)) throw new Error('Invalid usage snapshot');
-  const classifierUsd = raw.classifierProvider === 'tev' ? null : raw.jev.inputTokens * jevInputPrice / 1e6;
+  if (raw.classifierProvider !== undefined && raw.classifierProvider !== 'jev') throw new Error('Invalid usage snapshot');
+  const classifierUsd = raw.jev.inputTokens * jevInputPrice / 1e6;
   if (!matchesCost(raw.apiEquivalentUsd, equivalent) || !matchesCost(raw.solReferenceUsd, solReference) ||
-      (classifierUsd !== null && !matchesCost(raw.jev.estimatedUsd, classifierUsd))) throw new Error('Invalid usage snapshot');
+      !matchesCost(raw.jev.estimatedUsd, classifierUsd)) throw new Error('Invalid usage snapshot');
   const r = record(raw.latestRoute) ? raw.latestRoute : null;
   let probabilities: ProfileProbabilities | null = null;
   let servedModel: string | null = null;
@@ -92,7 +92,7 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
       collaborationSettingsOverridden: r && typeof r.collaborationSettingsOverridden === 'boolean' ? r.collaborationSettingsOverridden : null,
     },
     classifier: {
-      provider: raw.classifierProvider === 'tev' ? 'tev' : 'jev',
+      provider: 'jev',
       calls: raw.jev.calls as number, unknownUsageCalls: raw.jev.unknownCalls as number,
       reportedInputTokens: raw.jev.inputTokens as number, reportedOutputTokens: raw.jev.outputTokens as number,
       estimatedUsd: classifierUsd,
@@ -101,7 +101,7 @@ export function createUsageReport(raw: unknown, reportedOutcome?: unknown) {
       priceBasis: raw.priceBasis as string,
       pricedUsageApiEquivalentUsd: equivalent,
       sameObservedTokensAtSolUsd: solReference,
-      coveredRateDifferenceAfterReportedClassifierUsd: classifierUsd === null ? null : solReference - equivalent - classifierUsd,
+      coveredRateDifferenceAfterReportedClassifierUsd: solReference - equivalent - classifierUsd,
       interpretation: 'Same-token rate comparison only; not a counterfactual baseline run or measured savings.',
     },
     compactions: raw.compactions as number,

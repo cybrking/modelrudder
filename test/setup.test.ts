@@ -40,67 +40,18 @@ test('setup rejects unknown options before writing configuration', async () => {
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
-test('interactive setup switches an existing provider in both directions without opening a ready configuration', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'modelrudder-switch-'));
-  try {
-    const file = join(directory, 'env');
-    await writeFile(file, 'TYPESAFE_API_KEY=PRIVATE_TEST_VALUE\nALLOW_JEV_CLASSIFICATION=true\nSMART_CODEX_CLASSIFIER=direct\nOTHER="keep this"\n', { mode: 0o600 });
-    protectPrivatePathSync(file);
-    let output = ''; const current: string[] = []; let checks = 0;
-    const out = (text: string) => { output += text; };
-    const editor = async () => { throw new Error('Ready provider switching should not open an editor'); };
-    const inspect = async () => { checks++; return { ready: true, message: 'Tev available' }; };
-    assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, out, editor, inspect, async label => {
-      current.push(label); return 'tev';
-    }), 0);
-    const tev = parseEnv(await readFile(file, 'utf8'));
-    assert.equal(tev.SMART_CODEX_CLASSIFIER, 'tev');
-    assert.equal(tev.ALLOW_CLASSIFICATION, 'true');
-    assert.equal(checks, 1);
-    assert.equal(await runSetup([], { ...tev, SMART_CODEX_ENV_FILE: file }, out, editor, inspect, async label => {
-      current.push(label); return 'jev';
-    }), 0);
-    const jev = parseEnv(await readFile(file, 'utf8'));
-    assert.equal(jev.SMART_CODEX_CLASSIFIER, 'direct');
-    assert.equal(jev.TYPESAFE_API_KEY, 'PRIVATE_TEST_VALUE');
-    assert.equal(jev.ALLOW_JEV_CLASSIFICATION, 'true');
-    assert.equal(jev.OTHER, 'keep this');
-    assert.deepEqual(current, ['Jev (hosted)', 'Tev (local)']);
-    assert.match(output, /Restart sessions/);
-    assert.ok(!output.includes('PRIVATE_TEST_VALUE'));
-  } finally { await rm(directory, { recursive: true, force: true }); }
-});
-
-test('interactive setup preserves the selected provider when the replacement is not ready', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'modelrudder-switch-unready-'));
-  try {
-    const file = join(directory, 'env');
-    const jev = 'SMART_CODEX_CLASSIFIER=direct\n';
-    await writeFile(file, jev, { mode: 0o600 }); protectPrivatePathSync(file);
-    const env = { SMART_CODEX_ENV_FILE: file };
-    assert.equal(await runSetup([], env, () => {}, async () => {}, async () => ({ ready: false, message: 'Tev unavailable' }), async () => 'tev'), 1);
-    assert.equal(await readFile(file, 'utf8'), jev);
-    const tev = 'SMART_CODEX_CLASSIFIER=tev\nALLOW_CLASSIFICATION=true\n';
-    await writeFile(file, tev);
-    const opened: string[] = [];
-    assert.equal(await runSetup([], env, () => {}, async path => { opened.push(path); }, undefined, async () => 'jev'), 1);
-    assert.equal(await readFile(file, 'utf8'), tev);
-    assert.deepEqual(opened, [file]);
-  } finally { await rm(directory, { recursive: true, force: true }); }
-});
-
 test('keeping settings exits without writing or opening an editor on new and existing installations', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'modelrudder-switch-keep-'));
   try {
     const file = join(directory, 'env');
     const editor = async () => { throw new Error('Keep should not open an editor'); };
-    assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, () => {}, editor, undefined, async current => {
+    assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, () => {}, editor, async current => {
       assert.equal(current, 'Not configured'); return 'keep';
     }), 0);
     await assert.rejects(readFile(file), { code: 'ENOENT' });
-    const saved = 'SMART_CODEX_CLASSIFIER=tev\nOTHER=preserved\n';
+    const saved = 'SMART_CODEX_CLASSIFIER=direct\nOTHER=preserved\n';
     await writeFile(file, saved, { mode: 0o600 }); protectPrivatePathSync(file);
-    assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, () => {}, editor, undefined, async () => 'keep'), 0);
+    assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, () => {}, editor, async () => 'keep'), 0);
     assert.equal(await readFile(file, 'utf8'), saved);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
@@ -116,7 +67,7 @@ test('choosing direct Jev preserves a working gateway until direct credentials a
     const choose = async (current: string): Promise<'jev'> => {
       assert.equal(current, 'Jev (hosted gateway)'); return 'jev';
     };
-    assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, out, async path => { opened.push(path); }, undefined, choose), 1);
+    assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, out, async path => { opened.push(path); }, choose), 1);
     assert.equal(await readFile(file, 'utf8'), saved);
     assert.deepEqual(opened, [file]);
     assert.match(output, /gateway selection preserved/);
@@ -124,7 +75,7 @@ test('choosing direct Jev preserves a working gateway until direct credentials a
     const ready = saved + 'TYPESAFE_API_KEY=PRIVATE_DIRECT_FIXTURE\n';
     await writeFile(file, ready);
     assert.equal(await runSetup([], { SMART_CODEX_ENV_FILE: file }, out,
-      async () => { throw new Error('Ready Jev should not open an editor'); }, undefined, choose), 0);
+      async () => { throw new Error('Ready Jev should not open an editor'); }, choose), 0);
     const direct = parseEnv(await readFile(file, 'utf8'));
     assert.equal(direct.SMART_CODEX_CLASSIFIER, 'direct');
     assert.equal(direct.SMART_CODEX_GATEWAY_TOKEN, 'PRIVATE_GATEWAY_FIXTURE');
@@ -138,13 +89,13 @@ test('editing stays available and explicit or noninteractive setup never prompts
     const file = join(directory, 'env'); const opened: string[] = [];
     const env = { SMART_CODEX_ENV_FILE: file };
     const editor = async (path: string) => { opened.push(path); };
-    assert.equal(await runSetup([], env, () => {}, editor, undefined, async () => 'edit'), 0);
+    assert.equal(await runSetup([], env, () => {}, editor, async () => 'edit'), 0);
     assert.deepEqual(opened, [file]);
     assert.equal(await readFile(file, 'utf8'), setupTemplate);
     const unexpectedPrompt = async (): Promise<never> => { throw new Error('Should not prompt'); };
-    assert.equal(await runSetup(['--no-open'], env, () => {}, editor, undefined, unexpectedPrompt), 0);
-    assert.equal(await runSetup(['--classifier', 'tev'], env, () => {}, editor,
-      async () => ({ ready: true, message: 'available' }), unexpectedPrompt), 0);
+    assert.equal(await runSetup(['--no-open'], env, () => {}, editor, unexpectedPrompt), 0);
+    await writeFile(file, 'TYPESAFE_API_KEY=PRIVATE_FIXTURE\nALLOW_JEV_CLASSIFICATION=true\nSMART_CODEX_CLASSIFIER=direct\n');
+    assert.equal(await runSetup(['--classifier', 'jev'], env, () => {}, editor, unexpectedPrompt), 0);
     assert.deepEqual(opened, [file]);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
@@ -157,4 +108,37 @@ test('editor launch rejects a process that starts but exits unsuccessfully', asy
 test('editor launch accepts successful handoff and missing executables fail safely', async () => {
   await startEditor(process.execPath, ['-e', 'process.exit(0)']);
   await assert.rejects(startEditor('missing-editor-for-fixture', []), /Could not start editor/);
+});
+
+test('Jev setup preserves a saved classification kill switch and reports disabled routing', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'modelrudder-disabled-'));
+  try {
+    const file = join(directory, 'env');
+    for (const inherited of [false, true]) {
+      const saved = 'SMART_CODEX_CLASSIFIER=direct\nTYPESAFE_API_KEY=PRIVATE_FIXTURE\nALLOW_JEV_CLASSIFICATION=true\nALLOW_CLASSIFICATION=false\n';
+      await writeFile(file, saved, { mode: 0o600 }); protectPrivatePathSync(file);
+      let output = '';
+      await runSetup(['--classifier', 'jev', '--no-open'], {
+        SMART_CODEX_ENV_FILE: file, ...(inherited ? parseEnv(saved) : {}),
+      }, text => { output += text; });
+      assert.equal(parseEnv(await readFile(file, 'utf8')).ALLOW_CLASSIFICATION, 'false');
+      assert.match(output, /disabled/);
+      assert.doesNotMatch(output, /Hosted classification enabled/);
+    }
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('keeping a retired provider does not open an editor or change configuration', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'modelrudder-legacy-keep-'));
+  try {
+    const file = join(directory, 'env');
+    const saved = 'SMART_CODEX_CLASSIFIER=tev\n';
+    await writeFile(file, saved, { mode: 0o600 }); protectPrivatePathSync(file);
+    let output = '';
+    const result = await runSetup([], { SMART_CODEX_ENV_FILE: file }, text => { output += text; },
+      async () => { assert.fail('Keeping settings must not launch an editor'); }, async () => 'keep');
+    assert.equal(result, 1);
+    assert.equal(await readFile(file, 'utf8'), saved);
+    assert.match(output, /setup --classifier jev/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });

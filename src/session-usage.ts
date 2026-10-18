@@ -28,7 +28,7 @@ function cost(t: Tokens, prices: readonly number[]) {
     t.cacheWrite * prices[2] + t.output * prices[3]) / 1e6;
 }
 
-export function createSessionUsage(classifierProvider: 'jev' | 'tev' = 'jev') {
+export function createSessionUsage() {
   const requests = new Map<unknown, string>();
   const turnRequests = new Map<unknown, string>();
   const threads = new Map<string, { previous?: Tokens; model?: string; active?: string }>();
@@ -159,9 +159,9 @@ export function createSessionUsage(classifierProvider: 'jev' | 'tev' = 'jev') {
         }
       }
       const unknownJevCalls = [...calls.values()].filter(status => status !== 'reported').length;
-      const jevUsd = classifierProvider === 'tev' ? null : jevInput * jevInputPrice / 1e6;
-      const estimatedDifferenceUsd = partial || unknownJevCalls || jevUsd === null ? null : baseline - equivalent - jevUsd;
-      return { version: 1, classifierProvider, ended, partial, tokens: total, byModel: structuredClone(byModel), compactions,
+      const jevUsd = jevInput * jevInputPrice / 1e6;
+      const estimatedDifferenceUsd = partial || unknownJevCalls ? null : baseline - equivalent - jevUsd;
+      return { version: 1, classifierProvider: 'jev', ended, partial, tokens: total, byModel: structuredClone(byModel), compactions,
         decisionCount, latestRoute: latestRoute ? structuredClone(latestRoute) : null,
         jev: { calls: calls.size, unknownCalls: unknownJevCalls, inputTokens: jevInput, outputTokens: jevOutput, estimatedUsd: jevUsd },
         apiEquivalentUsd: equivalent, solReferenceUsd: baseline, estimatedDifferenceUsd,
@@ -189,7 +189,7 @@ export function formatSessionUsage(s: UsageSnapshot, options: { emphasis?: boole
   if (models.length === 1) lines.push(row('Model', modelName(models[0][0])));
   else models.forEach(([model, t], index) => lines.push(row(index === 0 ? 'Models' : '',
     `${modelName(model).padEnd(14)}${number(t.input)} in / ${number(t.output)} out`)));
-  lines.push(row(s.classifierProvider === 'tev' ? 'Tev (local)' : 'Jev', `${count(s.jev.calls, 'call')} / ${s.jev.estimatedUsd === null ? 'local compute cost unpriced' : money(s.jev.estimatedUsd) + ' estimated'}`));
+  lines.push(row('Jev', `${count(s.jev.calls, 'call')} / ${money(s.jev.estimatedUsd)} estimated`));
   if (s.jev.unknownCalls) lines.push(row('', `${count(s.jev.unknownCalls, 'call')} with unknown usage`));
   lines.push(row('API equiv.', !hasPricedUsage && (s.tokens.input || s.tokens.output)
     ? 'Unavailable (model attribution missing)' : `${money(s.apiEquivalentUsd, s.apiEquivalentUsd > 0 && s.apiEquivalentUsd < 0.0001 ? 6 : 4)} (priced usage)`));

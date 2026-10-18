@@ -114,3 +114,16 @@ test('private usage logs preserve final summary and ignore incomplete writes', (
     assert.equal(createUsageLog(join(directory, 'symlink')).failed, true);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+
+
+test('legacy provider logs are not displayed as Jev usage', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'usage-legacy-test-'));
+  protectPrivatePathSync(directory, true);
+  try {
+    const log = createUsageLog(directory);
+    const snapshot = createSessionUsage().snapshot();
+    log.write(snapshot); log.close();
+    appendFileSync(log.path!, JSON.stringify({ ...snapshot, classifierProvider: 'tev', timestamp: new Date().toISOString() }) + '\n');
+    assert.throws(() => readUsageTail(log.path!), /Invalid usage log/);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
