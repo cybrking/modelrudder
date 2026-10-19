@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { runSetup, setupTemplate, startEditor } from '../src/setup.ts';
 import { isPrivatePathSync, protectPrivatePathSync } from '../src/private-files.ts';
 import { readLiveConfig } from '../src/live-config.ts';
+import { nativeMaintenanceEnv } from '../src/native-runtime.ts';
 
 test('setup creates a private minimal disabled configuration, opens the file and never prints its contents', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'modelrudder-setup-'));
@@ -134,9 +135,9 @@ test('a setup-only kill switch stays disabled in a fresh process for both launch
   const directory = await mkdtemp(join(tmpdir(), 'modelrudder-transient-disabled-'));
   const run = promisify(execFile);
   const cwd = fileURLToPath(new URL('../', import.meta.url));
-  // Deliberately exclude inherited router settings, credentials and Node options.
-  const env = { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot, WINDIR: process.env.WINDIR,
-    HOME: directory, USERPROFILE: directory, TMPDIR: directory, TEMP: directory, TMP: directory };
+  // Keep the OS environment needed by Windows ACL checks, while excluding
+  // inherited router settings, credentials and Node options through the shared allowlist.
+  const env = { ...nativeMaintenanceEnv(process.env), TMPDIR: directory, TEMP: directory, TMP: directory };
   try {
     const file = join(directory, 'env');
     for (const launcher of ['smart-codex', 'smart-claude']) {
