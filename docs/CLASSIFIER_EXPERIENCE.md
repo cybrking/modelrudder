@@ -1,6 +1,6 @@
 # Jev setup contract
 
-Jev is the sole routing classifier. Both launchers share private configuration and retain native tool login, permissions and approvals. Current setup and migration commands are documented in [Jev setup](CLASSIFIER_CHOICES.md).
+This contract describes the unreleased preview.14 source candidate, where Jev is the sole routing classifier. It does not describe published preview.13's Tev-capable runtime; check [release installation status](AGENT_INSTALL.md) before selecting an artifact. Both current-source launchers share private configuration and retain native tool login, permissions and approvals. Current setup and migration commands are documented in [Jev setup](CLASSIFIER_CHOICES.md).
 
 ## Setup and consent
 
@@ -14,7 +14,7 @@ Supported setup commands are `smart-codex setup --classifier jev` and `smart-cla
 
 ## Compatibility and failure behavior
 
-Retired Tev configurations fail with explicit migration guidance. Migration must require a Jev key and Jev consent before changing the selection; old local activation never authorizes hosted transmission. Keep the global `ALLOW_CLASSIFICATION=false` kill switch effective. Preserve unrelated private settings and native credentials.
+Retired Tev configurations fail with explicit migration guidance. Migration must require a Jev key and Jev consent before changing the selection; old local activation never authorizes hosted transmission. Keep the global `ALLOW_CLASSIFICATION=false` kill switch effective, including persisting a setup-only disablement when saving the provider choice. Setup must not clear a saved disablement or claim it remains disabled unless the saved configuration supports that claim. Preserve unrelated private settings and native credentials.
 
 Both launchers use the same saved configuration. Exported environment settings take precedence over the file; the launch flag affects that session only. Restart sessions after changing saved settings. Unsupported or malformed configuration fails before inference. Bounded classification failures and cancellation follow each native tool's existing fallback policy and do not change provider or native login.
 

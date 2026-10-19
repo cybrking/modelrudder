@@ -2,7 +2,7 @@
 
 Use the copy-and-paste prompt for [Codex](../README.md#install-with-codex) or [Claude Code](../README.md#install-with-claude-code). Use this guide for manual installation or as the detailed procedure for your coding agent. It covers prerequisites, release installation, private configuration, authentication and removal.
 
-Jev is the only supported routing classifier in the published preview.14 release. Older preview assets include retired Tev support; select a release whose notes confirm Jev-only behavior. See [Jev setup](CLASSIFIER_CHOICES.md) for shared configuration and migration from retired local settings.
+This guide describes the Jev-only preview.14 source candidate. As checked October 19, 2026 at 13:02 UTC, preview.14 is an unpublished draft with no release assets. The newest published release, [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), still includes Tev. For a Jev-only release installation, stop until a published release's notes and assets confirm that behavior; do not silently install preview.13 or build from source. See [Jev setup](CLASSIFIER_CHOICES.md) for the candidate's shared configuration and migration.
 
 ## Jev setup for agent-assisted installs
 
@@ -45,7 +45,9 @@ After installing the ModelRudder release, run `smart-codex native install` and `
 
 ## 2. Download and verify a release
 
-Use the selected tagged release on [github.com/cybrking/modelrudder/releases](https://github.com/cybrking/modelrudder/releases). Download its `smart-codex-RELEASE_ID-install.mjs` and `SHA256SUMS` into the same directory. Replace `RELEASE_ID` with the actual release filename; do not execute this placeholder. Confirm the publisher and release page before running downloaded code. Do not run a script piped from a URL directly into a shell.
+Select the newest published release by publication date on [github.com/cybrking/modelrudder/releases](https://github.com/cybrking/modelrudder/releases), including previews and excluding drafts, whose notes explicitly confirm Jev-only support. Stop if no such release exists or its installer or `SHA256SUMS` is missing. A source version, draft release, tag or CI artifact alone does not establish publication. Do not use GitHub's `/releases/latest` shortcut, which excludes prereleases.
+
+Resolve the release once and read the README and this guide at that exact tag. Download its `smart-codex-RELEASE_ID-install.mjs` and `SHA256SUMS` into the same directory using the exact published filenames. Replace `RELEASE_ID` with the actual release filename; do not execute this placeholder. Keep the documentation and both downloads tied to that same release. Confirm the publisher and release page before running downloaded code. Do not run a script piped from a URL directly into a shell.
 
 On macOS:
 
@@ -128,7 +130,7 @@ Native CLI rollback is separate from ModelRudder release rollback: `smart-codex 
 
 ## Source installation
 
-Alternatively, build from a trusted source checkout with Node.js 24+:
+Source installation is a separate developer choice, not a fallback for an unavailable published release. Proceed only if the user explicitly requests a source build and has reviewed the trusted revision being installed. Record its commit ID and use its matching documentation; preview.14 source and local packaging do not establish a published release. With Node.js 24+:
 
 ```sh
 npm ci --ignore-scripts

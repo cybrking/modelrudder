@@ -105,7 +105,9 @@ export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.
     protectPrivatePathSync(file);
   }
   if (provider) {
-    const updates = { SMART_CODEX_CLASSIFIER: 'direct' };
+    const updates: Record<string, string> = { SMART_CODEX_CLASSIFIER: 'direct' };
+    // A setup-only disablement must survive restart. Never persist an enabling override.
+    if (env.ALLOW_CLASSIFICATION === 'false') updates.ALLOW_CLASSIFICATION = 'false';
     const retiredKeys = ['SMART_CODEX_TEV_URL', 'SMART_CODEX_TEV_MODEL'];
     let next = oldText;
     for (const key of retiredKeys) next = next.replace(new RegExp('^[ \t]*(?:export\\s+)?' + key + '\\s*=.*(?:\\r?\\n|$)', 'gm'), '');
@@ -124,7 +126,7 @@ export async function runSetup(args: string[], env: NodeJS.ProcessEnv = process.
       await rename(temp, file);
     } finally { await rm(temp, { force: true }); }
     out(`Saved Jev (hosted) for both launchers. Restart sessions to apply. Native login and unrelated settings preserved.\n`);
-    if ((env.ALLOW_CLASSIFICATION ?? saved.ALLOW_CLASSIFICATION) === 'false') {
+    if (parsed.ALLOW_CLASSIFICATION === 'false') {
       out('Classification remains disabled by ALLOW_CLASSIFICATION=false. Change that setting explicitly when ready to enable routing.\n');
       return 0;
     }

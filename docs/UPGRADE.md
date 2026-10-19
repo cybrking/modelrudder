@@ -8,11 +8,11 @@ Upgrades preserve the existing private key file and local state. You do not need
 
 If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same flags on every installer and maintenance command below. Use your installation's existing paths, rather than creating a second default installation.
 
-Preview.14 (`v0.1.0-preview.14`) is the first published Jev-only release. Older preview assets include retired Tev functionality; verify the release notes and checksum before installing.
+Preview.14 is an unreleased Jev-only source candidate. As checked October 19, 2026 at 13:02 UTC, its GitHub release is a draft with no assets; the newest published release is [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), which still includes Tev. A Jev-only release upgrade is blocked until a qualifying release is published with its installer and checksum.
 
 ## Normal release upgrade
 
-Select the newest published release by publication date from the [official releases list](https://github.com/cybrking/modelrudder/releases), including preview releases and excluding drafts. Require release notes explicitly confirming Jev-only support. If no such release is available, stop; do not install an older preview or an unreviewed source build as a Jev-only upgrade. GitHub's [`/releases/latest` endpoint](https://docs.github.com/en/rest/releases/releases#get-the-latest-release) excludes prereleases, so it is not suitable for this preview channel.
+Select the newest published release by publication date from the [official releases list](https://github.com/cybrking/modelrudder/releases), including preview releases and excluding drafts. Require release notes explicitly confirming Jev-only support. If no such release is available or its installer or `SHA256SUMS` is missing, stop; do not substitute an older preview or a source build. GitHub's [`/releases/latest` endpoint](https://docs.github.com/en/rest/releases/releases#get-the-latest-release) excludes prereleases, so it is not suitable for this preview channel.
 
 Resolve the release once and record its exact tag. Read the README and `docs/UPGRADE.md` at that tag for its prerequisites and migration steps. Download its standalone installer and `SHA256SUMS` into a new folder using the exact published asset filenames. Keep the documentation, installer and checksum tied to that same release throughout the upgrade.
 
@@ -41,7 +41,7 @@ node -- .\smart-codex-RELEASE_ID-install.mjs
 
 Replace both filename placeholders with your actual files. The old and new files may be in different download directories; use their full paths if needed. Stop if the new installer hash does not match.
 
-For a clean source checkout, select an approved release tag, then install:
+Only if a source installation was explicitly requested, use a clean trusted checkout and select an approved release tag, then install:
 
 ```sh
 git fetch --tags origin
@@ -51,7 +51,7 @@ node -- src/install-cli.ts --list
 node -- src/install-cli.ts
 ```
 
-Replace `APPROVED_RELEASE_TAG` with the release you reviewed. Before installing, record the current release ID printed by `--list` for rollback. Pulling source alone does not update the managed runtime.
+Replace `APPROVED_RELEASE_TAG` with the release you reviewed. Do not assume an unpublished candidate has a release tag. For an explicitly requested unreleased revision, follow the separate [source installation instructions](AGENT_INSTALL.md#source-installation). Before installing, record the current release ID printed by `--list` for rollback. Pulling source alone does not update the managed runtime.
 
 The explicit `node -- src/install-cli.ts` command works with older source builds whose npm installer script lacks the `--` boundary. Without it, Node can consume a custom `--env-file` option and report that the file was not found before the installer runs. The installer only needs that path to configure the launchers; it does not need to load the key file during installation.
 
