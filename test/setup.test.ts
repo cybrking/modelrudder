@@ -10,6 +10,8 @@ import { runSetup, setupTemplate, startEditor } from '../src/setup.ts';
 import { isPrivatePathSync, protectPrivatePathSync } from '../src/private-files.ts';
 import { readLiveConfig } from '../src/live-config.ts';
 import { nativeMaintenanceEnv } from '../src/native-runtime.ts';
+import { launchSmartCodex } from '../src/smart-codex.ts';
+import { launchSmartClaude } from '../src/smart-claude.ts';
 
 test('setup creates a private minimal disabled configuration, opens the file and never prints its contents', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'modelrudder-setup-'));
@@ -131,25 +133,29 @@ test('Jev setup preserves a saved classification kill switch and reports disable
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
-test('a setup-only kill switch stays disabled in a fresh process for both launchers', async () => {
+test('a setup-only kill switch stays disabled in a fresh process for both launchers', async t => {
   const directory = await mkdtemp(join(tmpdir(), 'modelrudder-transient-disabled-'));
   const run = promisify(execFile);
   const cwd = fileURLToPath(new URL('../', import.meta.url));
-  // Keep the OS environment needed by Windows ACL checks, while excluding
-  // inherited router settings, credentials and Node options through the shared allowlist.
+  // The fresh runtime must not inherit router settings, credentials or Node options.
   const env = { ...nativeMaintenanceEnv(process.env), TMPDIR: directory, TEMP: directory, TMP: directory };
   try {
     const file = join(directory, 'env');
-    for (const launcher of ['smart-codex', 'smart-claude']) {
+    for (const launch of [launchSmartCodex, launchSmartClaude]) {
       for (const previous of ['', 'ALLOW_CLASSIFICATION=true\n', 'ALLOW_CLASSIFICATION=false\n']) {
         const saved = 'SMART_CODEX_CLASSIFIER=direct\nTYPESAFE_API_KEY=SYNTHETIC_FIXTURE\nALLOW_JEV_CLASSIFICATION=true\nOTHER=preserved\n' + previous;
         await writeFile(file, saved, { mode: 0o600 }); protectPrivatePathSync(file);
-        const setup = await run(process.execPath, [`--env-file=${file}`, '--', `src/${launcher}.ts`,
-          'setup', '--classifier', 'jev', '--no-open'], {
-          cwd, env: { ...env, SMART_CODEX_ENV_FILE: file, ALLOW_CLASSIFICATION: 'false' },
-        });
-        assert.match(setup.stdout, /Classification remains disabled/);
-        assert.doesNotMatch(setup.stdout, /Hosted classification enabled|SYNTHETIC_FIXTURE/);
+        // Use each real setup entrypoint with an explicit temporary override. Keep
+        // native permission checks in the normal test host's OS environment.
+        let output = '';
+        const stdout = t.mock.method(process.stdout, 'write', (text: string) => { output += text; return true; });
+        try {
+          assert.equal(await launch(['setup', '--classifier', 'jev', '--no-open'], {
+            ...parseEnv(saved), SMART_CODEX_ENV_FILE: file, ALLOW_CLASSIFICATION: 'false',
+          }), 0);
+        } finally { stdout.mock.restore(); }
+        assert.match(output, /Classification remains disabled/);
+        assert.doesNotMatch(output, /Hosted classification enabled|SYNTHETIC_FIXTURE/);
         // A genuinely new Node process loads only the saved file, without the transient flag.
         // Even the positive control uses a mock transport and synthetic task/credentials.
         const runtime = await run(process.execPath, [`--env-file=${file}`, '--input-type=module', '-e', `
