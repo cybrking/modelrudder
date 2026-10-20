@@ -150,6 +150,12 @@ jobs:
           path: candidate-evidence
       - name: Verify evidence and prepare compatibility changes
         run: node scripts/promote-cli-compatibility.ts candidate-evidence "$GITHUB_SHA"
+      - name: Install dependencies for the generated proposal
+        run: npm ci --ignore-scripts
+      - name: Typecheck the generated proposal
+        run: npm run typecheck
+      - name: Test the generated proposal
+        run: npm test
       - name: Open a reviewed promotion PR
         shell: bash
         env:
