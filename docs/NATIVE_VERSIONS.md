@@ -16,13 +16,13 @@ Use only the commands for the provider you need. `native install` needs npm and 
 
 ## Selection and verification
 
-`native install` without a version selects the latest recorded version shipped in the installed router, even if an older managed version was previously selected. The current source candidate records Codex **0.162.1** and Claude Code **2.1.300**. Check `src/cli-compatibility-data.ts` at the installed release's tag for its defaults, evidence history, minimums and explicit known-broken blocks; source documentation does not change an installed release's policy.
+`native install` without a version selects the latest recorded version shipped in the installed router, even if an older managed version was previously selected. The current source candidate records Codex **0.163.0** and Claude Code **2.1.303**. Check `src/cli-compatibility-data.ts` at the installed release's tag for its defaults, evidence history, minimums and explicit known-broken blocks; source documentation does not change an installed release's policy.
 
-An explicit stable candidate at or above the minimum within the supported major can be evaluated with `native install VERSION`. It is downloaded into separate temporary state, checked with the actual native protocol/plugin probes and selected only after success. Unsupported majors, prereleases/modified versions, too-old builds and known broken builds are rejected before download. Unrecorded selected candidates also need a fresh probe at launch; local success does not record cross-platform release qualification. See [managed upstream updates](UPSTREAM_UPDATES.md). To select a recorded version:
+An explicit stable candidate at or above the minimum within the supported major can be evaluated with `native install VERSION`. It is downloaded into separate staging state, moved to its final path before the actual native protocol/plugin probes run, and selected only after successful verification. Unsupported majors, prereleases/modified versions, too-old builds and known broken builds are rejected before download. Unrecorded selected candidates also need a fresh probe at launch; local success does not record cross-platform release qualification. See [managed upstream updates](UPSTREAM_UPDATES.md). To select a recorded version:
 
 ```sh
-smart-codex native install 0.162.1
-smart-claude native install 2.1.300
+smart-codex native install 0.163.0
+smart-claude native install 2.1.303
 ```
 
 Before selecting a candidate, ModelRudder checks its reported version and runs the shipped native smoke checks. Codex initializes stdio and creates a fresh read-only thread without submitting a turn. Claude runs plugin fixtures and synthetic provider-wire checks with fake credentials. Selection changes only after these pass; failure leaves the current selection intact. Repeating installation for an installed version reuses its package and checks it again.
