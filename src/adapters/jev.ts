@@ -83,7 +83,7 @@ export function parseJevResponse(raw: unknown, model = 'jev-latest') {
   }
   let servedModel: string | undefined;
   if (isRecord(raw) && raw.model !== undefined) {
-    try { servedModel = parseServedModel(raw.model); if (!servedModel.startsWith('jev-')) throw new Error(); }
+    try { servedModel = parseServedModel(raw.model); }
     catch { throw new Error('Invalid Jev model response'); }
   }
   if (model !== 'jev-latest' && servedModel !== model) throw new Error('Invalid Jev served model');

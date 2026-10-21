@@ -77,8 +77,8 @@ test('promotion requires complete matching evidence from every provider platform
   assert.throws(() => promoteCliEvidence(candidates.slice(1), evidence, sha), /platform matrix/);
 });
 
-test('promotion command turns bound artifacts into a reviewable policy and evidence proposal', async () => {
-  const { mkdtemp, mkdir, writeFile, readFile, rm } = await import('node:fs/promises');
+test('promotion command produces a proposal that still passes compatibility regression tests', async () => {
+  const { mkdtemp, mkdir, writeFile, readFile, rm, cp } = await import('node:fs/promises');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
   const { execFile } = await import('node:child_process');
@@ -91,7 +91,10 @@ test('promotion command turns bound artifacts into a reviewable policy and evide
   try {
     const artifacts = join(root, 'artifacts');
     await mkdir(join(artifacts, 'upstream-release-report'), { recursive: true });
-    await mkdir(join(root, 'src'));
+    await cp(fileURLToPath(new URL('../src', import.meta.url)), join(root, 'src'), { recursive: true });
+    await cp(fileURLToPath(new URL('../package.json', import.meta.url)), join(root, 'package.json'));
+    await mkdir(join(root, 'test'));
+    await cp(fileURLToPath(new URL('./codex-compatibility.test.ts', import.meta.url)), join(root, 'test/codex-compatibility.test.ts'));
     await writeFile(join(artifacts, 'upstream-release-report', 'upstream-releases.json'), JSON.stringify({ matrix: { include: candidates } }));
     for (const c of candidates) {
       const folder = join(artifacts, `upstream-${c.provider}-${c.version}-${c.os}`);
@@ -103,7 +106,15 @@ test('promotion command turns bound artifacts into a reviewable policy and evide
     assert.ok((await readFile(join(root, 'src/cli-compatibility-data.ts'), 'utf8')).includes(codexCandidate));
     assert.equal(JSON.parse(await readFile(join(root, 'docs/compatibility/latest.json'), 'utf8')).evidence.length, 6);
     assert.match(await readFile(join(root, 'compatibility-pr-body.md'), 'utf8'), /does not merge or publish automatically/);
+    await promisify(execFile)(process.execPath, ['--test', 'test/codex-compatibility.test.ts'], { cwd: root });
   } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('promotion workflow validates generated changes before opening or pushing the proposal', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const workflow = await readFile(new URL('../.github/workflows/upstream-releases.yml', import.meta.url), 'utf8');
+  const promote = workflow.slice(workflow.indexOf('\n  promote:'));
+  assert.match(promote, /run: node scripts\/promote-cli-compatibility\.ts[^\n]*\n\s+- name: Install dependencies for the generated proposal\n\s+run: npm ci --ignore-scripts\n\s+- name: Typecheck the generated proposal\n\s+run: npm run typecheck\n\s+- name: Test the generated proposal\n\s+run: npm test\n\s+- name: Open a reviewed promotion PR/);
 });
 
 test('native probe rejects lookalike flags and broadened permissions from an actual subprocess', async () => {

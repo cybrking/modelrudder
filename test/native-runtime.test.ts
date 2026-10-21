@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile, symlink } from 'node:fs/promises';
+import fs from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, realpath, rm, writeFile, symlink } from 'node:fs/promises';
+import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { installNative, rollbackNative, managedNativeCommand, requireManagedNative, nativeDirectory, nativeMaintenanceEnv, nativeStatus, renameNative } from '../src/native-runtime.ts';
@@ -68,6 +70,149 @@ test('failed download, verification and unsupported version preserve current and
     await assert.rejects(rollbackNative('codex', f.env, { ...f.ops, async verify() { throw new Error('rollback failed'); } }), /rollback failed/);
     assert.equal(await readFile(path, 'utf8'), before);
   } finally { await f.close(); }
+});
+
+for (const [provider, previous, candidate] of [
+  ['codex', '0.161.0', '0.162.0'], ['claude', '2.1.295', '2.1.296'],
+] as const) {
+  test(`${provider} is verified at its final path before metadata or selection is published`, async () => {
+    const f = await fixture();
+    try {
+      await installNative(provider, previous, f.env, f.ops);
+      const root = nativeDirectory(provider, f.env);
+      const selectionPath = join(root, 'selection.json');
+      const before = await readFile(selectionPath, 'utf8');
+      const oldCommand = await requireManagedNative(provider, f.env);
+      const target = join(await realpath(join(root, 'versions')), candidate);
+      let verifiedEntry: string | undefined;
+      await installNative(provider, candidate, f.env, { ...f.ops,
+        async verify(actualProvider, version, command, env) {
+          assert.equal(command.args[1], join(target, 'package with spaces', 'cli.js'),
+            'Do not run the native executable in a directory that will be renamed afterward');
+          await assert.rejects(readFile(join(target, 'metadata.json')), { code: 'ENOENT' });
+          assert.equal(await readFile(selectionPath, 'utf8'), before);
+          assert.deepEqual(await requireManagedNative(provider, f.env), oldCommand);
+          await f.ops.verify(actualProvider, version, command, env);
+          verifiedEntry = command.args[1];
+        },
+      });
+      assert.equal((await requireManagedNative(provider, f.env)).args[1], verifiedEntry);
+      assert.equal(JSON.parse(await readFile(selectionPath, 'utf8')).previous, previous);
+      assert.deepEqual((await readdir(root)).sort(), ['selection.json', 'versions']);
+      assert.deepEqual((await readdir(join(root, 'versions'))).sort(), [previous, candidate].sort());
+      assert.equal(await rollbackNative(provider, f.env, f.ops), previous);
+    } finally { await f.close(); }
+  });
+}
+
+test('repairing a missing selected installation stays unavailable until native verification passes', async () => {
+  const f = await fixture();
+  try {
+    await installNative('codex', '0.162.0', f.env, f.ops);
+    const root = nativeDirectory('codex', f.env);
+    const before = await readFile(join(root, 'selection.json'), 'utf8');
+    await rm(join(root, 'versions', '0.162.0'), { recursive: true });
+    await installNative('codex', '0.162.0', f.env, { ...f.ops,
+      async verify(provider, version, command, env) {
+        await assert.rejects(requireManagedNative(provider, f.env), /metadata is missing/);
+        assert.equal(await readFile(join(root, 'selection.json'), 'utf8'), before);
+        await f.ops.verify(provider, version, command, env);
+      },
+    });
+    assert.ok(await requireManagedNative('codex', f.env));
+    assert.equal(await readFile(join(root, 'selection.json'), 'utf8'), before);
+  } finally { await f.close(); }
+});
+
+test('failed final-path verification removes only its candidate and permits a clean retry', async () => {
+  const f = await fixture();
+  try {
+    await installNative('claude', '2.1.295', f.env, f.ops);
+    const root = nativeDirectory('claude', f.env);
+    const selectionPath = join(root, 'selection.json');
+    const before = await readFile(selectionPath, 'utf8');
+    const target = join(root, 'versions', '2.1.296');
+    await assert.rejects(installNative('claude', '2.1.296', f.env, { ...f.ops,
+      async verify() {
+        assert.ok((await readdir(target)).includes('package with spaces'));
+        await assert.rejects(readFile(join(target, 'metadata.json')), { code: 'ENOENT' });
+        throw new Error('synthetic final-path failure');
+      },
+    }), /synthetic final-path failure/);
+    assert.equal(await readFile(selectionPath, 'utf8'), before);
+    assert.deepEqual((await readdir(root)).sort(), ['selection.json', 'versions']);
+    assert.deepEqual(await readdir(join(root, 'versions')), ['2.1.295']);
+    assert.equal(await readFile((await requireManagedNative('claude', f.env)).args[1], 'utf8'), '// claude 2.1.295');
+    await installNative('claude', '2.1.296', f.env, f.ops);
+    assert.equal(await rollbackNative('claude', f.env, f.ops), '2.1.295');
+  } finally { await f.close(); }
+});
+
+test('downloaded verification metadata cannot make an unverified candidate usable', async () => {
+  const f = await fixture();
+  try {
+    await installNative('codex', '0.162.0', f.env, f.ops);
+    const root = nativeDirectory('codex', f.env);
+    const target = join(root, 'versions', '0.162.0');
+    const before = await readFile(join(root, 'selection.json'), 'utf8');
+    const metadata = await readFile(join(target, 'metadata.json'), 'utf8');
+    await rm(target, { recursive: true });
+    await assert.rejects(installNative('codex', '0.162.0', f.env, { ...f.ops,
+      async install(...args) {
+        const entry = await f.ops.install(...args);
+        await writeFile(join(args[2], 'metadata.json'), metadata);
+        return entry;
+      },
+      async verify() { assert.fail('Do not probe a candidate carrying its own verification marker'); },
+    }), /must not supply managed verification metadata/);
+    assert.equal(await readFile(join(root, 'selection.json'), 'utf8'), before);
+    assert.deepEqual(await readdir(join(root, 'versions')), []);
+    await assert.rejects(requireManagedNative('codex', f.env), /is missing/);
+  } finally { await f.close(); }
+});
+
+test('failed candidate cleanup explains recovery without exposing diagnostics or changing either pin', async (t) => {
+  const f = await fixture();
+  let restoreRemove: (() => void) | undefined;
+  try {
+    await installNative('claude', '2.1.295', f.env, f.ops);
+    await installNative('claude', '2.1.296', f.env, f.ops);
+    const root = nativeDirectory('claude', f.env);
+    const target = join(root, 'versions', '2.1.303');
+    const before = await readFile(join(root, 'selection.json'), 'utf8');
+    const originalRemove = fs.rm;
+    let cleanupAttempts = 0;
+    const remove = t.mock.method(fs, 'rm', async (path, options) => {
+      if (path === target) {
+        cleanupAttempts++;
+        assert.equal(options?.maxRetries, 6);
+        assert.equal(options?.retryDelay, 100);
+        throw Object.assign(new Error('PRIVATE filesystem diagnostic'), { code: 'EBUSY' });
+      }
+      return originalRemove(path, options);
+    });
+    syncBuiltinESMExports();
+    restoreRemove = () => { remove.mock.restore(); syncBuiltinESMExports(); };
+    await assert.rejects(installNative('claude', '2.1.303', f.env, { ...f.ops,
+      async verify() { throw new Error('PRIVATE native diagnostic'); },
+    }), error => {
+      assert.ok(error instanceof Error);
+      assert.match(error.message, /Could not finish verifying claude 2.1.303 or remove its unverified files/);
+      assert.match(error.message, /current selection was not changed/);
+      assert.ok(error.message.includes(JSON.stringify(target)));
+      assert.match(error.message, /then run smart-claude native install 2.1.303/);
+      assert.doesNotMatch(error.message, /PRIVATE/);
+      return true;
+    });
+    assert.equal(cleanupAttempts, 1);
+    assert.equal(await readFile(join(root, 'selection.json'), 'utf8'), before);
+    await assert.rejects(readFile(join(target, 'metadata.json')), { code: 'ENOENT' });
+    assert.deepEqual((await readdir(root)).sort(), ['selection.json', 'versions']);
+    assert.deepEqual((await readdir(join(root, 'versions'))).sort(), ['2.1.295', '2.1.296', '2.1.303']);
+    assert.equal(await readFile((await requireManagedNative('claude', f.env)).args[1], 'utf8'), '// claude 2.1.296');
+    await assert.rejects(installNative('claude', '2.1.303', f.env, f.ops), /failed validation/);
+    assert.equal(await rollbackNative('claude', f.env, f.ops), '2.1.295');
+  } finally { restoreRemove?.(); await f.close(); }
 });
 
 test('missing managed executable fails closed instead of falling back to global CLI', async () => {

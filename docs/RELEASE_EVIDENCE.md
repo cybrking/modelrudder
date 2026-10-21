@@ -1,4 +1,10 @@
-# Community preview evidence — October 7, 2026
+# Community preview evidence
+
+Preview.14 is an unreleased Jev-only source candidate. As checked October 19, 2026 at 13:02 UTC, its GitHub release is a draft with no assets; [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13) remains the newest published release and includes Tev. Earlier records below describe historical functionality and do not certify the current change or establish publication. Current-source instructions are [Jev-only](CLASSIFIER_CHOICES.md); candidate evidence and limits are in [release readiness](RELEASE_READINESS.md#preview14-jev-only-routing).
+
+Preview.13 gives Codex Tev a separate rubric that distinguishes mechanical work, bounded implementation, investigation and broad discovery. It preserves Jev/Claude behavior and records the new rubric version in reports. Local verification passed 212 tests with one Windows-only skip and type checking. The exploratory routing comparison and bounded task-outcome evidence are described in [release readiness](RELEASE_READINESS.md#preview13-codex-tev-rubric-historical); they do not establish general task-quality improvement or savings.
+
+Preview.12 adds selectable hosted Jev/local Tev routing, an interactive setup menu for new and existing installations, and complete provider-specific natural-language installation prompts for Codex and Claude. October 16 local verification passed 210 tests with one Windows-only skip and type checking; installed setup-menu checks preserved configuration and managed native selections. These checks do not establish authenticated Claude task quality or full live TUI qualification. See the preview.12 section of [release readiness](RELEASE_READINESS.md).
 
 Preview.11 adds bounded stable CLI candidate evaluation and cross-platform reviewed evidence promotion. Release qualification remains distinct from local protocol compatibility. See [release readiness](RELEASE_READINESS.md) and [managed CLI updates](UPSTREAM_UPDATES.md).
 

@@ -59,6 +59,13 @@ test('release is reproducible, has exact allowlist, and rejects traversal/tamper
   const a = await buildRelease(project); const b = await buildRelease(project);
   assert.deepEqual(a, b);
   assert.deepEqual(Object.keys(a.files), releaseFiles);
+  assert.ok(!Object.keys(a.files).some(path => /(?:^|\/)tev(?:\.|\/)/i.test(path)));
+  const removedProvider = structuredClone(a);
+  removedProvider.files['src/adapters/tev.ts'] = '// obsolete provider';
+  removedProvider.files = Object.fromEntries(Object.keys(removedProvider.files).sort().map(path => [path, removedProvider.files[path]]));
+  assert.doesNotThrow(() => validateRelease(sealRelease(removedProvider)));
+  removedProvider.files['src/adapters/unknown.ts'] = '// unsupported';
+  assert.throws(() => validateRelease(sealRelease(removedProvider)), /allowlist/);
   const previousManifest = structuredClone(a);
   previousManifest.files = Object.fromEntries(managedNativeReleaseFiles.map(path => [path, a.files[path]]));
   assert.doesNotThrow(() => validateRelease(sealRelease(previousManifest)));
@@ -69,6 +76,29 @@ test('release is reproducible, has exact allowlist, and rejects traversal/tamper
   assert.throws(() => validateRelease(sealRelease(partial)), /allowlist/);
   const traversal = structuredClone(a); traversal.files['../escape'] = 'bad';
   assert.throws(() => validateRelease(traversal), /allowlist/);
+});
+
+test('Jev-only upgrades retain explicit rollback to the previous provider manifest', async () => {
+  const { temp, options } = await fixture();
+  try {
+    const current = await buildRelease(project);
+    const previous = structuredClone(current);
+    previous.files['src/adapters/tev.ts'] = '// Historical release fixture; never included in current builds.\n';
+    previous.files = Object.fromEntries(Object.keys(previous.files).sort().map(path => [path, previous.files[path]]));
+    sealRelease(previous);
+    await writeFile(options.envFile, 'RELEASE_SMOKE_CONFIG=preserved\n', { mode: 0o600 });
+    await installRelease(previous, options);
+    const stateFile = join(options.root, 'state', 'keep.json');
+    await writeFile(stateFile, '{}');
+    await installRelease(current, options);
+    assert.equal(await pointer(options.root), `releases/${current.id}`);
+    await assert.rejects(stat(join(options.root, 'releases', current.id, 'src/adapters/tev.ts')), { code: 'ENOENT' });
+    await rollbackRelease(previous.id, options);
+    assert.equal(await pointer(options.root), `releases/${previous.id}`);
+    for (const name of launcherNames) assert.match((await installedRun(options, ['--help'], temp, name)).stdout, new RegExp(name));
+    assert.equal(await readFile(options.envFile, 'utf8'), 'RELEASE_SMOKE_CONFIG=preserved\n');
+    assert.equal(await readFile(stateFile, 'utf8'), '{}');
+  } finally { await rm(temp, { recursive: true, force: true }); }
 });
 
 test('offline installed help runs independently of checkout; upgrade, rollback and uninstall retain user data', async () => {

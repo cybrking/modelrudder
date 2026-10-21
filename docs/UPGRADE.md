@@ -8,9 +8,11 @@ Upgrades preserve the existing private key file and local state. You do not need
 
 If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same flags on every installer and maintenance command below. Use your installation's existing paths, rather than creating a second default installation.
 
+Preview.14 is an unreleased Jev-only source candidate. As checked October 19, 2026 at 13:02 UTC, its GitHub release is a draft with no assets; the newest published release is [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), which still includes Tev. A Jev-only release upgrade is blocked until a qualifying release is published with its installer and checksum.
+
 ## Normal release upgrade
 
-Select the newest published release by publication date from the [official releases list](https://github.com/cybrking/modelrudder/releases), including preview releases and excluding drafts. GitHub's [`/releases/latest` endpoint](https://docs.github.com/en/rest/releases/releases#get-the-latest-release) excludes prereleases, so it is not suitable for this preview channel.
+Select the newest published release by publication date from the [official releases list](https://github.com/cybrking/modelrudder/releases), including preview releases and excluding drafts. Require release notes explicitly confirming Jev-only support. If no such release is available or its installer or `SHA256SUMS` is missing, stop; do not substitute an older preview or a source build. GitHub's [`/releases/latest` endpoint](https://docs.github.com/en/rest/releases/releases#get-the-latest-release) excludes prereleases, so it is not suitable for this preview channel.
 
 Resolve the release once and record its exact tag. Read the README and `docs/UPGRADE.md` at that tag for its prerequisites and migration steps. Download its standalone installer and `SHA256SUMS` into a new folder using the exact published asset filenames. Keep the documentation, installer and checksum tied to that same release throughout the upgrade.
 
@@ -39,7 +41,7 @@ node -- .\smart-codex-RELEASE_ID-install.mjs
 
 Replace both filename placeholders with your actual files. The old and new files may be in different download directories; use their full paths if needed. Stop if the new installer hash does not match.
 
-For a clean source checkout, select an approved release tag, then install:
+Only if a source installation was explicitly requested, use a clean trusted checkout and select an approved release tag, then install:
 
 ```sh
 git fetch --tags origin
@@ -49,7 +51,7 @@ node -- src/install-cli.ts --list
 node -- src/install-cli.ts
 ```
 
-Replace `APPROVED_RELEASE_TAG` with the release you reviewed. Before installing, record the current release ID printed by `--list` for rollback. Pulling source alone does not update the managed runtime.
+Replace `APPROVED_RELEASE_TAG` with the release you reviewed. Do not assume an unpublished candidate has a release tag. For an explicitly requested unreleased revision, follow the separate [source installation instructions](AGENT_INSTALL.md#source-installation). Before installing, record the current release ID printed by `--list` for rollback. Pulling source alone does not update the managed runtime.
 
 The explicit `node -- src/install-cli.ts` command works with older source builds whose npm installer script lacks the `--` boundary. Without it, Node can consume a custom `--env-file` option and report that the file was not found before the installer runs. The installer only needs that path to configure the launchers; it does not need to load the key file during installation.
 
@@ -59,7 +61,11 @@ ModelRudder has no local self-updater or `upgrade` command in this preview. The 
 
 To receive ModelRudder release notifications, open the [repository](https://github.com/cybrking/modelrudder), choose **Watch → Custom**, and select **Releases**. Follow the reviewed release's upgrade steps when notified. See [GitHub's notification instructions](https://docs.github.com/en/subscriptions-and-notifications/get-started/configuring-notifications).
 
-Plain Claude/Codex updates are independent of ModelRudder. Managed native upgrades require an explicit `native install VERSION`, restricted to versions recorded by the installed release. Candidates are checked before selection; failures leave the current pin intact. Automated compatibility discovery is not approval of a release. See [native upgrade and rollback](NATIVE_VERSIONS.md).
+Plain Claude/Codex updates are independent of ModelRudder. Managed native upgrades use `native install VERSION`. An unrecorded stable candidate must satisfy the supported-major and minimum-version policy, avoid the blocked-version list, and pass native verification before selection. Candidates are checked before selection; failures leave the current pin intact. Automated compatibility discovery is not approval of a release. See [native upgrade and rollback](NATIVE_VERSIONS.md).
+
+## Retired local-classifier configurations
+
+Jev is the only supported routing classifier. Upgrades preserve the private configuration rather than silently enabling hosted transmission. If an earlier source build saved `SMART_CODEX_CLASSIFIER=tev`, follow the [Jev migration steps](CLASSIFIER_CHOICES.md#migrate-a-retired-local-configuration): run `setup --classifier jev` with either launcher, privately enter your Jev key and explicitly enable Jev consent. Existing direct Jev and Codex hosted Jev gateway configurations remain supported. The shared `ALLOW_CLASSIFICATION=false` kill switch still disables classification. Restart both launchers after changing their shared configuration.
 
 ## Migration from preview.8 and earlier
 
@@ -113,7 +119,7 @@ From the source checkout, use the previous release ID you saved:
 node -- src/install-cli.ts --rollback PREVIOUS_RELEASE_ID
 ```
 
-Replace `PREVIOUS_RELEASE_ID` with the exact ID printed by `--list`, and repeat any custom installation flags. Restart active launchers afterward. Rollback preserves configuration and state.
+Replace `PREVIOUS_RELEASE_ID` with the exact ID printed by `--list`, and repeat any custom installation flags. Restart active launchers afterward. Rollback preserves configuration and state, but restores the selected release's functionality. Rolling back to a release with Tev support restores that support; rollback does not preserve the newer Jev-only restriction.
 
 Standalone users can use the retained verified installer with `--list` and `--rollback PREVIOUS_RELEASE_ID`, as described in [recovery instructions](AGENT_INSTALL.md#5-report-and-retain-recovery-options).
 

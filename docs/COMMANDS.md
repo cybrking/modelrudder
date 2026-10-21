@@ -1,6 +1,6 @@
 # ModelRudder command reference
 
-Complete the [installation and private configuration steps](AGENT_INSTALL.md) first. Both launchers share the saved routing-provider configuration. See [classifier choices](CLASSIFIER_CHOICES.md) for setup and session switching between Jev and local Tev in preview.12. Claude uses a session-local Mods adapter; Codex uses a local app-server relay.
+Complete the [installation and private configuration steps](AGENT_INSTALL.md) first. Both launchers share the saved routing-provider configuration. See [Jev setup](CLASSIFIER_CHOICES.md) for configuration, consent and migration. Claude uses a session-local Mods adapter; Codex uses a local app-server relay.
 
 ## Routing modes and defaults
 
@@ -8,13 +8,13 @@ Complete the [installation and private configuration steps](AGENT_INSTALL.md) fi
 - **Observe:** ModelRudder recommends a route without switching the native model. Fresh sessions start on Sonnet for Claude or Sol for Codex.
 - **Pinned:** Use an explicit model without Jev classification. An explicit `--model` selects pinned mode unless `--routing` is also supplied.
 
-Observe and auto send eligible task text and bounded earlier excerpts to the selected routing provider: hosted Jev or local Tev. Pinned tasks still use the native provider's allowance.
+Observe and auto send eligible task text and bounded earlier excerpts to Jev. Pinned tasks still use the native provider's allowance.
 
 Bare `smart-codex` is equivalent to `smart-codex --routing auto --effort-mode auto`; bare `smart-claude` is equivalent to `smart-claude --routing auto`. These flags make the defaults explicit. Plain `codex` and `claude` do not enable ModelRudder routing.
 
 ## Claude Code
 
-Run `smart-claude setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described in the installation guide. Then check readiness and start with recommendations while Claude begins on Sonnet:
+Run `smart-claude setup --classifier jev` and enter your key and explicit consent in the local editor if needed. Then check readiness and start with recommendations while Claude begins on Sonnet:
 
 ```sh
 smart-claude native install
@@ -33,7 +33,7 @@ Auto maps FAST to Haiku, BALANCED/DEEP to Sonnet, and MAX to Opus. Native effort
 
 ## Codex
 
-Run `smart-codex setup` to open your private configuration. Enter your Jev key in the local editor and enable classification as described in the installation guide. Then check readiness and start with recommendations while Sol executes:
+Run `smart-codex setup --classifier jev` and enter your key and explicit consent in the local editor if needed. Then check readiness and start with recommendations while Sol executes:
 
 ```sh
 smart-codex native install
@@ -75,7 +75,7 @@ Outcome markers and cleanup are Codex-specific commands. Outcome markers are you
 
 ## Data and privacy
 
-In auto/observe mode, direct classification sends the current eligible text task and up to two bounded earlier task excerpts to TypeSafe. Anything pasted into that text, including source code or secrets, is included. The adapters do not automatically send repository files, assistant output or attachments to the classifier. Native Codex and Claude Code send their normal model inputs to their providers under your own account terms. Claude supports direct Jev or local Tev using its own rubric; the hosted gateway has only a Codex rubric.
+In auto/observe mode, direct classification sends the current eligible text task and up to two bounded earlier task excerpts to TypeSafe. Anything pasted into that text, including source code or secrets, is included. The adapters do not automatically send repository files, assistant output or attachments to the classifier. Native Codex and Claude Code send their normal model inputs to their providers under your own account terms. Claude supports direct Jev using its own rubric; the hosted gateway has only a Codex rubric.
 
 The child process does not receive the Jev key from ModelRudder's classifier environment. Each native tool manages its own login. Claude's mod contacts a launcher-local authenticated loopback bridge; it does not proxy Claude model requests or obtain Claude credentials. Local reports contain routing/usage metadata rather than task text; configuration and logs remain on your machine. Review provider policies before sending confidential content. The community client has no ModelRudder telemetry or hosted billing requirement.
 

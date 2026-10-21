@@ -12,7 +12,7 @@ ModelRudder's Codex adapter classifies an eligible new user turn, applies a cons
 | Route each observed eligible user turn | `turn/start` | `prompt.submit` + `turn.start` + `turn.step` |
 | Keep route through tool loop | One setting per native turn | Decision keyed by native `turnId`; stream forwarded unchanged |
 | Auto / observe / pinned | Supported | Supported |
-| Classifier | Direct Jev, local Tev or existing hosted gateway | Direct Jev or local Tev with a separate Claude rubric |
+| Classifier | Direct Jev or existing hosted Jev gateway | Direct Jev with a separate Claude rubric |
 | Conservative opaque/media/history handling | Baseline | Native selection retained; no automatic downgrade |
 | Subagents and background helpers | Native | Native; `agentId` and unobserved steps untouched |
 | Effort routing | Fixed / observe / auto | Native effort preserved; no Claude effort classifier |
@@ -27,28 +27,31 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 ## Requirements and installation
 
 - Node.js 24+ for ModelRudder
-- A managed official Claude Code **2.1.295** installation via `smart-claude native install`, requiring npm/network access once. The managed launcher disables native auto-updates for its child process; plain Claude remains independent.
+- A managed official Claude Code **2.1.300** installation via `smart-claude native install`, requiring npm/network access once. The managed launcher disables native auto-updates for its child process; plain Claude remains independent.
 - A separately installed official Claude CLI for native login; use `claude auth login` with a `claude.ai` account yourself if needed. This login is reused by the managed CLI; the plain CLI can update independently
-- Your own direct Jev credentials and explicit `ALLOW_JEV_CLASSIFICATION=true` for observe/auto
-- The official `v0.1.0-preview.12` standalone installer, which includes `smart-claude`; older Codex-only installers do not include it
+- For observe/auto: your own direct Jev credentials and explicit classification consent
+- A published release explicitly containing Jev-only support, or a separately requested, reviewed source build
 
-For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download the preview.12 installer and `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
+These instructions describe the preview.14 source candidate. As checked October 19, 2026 at 13:02 UTC, preview.14 is an unpublished draft with no release assets; published preview.13 still includes Tev. For agent-assisted release setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation). Both paths must stop until a published Jev-only release and its installer/checksum are available. Do not replace a release-install request with a source build; use [source installation](AGENT_INSTALL.md#source-installation) only when explicitly requested.
+
+Once a qualifying release is published, read its tagged documentation, verify its installer against the same release's `SHA256SUMS`, run it with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
 
 Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.9 release containing both Claude multi-turn fixes.
 
-Then prepare your private configuration and check readiness:
+Then select your provider and check readiness. Agents use the explicit setup command for the user's choice:
 
 ```sh
 smart-claude --help
 smart-claude native install
 smart-claude native status
-smart-claude setup
+smart-claude setup --classifier jev
+smart-claude classifier status
 smart-claude doctor
 ```
 
-After entering your own key and enabling direct Jev classification, start a fresh terminal and run `smart-claude --routing observe`. Actual tasks consume provider usage; setup does not run them automatically. Source builds remain available through the [development instructions](../CONTRIBUTING.md#development).
+Enter your own Jev key and explicitly enable classification in the private editor. Follow [private configuration](AGENT_INSTALL.md#3-configure-jev), then confirm classifier status names Jev and reports it enabled. Start a fresh terminal with `smart-claude --routing observe`. Actual tasks consume provider usage; setup does not run them automatically. Source builds remain available through the [development instructions](../CONTRIBUTING.md#development).
 
-The installer manages both launchers and uses the existing private configuration path and `SMART_CODEX_ENV_FILE` setting for compatibility. In the local editor, enter your own `TYPESAFE_API_KEY` and change `ALLOW_JEV_CLASSIFICATION` to `true` only after reviewing the data flow; `SMART_CODEX_CLASSIFIER=direct` is already set. Do not paste a key into chat or command arguments. `smart-claude setup --no-open` prepares the minimal disabled configuration without opening an editor. Existing configuration is preserved.
+The installer manages both launchers and uses the existing private configuration path and `SMART_CODEX_ENV_FILE` setting for compatibility. Jev setup uses `SMART_CODEX_CLASSIFIER=direct`; enter your own `TYPESAFE_API_KEY` and set `ALLOW_JEV_CLASSIFICATION=true` in the local editor only after reviewing the data flow. Do not paste a key into chat or command arguments. `smart-claude setup --no-open` prepares a disabled template if absent or preserves existing settings. See [Jev migration](CLASSIFIER_CHOICES.md#migrate-a-retired-local-configuration) for retired configurations.
 
 The launcher loads the bundled plugin with `claude --plugin-dir` for that session. It does **not** install the plugin into your account, change Claude settings, create OAuth grants, enable disabled hooks or change organization policy. Claude may ask you to trust the plugin. Mods are privileged code; review the source and trust only code you intend to run. If policy prevents loading the mod, use plain Claude and consult your administrator rather than bypassing it. A launcher exit warning identifies a missing plugin readiness handshake.
 
@@ -80,7 +83,7 @@ Run `smart-claude --help` for the deliberately narrow native-option allowlist. A
 
 ## Eligibility, privacy and failure behavior
 
-Only explicit, observed composer/bridge user text that matches the new turn reaches the classifier. This avoids accidentally classifying helper requests, hidden rewritten prompts or tool results. The text limit in the native adapter is 64,000 characters. Classifier context is only the current task plus up to two earlier 4,000-character user-task excerpts, retained in memory. Anything the user pasted into that text, including code or secrets, is part of the transmission to TypeSafe.
+Only explicit, observed composer/bridge user text that matches the new turn reaches the classifier. This avoids accidentally classifying helper requests, hidden rewritten prompts or tool results. The text limit in the native adapter is 64,000 characters. Classifier context is only the current task plus up to two earlier 4,000-character user-task excerpts, retained in memory. Anything the user pasted into that text, including code or secrets, is sent to TypeSafe through Jev. Native execution still uses Claude's provider.
 
 Media, @-references, additional prompt context, ambiguous/dropped/rewritten prompts, foreign-origin messages, compaction and resumed or reloaded history retain the native model instead of authorizing a downgrade. Auto/observe resumes omit the startup model override, preserving Claude's restored choice. A fresh `/clear` allows fresh text routing again. Referenced files, queued input and non-native instruction attachments can mark history opaque; the attachment content itself is never read or transmitted by the adapter. Claude's engine-authored `instructions` and `nested_memory` announcements are normal project guidance and do not disable subsequent user-task classification. The adapter checks the engine-pinned attachment origin, not its text, and does not send project instructions to the classifier. Independent prompt-rewriting hooks can affect eligibility; interactions with arbitrary third-party mods are not certified.
 
@@ -95,6 +98,8 @@ Classification has a five-second deadline and no inference retry. The mod waits 
 Logs are private metadata files in the installed state directory's `claude-logs`, or `.smart-claude` for source runs. They exclude tasks, answers, credentials, repository contents and native session IDs. Reports keep Claude's separate uncached input, cache-read, cache-write and output counts, plus available Jev token counts. Completion reporting can be incomplete. They do not infer plan allowance weights, dollar savings or quality from token totals.
 
 ## Verification and remaining limits
+
+See the [live qualification procedure and current evidence](CLAUDE_LIVE_QUALIFICATION.md) for the authenticated terminal checks that remain.
 
 - Node regression fixtures cover classification independent of confidence, privacy, cancellation, duplicate routing, context bounds, HTTP authentication, argument handling and separate usage records.
 - The actual official Claude Code **2.1.295** binary passed static plugin validation and the plugin's no-inference test suite in an isolated, unsigned-in environment.
@@ -127,9 +132,3 @@ The Agent SDK has separate authentication terms. This integration runs native Cl
 Notices display the configured model ID as a readable name and version, for example `Claude Sonnet 5.5`. Dated IDs also show the snapshot date; custom IDs retain the exact ID. Preview.12 applies every valid classifier choice in auto mode; low or missing reported confidence alone does not select the fallback. Invalid or unavailable classification uses Sonnet, and ineligible context follows its context policy. Historical releases could display “Uncertain classification; using fallback” for a confidence cutoff. See the [copyable routing examples](ROUTING_EXAMPLES.md#three-routing-tests-for-claude-code) and [routing troubleshooting](TROUBLESHOOTING.md).
 
 Managed native selection, explicit upgrades and rollback are described in [Native versions](NATIVE_VERSIONS.md). An existing installation must create its managed pin once after upgrading to preview.9. Native installation and its synthetic verification do not require a Jev key or copy provider credentials.
-
-## Local Tev (preview.12)
-
-Preview.12 supports `smart-claude setup --classifier tev`, `smart-claude classifier status` and `smart-claude --classifier tev --routing observe`. See [classifier setup](CLASSIFIER_CHOICES.md). Tev uses the Claude rubric; native effort remains unchanged. Earlier release instructions above describe the hosted Jev path. Local metadata checks and synthetic bridge tests do not certify live Claude TUI or routing quality.
-
-See the [live qualification procedure and current evidence](CLAUDE_LIVE_QUALIFICATION.md) for the authenticated terminal checks that remain.

@@ -34,7 +34,7 @@ export async function runDoctor(env: Record<string, string | undefined>, probe?:
     `Interactive effort mode: ${effective.effortMode}; baseline medium; FAST Luna proposal low, other profiles medium. Model observe, pinned and fallback use medium.`,
     `Fallback: ${effective.routes[effective.policy.fallback].model}; selection ${effective.selectionRule}; confidence informational; classifier timeout ${effective.classificationTimeoutMs} ms`];
   let ok = Number(process.versions.node.split('.')[0]) >= 24;
-  if (env.SMART_CODEX_CLASSIFIER !== 'tev') lines.push(`TypeSafe credential: ${env.TYPESAFE_API_KEY?.trim() ? 'present' : 'missing'}`);
+  lines.push(`TypeSafe credential: ${env.TYPESAFE_API_KEY?.trim() ? 'present' : 'missing'}`);
   try {
     const config = readLiveConfig(env);
     lines.push(`Text classification: ${config.allowClassification ? 'enabled' : 'disabled'}`);
@@ -47,8 +47,8 @@ export async function runDoctor(env: Record<string, string | undefined>, probe?:
   }
   const status = await classifierStatus(env); lines.push(status.text);
   if (effective.policy.allowClassification) interactiveReady &&= status.ok;
-  lines.push(`Classifier transport: ${env.SMART_CODEX_CLASSIFIER === 'tev' ? 'local Tev' : env.SMART_CODEX_CLASSIFIER === 'hosted' ? 'hosted gateway; endpoint and customer token withheld' : 'direct Jev'}`);
-  lines.push(`Interactive classification: ${!effective.policy.allowClassification ? 'disabled; no credentials required' : interactiveReady ? 'configured' : 'requires provider setup; run setup --classifier jev or setup --classifier tev; alternatively use --routing pinned'}`);
+  lines.push(`Classifier transport: ${env.SMART_CODEX_CLASSIFIER === 'hosted' ? 'hosted gateway; endpoint and customer token withheld' : 'direct Jev'}`);
+  lines.push(`Interactive classification: ${!effective.policy.allowClassification ? 'disabled; no credentials required' : interactiveReady ? 'configured' : 'requires provider setup; run setup --classifier jev; alternatively use --routing pinned'}`);
   ok &&= interactiveReady;
   try {
     let run = probe;

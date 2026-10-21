@@ -1,6 +1,10 @@
 export const classifierVersion = 'jev-latest:rubric-2026-10-01';
 export const gatewayProtocol = 1;
 
+export function codexClassifierVersion(value: unknown): string | null {
+  return value === classifierVersion ? classifierVersion : null;
+}
+
 export function httpsEndpoint(value: string): string {
   const url = new URL(value);
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {

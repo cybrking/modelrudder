@@ -1,8 +1,47 @@
 # Community release readiness evaluation
 
-## Preview.12 selectable Jev and local Tev
+## Preview.14 Jev-only routing
+
+Preview.14 is an unreleased source candidate. As checked October 19, 2026 at 13:02 UTC through the [GitHub releases API](https://api.github.com/repos/cybrking/modelrudder/releases), its release is a draft with no assets and no publication date. The newest published release is [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), which still includes Tev. A package version or successful CI run is not evidence that an installer has been published.
+
+Current-source setup and launchers support Jev only. Earlier Tev validation below is historical evidence and does not describe current functionality or qualify this candidate. Full live native journeys are not established by these records. See [Jev setup](CLASSIFIER_CHOICES.md) for migration.
+
+Previously recorded candidate validation on macOS / Node 26: 210 tests total, 209 passed and one Windows-only skip; `npm run typecheck`, `npm audit --omit=dev` (0 vulnerabilities), and `git diff --check` passed. Four regression checks were demonstrated failing before their fixes and passing afterward: two setup checks, historical manifest acceptance, and an isolated install/upgrade/rollback lifecycle. GitHub Actions run [39151139120](https://github.com/cybrking/modelrudder/actions/runs/39151139120) passed all six macOS/Linux/Windows × Node 24/26 jobs, including packaging, managed native install/status and audit. The recorded candidate package ID was `0.1.0-preview.14-f13cbcb6482c81bc`; its SHA-256 was `f13cbcb6482c81bcecbb0b160d634e11cf2e2915d313c96b74b54a78b7f68ac3`. The locally packaged installer was `smart-codex-0.1.0-preview.14-f13cbcb6482c81bc-install.mjs` (SHA-256 `ef26c473aa9d7bb358edd45730872e74a20420868148fd22b9a1932b00e63333`). These are historical candidate fingerprints, not available release downloads or verification of later source changes. A synthetic direct Jev request and Codex doctor passed before that packaging. Full live native TUI qualification is not established; the Claude doctor was blocked by missing native Claude login. Rebuild, verify the final revision, and confirm published installer/checksum assets on the [official releases page](https://github.com/cybrking/modelrudder/releases) before presenting preview.14 as installable from a release.
+
+### October 19 disablement-persistence correction
+
+The candidate now saves a setup-only `ALLOW_CLASSIFICATION=false` when selecting Jev and never clears a saved disablement through setup. A new fresh-process regression reproduces unintended classification before the fix and passes afterward for both launchers, with absent, enabled and disabled prior saved flags. It uses synthetic credentials, mocked classification and a mocked positive control; no live inference is submitted.
+
+Local Linux / Node 24.19.0 validation: all 14 focused setup/Jev tests passed, type checking passed, and the production dependency audit reported zero vulnerabilities. The broad run passed 209 tests, skipped one Windows-only test and could not run one Unix-socket transport fixture because this environment rejects its socket bind (`EPERM`). The unchanged baseline reproduces that restriction; rerunning with only that fixture excluded passed all 209 remaining tests. Independent code review found no actionable issue. Cross-platform CI for this correction and the blocked transport test remain required before release qualification. No release was published by this validation.
+
+## Preview.13 Codex Tev rubric (historical)
+
+Codex Tev uses a separate rubric with explicit boundaries between mechanical work, bounded implementation, investigation and broad discovery. Its version is recorded as `tev1:latest:codex-rubric-2026-10-16` with the default model tag. Jev and Claude rubrics, model/effort mappings, confidence handling and native CLI compatibility data are unchanged.
+
+Local verification on macOS / Node 26: 212 tests passed, one Windows-only skip, and type checking passed. New regressions failed before the change and passed afterward: Tev-specific request/version selection with unchanged Jev and Claude requests, and preservation of current/historical report versions with unsupported values redacted. The full suite also exercises transport, timeout/cancellation, fallback, native permissions and standalone installation/rollback. Cross-platform CI results accompany the release.
+
+Four local calls through the implemented classifier selected MAX for the reported audit request and its `continue` follow-up, FAST for an explicit new security-document typo, and BALANCED for `implement it` following a bounded feature request. These checks use available prior task excerpts; they do not establish continuity after the original goal leaves the two-excerpt context window.
+
+Bounded execution comparison used native Codex 0.162.1 with subscription authentication, tools/host discovery disabled, complete synthetic source supplied in the prompt, and structured replacement-file output. Independent executable graders were frozen before execution and verified against broken fixtures and reference fixes. All three arms received the same task/source contract.
+
+| Fixture | Previous Tev rubric | New Tev rubric | Fixed baseline |
+| --- | --- | --- | --- |
+| Pagination validation and offset fix | Luna/low: passed | Luna/medium: passed | Sol/medium: passed |
+| Tenant/owner access control and update restrictions, clarified contract | Luna/medium: passed | Astra/medium: passed | Sol/medium: passed |
+
+Each cell is one attempt. The original security fixture omitted session field names; one model used `session.ownerId` where the grader assumed `session.userId`. All three original security outcomes are excluded. The clarified fixture is a development rerun, not held-out evidence. The six eligible attempts used 129,929 reported native input/output tokens; all nine invocations including excluded trials used 181,179. Four initial classifier calls selected the comparison routes; the clarification replayed those choices with unchanged routing text. Served native model, effective effort and subscription dollar cost are not observable through this execution interface. These small artifact tasks do not establish full repository/tool/PR performance, or that the additional capacity is necessary.
+
+The standalone preview.13 installer was checksum-verified and installed into disposable paths. Both launchers reported preview.13, the installed classifier reported the new Tev rubric, and existing fixture configuration was unchanged. Runtime ID: `0.1.0-preview.13-cfeea05b54cbbbd2`.
+
+The historical classifier comparison above is exploratory. General task-quality improvement, calibrated confidence, savings and Claude quality are not established by it.
+
+## Preview.12 selectable Jev and local Tev (historical)
 
 Both launchers support a saved routing-provider selection, a per-session override and metadata-only status checks. Tev uses a loopback-only adapter with each native tool's own rubric. Hosted Jev consent remains separate; local failures use the existing model fallback without hosted substitution. Existing configuration and native CLI pins survive upgrades. Local Tev compute cost is unpriced rather than charged at Jev rates. Opt-in local learning records remain private and do not upload or train automatically.
+
+Interactive setup now shows the saved provider on existing installations as well as new ones, with Jev, Tev, private configuration editing and Enter to keep settings. Ready providers switch without opening an editor; unavailable replacements preserve the current selection. Both natural-language installation prompts cover Jev and Tev, explicit noninteractive setup, private Jev key/consent entry, local Tev prerequisites and provider-specific readiness checks.
+
+October 16 local verification: 210 tests passed with one Windows-only skip; type checking and diff whitespace checks passed. The installed macOS setup menu correctly reprompted after invalid input and exited unchanged on Enter. Configuration and both native CLI selections matched their pre-install fingerprints. The setup/provider-switch tests use fixtures; no real classifier inference or native coding task was submitted for this change. Final cross-platform CI evidence accompanies the published release.
 
 The release candidate retains the managed CLI compatibility policy and the reviewed compatibility data from current main. On macOS, 204 tests passed with one Windows-only skip and type checking passed after integration. Five actual local Tev classifier calls passed before integration, covering both rubrics; they did not execute coding tasks. Full authenticated Claude qualification is pending: a real terminal launched and preserved manual permissions, but reported expired native login before any coding task was submitted. No successful live coding journey is claimed.
 
