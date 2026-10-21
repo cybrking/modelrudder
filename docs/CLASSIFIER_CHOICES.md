@@ -1,6 +1,6 @@
 # Jev routing setup
 
-Jev is ModelRudder's only routing classifier. Both native launchers support direct Jev with their own tool-specific rubric. Codex also retains its existing hosted Jev gateway protocol; Claude requires direct Jev. Native execution still uses your own Claude or Codex account, approvals and workspace permissions.
+Jev is the only routing classifier in the preview.14 source candidate. This is not yet a published Jev-only release; see [release installation status](AGENT_INSTALL.md). Use documentation at the exact installed release tag for older builds, including preview.13's Tev-capable runtime. Both current-source launchers support direct Jev with their own tool-specific rubric. Codex also retains its existing hosted Jev gateway protocol; Claude requires direct Jev. Native execution still uses your own Claude or Codex account, approvals and workspace permissions.
 
 ## Private configuration
 
@@ -15,6 +15,8 @@ smart-codex doctor
 Use `smart-claude` in place of `smart-codex` for Claude. Enter your own `TYPESAFE_API_KEY` in the local editor and explicitly enable `ALLOW_JEV_CLASSIFICATION=true` after reviewing the data flow. Never paste the key into chat or command arguments. Direct Jev accepts `SMART_CODEX_CLASSIFIER=direct` or `jev`. `ALLOW_CLASSIFICATION=false` is a global kill switch: it disables classification even when Jev consent is present. Setting it to `true` does not replace Jev consent.
 
 Both launchers share the saved configuration. Restart existing sessions to apply changes. Explicit environment exports override the saved file; `--classifier jev` selects direct Jev for one session but does not grant consent. Unset conflicting exported classifier settings before setup. `setup --no-open` preserves existing configuration or creates a disabled template without opening an editor.
+
+When `setup --classifier jev` saves the provider choice, it also saves `ALLOW_CLASSIFICATION=false` if supplied only in the setup process environment. The disablement therefore survives a fresh session. Setup never replaces a saved `false` with `true`; change the saved setting explicitly when you intend to enable classification.
 
 Setup, classifier status and doctor do not submit classification requests. They check configuration and prerequisites, not paid-access eligibility, service availability or task quality. When ready, start with recommendations:
 

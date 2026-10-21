@@ -1,12 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { parseEnv } from 'node:util';
+import { parseEnv, promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import { runSetup, setupTemplate, startEditor } from '../src/setup.ts';
 import { isPrivatePathSync, protectPrivatePathSync } from '../src/private-files.ts';
 import { readLiveConfig } from '../src/live-config.ts';
+import { nativeMaintenanceEnv } from '../src/native-runtime.ts';
+import { launchSmartCodex } from '../src/smart-codex.ts';
+import { launchSmartClaude } from '../src/smart-claude.ts';
 
 test('setup creates a private minimal disabled configuration, opens the file and never prints its contents', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'modelrudder-setup-'));
@@ -114,16 +119,71 @@ test('Jev setup preserves a saved classification kill switch and reports disable
   const directory = await mkdtemp(join(tmpdir(), 'modelrudder-disabled-'));
   try {
     const file = join(directory, 'env');
-    for (const inherited of [false, true]) {
+    for (const override of [undefined, 'false', 'true']) {
       const saved = 'SMART_CODEX_CLASSIFIER=direct\nTYPESAFE_API_KEY=PRIVATE_FIXTURE\nALLOW_JEV_CLASSIFICATION=true\nALLOW_CLASSIFICATION=false\n';
       await writeFile(file, saved, { mode: 0o600 }); protectPrivatePathSync(file);
       let output = '';
       await runSetup(['--classifier', 'jev', '--no-open'], {
-        SMART_CODEX_ENV_FILE: file, ...(inherited ? parseEnv(saved) : {}),
+        SMART_CODEX_ENV_FILE: file, ...(override === undefined ? {} : { ALLOW_CLASSIFICATION: override }),
       }, text => { output += text; });
       assert.equal(parseEnv(await readFile(file, 'utf8')).ALLOW_CLASSIFICATION, 'false');
       assert.match(output, /disabled/);
       assert.doesNotMatch(output, /Hosted classification enabled/);
+    }
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('a setup-only kill switch stays disabled in a fresh process for both launchers', async t => {
+  const directory = await mkdtemp(join(tmpdir(), 'modelrudder-transient-disabled-'));
+  const run = promisify(execFile);
+  const cwd = fileURLToPath(new URL('../', import.meta.url));
+  // The fresh runtime must not inherit router settings, credentials or Node options.
+  const env = { ...nativeMaintenanceEnv(process.env), TMPDIR: directory, TEMP: directory, TMP: directory };
+  try {
+    const file = join(directory, 'env');
+    for (const launch of [launchSmartCodex, launchSmartClaude]) {
+      for (const previous of ['', 'ALLOW_CLASSIFICATION=true\n', 'ALLOW_CLASSIFICATION=false\n']) {
+        const saved = 'SMART_CODEX_CLASSIFIER=direct\nTYPESAFE_API_KEY=SYNTHETIC_FIXTURE\nALLOW_JEV_CLASSIFICATION=true\nOTHER=preserved\n' + previous;
+        await writeFile(file, saved, { mode: 0o600 }); protectPrivatePathSync(file);
+        // Use each real setup entrypoint with an explicit temporary override. Keep
+        // native permission checks in the normal test host's OS environment.
+        let output = '';
+        const stdout = t.mock.method(process.stdout, 'write', (text: string) => { output += text; return true; });
+        try {
+          assert.equal(await launch(['setup', '--classifier', 'jev', '--no-open'], {
+            ...parseEnv(saved), SMART_CODEX_ENV_FILE: file, ALLOW_CLASSIFICATION: 'false',
+          }), 0);
+        } finally { stdout.mock.restore(); }
+        assert.match(output, /Classification remains disabled/);
+        assert.doesNotMatch(output, /Hosted classification enabled|SYNTHETIC_FIXTURE/);
+        // A genuinely new Node process loads only the saved file, without the transient flag.
+        // Even the positive control uses a mock transport and synthetic task/credentials.
+        const runtime = await run(process.execPath, [`--env-file=${file}`, '--input-type=module', '-e', `
+          import { classificationEnabled, createConfiguredClassifier } from './src/classifier.ts';
+          import { createClaudeClassifier } from './src/claude-classifier.ts';
+          let calls = 0;
+          globalThis.fetch = async () => {
+            calls++;
+            return Response.json({ model: 'jev-latest', answers: { route: { type: 'choice', choice: 'FAST',
+              confidence: 0.9, probabilities: { FAST: 1, BALANCED: 0, DEEP: 0, MAX: 0 } } },
+              usage: { input_tokens: 10, output_tokens: 2 } });
+          };
+          const enabled = classificationEnabled(process.env);
+          let claudeBlocked = false;
+          try { createClaudeClassifier(process.env); } catch { claudeBlocked = true; }
+          if (enabled) await createConfiguredClassifier(process.env)({ input: 'synthetic task' });
+          const disabledCalls = calls;
+          await createConfiguredClassifier({ ...process.env, ALLOW_CLASSIFICATION: 'true' })({ input: 'synthetic control' });
+          console.log(JSON.stringify({ enabled, claudeBlocked, disabledCalls, controlCalls: calls - disabledCalls }));
+        `], { cwd, env });
+        assert.deepEqual(JSON.parse(runtime.stdout), { enabled: false, claudeBlocked: true, disabledCalls: 0, controlCalls: 1 });
+        const persisted = parseEnv(await readFile(file, 'utf8'));
+        assert.equal(persisted.ALLOW_CLASSIFICATION, 'false');
+        assert.equal(persisted.ALLOW_JEV_CLASSIFICATION, 'true');
+        assert.equal(persisted.TYPESAFE_API_KEY, 'SYNTHETIC_FIXTURE');
+        assert.equal(persisted.OTHER, 'preserved');
+        assert.equal(isPrivatePathSync(file), true);
+      }
     }
   } finally { await rm(directory, { recursive: true, force: true }); }
 });

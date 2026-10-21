@@ -30,9 +30,11 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 - A managed official Claude Code **2.1.300** installation via `smart-claude native install`, requiring npm/network access once. The managed launcher disables native auto-updates for its child process; plain Claude remains independent.
 - A separately installed official Claude CLI for native login; use `claude auth login` with a `claude.ai` account yourself if needed. This login is reused by the managed CLI; the plain CLI can update independently
 - For observe/auto: your own direct Jev credentials and explicit classification consent
-- This trusted Jev-only source checkout while publication is pending; later use a release explicitly containing the change
+- A published release explicitly containing Jev-only support, or a separately requested, reviewed source build
 
-While publication is pending, follow [source installation](AGENT_INSTALL.md#source-installation). For agent-assisted setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation): download a release explicitly containing Jev-only support and its `SHA256SUMS`, verify the checksum, run the installer with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
+These instructions describe the preview.14 source candidate. As checked October 19, 2026 at 13:02 UTC, preview.14 is an unpublished draft with no release assets; published preview.13 still includes Tev. For agent-assisted release setup, use [Install with Claude Code](../README.md#install-with-claude-code). For manual setup, follow [Claude Code release installation](AGENT_INSTALL.md#claude-code-release-installation). Both paths must stop until a published Jev-only release and its installer/checksum are available. Do not replace a release-install request with a source build; use [source installation](AGENT_INSTALL.md#source-installation) only when explicitly requested.
+
+Once a qualifying release is published, read its tagged documentation, verify its installer against the same release's `SHA256SUMS`, run it with Node and add the printed launcher directory to your user PATH. Its `smart-codex-...-install.mjs` filename is shared by both adapters; installing Codex is not required to use Claude.
 
 Already installed? See [upgrade and rollback instructions](UPGRADE.md), including the preview.9 release containing both Claude multi-turn fixes.
 

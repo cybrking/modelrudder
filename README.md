@@ -8,7 +8,9 @@ Spend your strongest model on the tasks that need it. ModelRudder adds experimen
 
 Use your own native provider account. ModelRudder uses Jev with your own TypeSafe key and explicit classification consent. This preview requires no ModelRudder account or subscription. Provider charges and usage limits still apply. Clef support is not included.
 
-Choose the launcher for your native coding tool. The preview.14 installer includes both; you only need the native CLI you intend to use. Preview.14 is Jev-only. Download its installer and checksum from the [official releases page](https://github.com/cybrking/modelrudder/releases) and follow the verification steps in [AGENT_INSTALL.md](docs/AGENT_INSTALL.md#2-download-and-verify-a-release).
+**Release status, checked October 19, 2026 at 13:02 UTC:** preview.14 is an unreleased Jev-only source candidate. Its GitHub release is a draft with no downloadable assets; the newest published release is [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), which still includes Tev. These current-source docs do not describe a published Jev-only installer.
+
+Choose the launcher for your native coding tool; a dual-launcher installer includes both, and you only need the native CLI you intend to use. The installation prompts below check the [official releases page](https://github.com/cybrking/modelrudder/releases) and stop unless a published Jev-only release and its installer/checksum are available. Do not substitute preview.13 or a source build for that request. See [release verification](docs/AGENT_INSTALL.md#2-download-and-verify-a-release); [source installation](docs/AGENT_INSTALL.md#source-installation) is a separate, explicit developer choice.
 
 | Native tool | ModelRudder launcher | Experimental automatic routing |
 | --- | --- | --- |
@@ -40,9 +42,11 @@ Copy this entire prompt into Codex. The agent installs the launcher and prepares
 
 ```text
 Install and set up ModelRudder on this computer for Codex.
-Use the official published ModelRudder release at
-https://github.com/cybrking/modelrudder/releases. Include previews, exclude
-drafts, and choose the newest release by publication date. Read the README,
+Use the official releases at https://github.com/cybrking/modelrudder/releases.
+Include previews, exclude drafts, and choose the newest published release by
+publication date whose notes confirm Jev-only support. Stop if none exists or
+its standalone installer or SHA256SUMS is missing. Do not substitute an older
+Tev-capable release or a source build. Resolve the release once and read the README,
 docs/AGENT_INSTALL.md and docs/CLASSIFIER_CHOICES.md at that exact release tag.
 Verify the standalone installer against that release's SHA256SUMS before use.
 
@@ -92,9 +96,11 @@ Copy this entire prompt into Claude Code. Codex is not required. Private Jev key
 
 ```text
 Install and set up ModelRudder on this computer for Claude Code.
-Use the official published ModelRudder release at
-https://github.com/cybrking/modelrudder/releases. Include previews, exclude
-drafts, and choose the newest release by publication date. Read the README,
+Use the official releases at https://github.com/cybrking/modelrudder/releases.
+Include previews, exclude drafts, and choose the newest published release by
+publication date whose notes confirm Jev-only support. Stop if none exists or
+its standalone installer or SHA256SUMS is missing. Do not substitute an older
+Tev-capable release or a source build. Resolve the release once and read the README,
 docs/AGENT_INSTALL.md, docs/CLAUDE_CODE.md and docs/CLASSIFIER_CHOICES.md at
 that exact release tag. Verify the standalone installer against that release's
 SHA256SUMS before use.
@@ -178,7 +184,8 @@ Copy this prompt into **Claude Code or Codex**. Your coding agent can handle the
 Upgrade my existing ModelRudder installation to the newest published release
 from https://github.com/cybrking/modelrudder/releases.
 Require release notes confirming Jev-only support; stop if no such release is
-available, stop and explain that there is no published Jev-only release to install.
+available or its standalone installer or SHA256SUMS is missing. Explain the
+blocker without substituting an older Tev-capable release or a source build.
 Include preview releases, exclude drafts, and select by publication date.
 Resolve the release once, tell me its exact tag, and use that same release
 for all documentation and downloads. Do not use GitHub's /releases/latest
