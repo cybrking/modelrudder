@@ -160,7 +160,7 @@ async function withLock<T>(root: string, action: () => Promise<T>) {
   catch { throw problem('Another native install/rollback is active. Retry after it finishes; an interrupted operation may require removing its .lock directory.'); }
   try { return await action(); } finally { await rm(lock, { recursive: true, force: true }); }
 }
-// Windows can briefly retain executable/directory handles after a successful probe.
+// Windows can briefly retain executable/directory handles during installation.
 export async function renameNative(from: string, to: string, platform: NodeJS.Platform = process.platform,
   move = rename, wait: (ms: number) => Promise<unknown> = delay) {
   for (let attempt = 0; ; attempt++) {
@@ -168,7 +168,7 @@ export async function renameNative(from: string, to: string, platform: NodeJS.Pl
     catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
       if (platform !== 'win32' || !['EPERM', 'EACCES', 'EBUSY'].includes(code ?? '') || attempt >= 6) {
-        throw problem('Could not activate the verified native installation. Close other ModelRudder sessions and retry; the current selection was not changed.');
+        throw problem('Could not activate the native installation. Close other ModelRudder sessions and retry; the current selection was not changed.');
       }
       await wait(100 * 2 ** attempt);
     }
@@ -198,16 +198,37 @@ export async function installNative(provider: NativeProvider, version: string, e
       }
     } else {
       const staging = await mkdtemp(join(versions, '.candidate-'));
+      let moved = false;
+      let verified = false;
       try {
         const entry = await ops.install(provider, version, staging, cleanEnv);
         // Validate package entry before executing any downloaded code.
         const absolute = await realpath(resolve(staging, entry));
         if (!absolute.startsWith(await realpath(staging) + sep) || !(await lstat(absolute)).isFile()) throw problem('Downloaded CLI entry escapes its version directory.');
-        await ops.verify(provider, version, commandForEntry(absolute), cleanEnv);
-        const metadata: Metadata = { format: 1, provider, version, platform: process.platform, arch: process.arch, entry };
-        await writeFile(join(staging, 'metadata.json'), JSON.stringify(metadata), { mode: 0o600, flag: 'wx' });
+        if (await info(join(staging, 'metadata.json'))) throw problem('Downloaded CLI must not supply managed verification metadata.');
+        // Probe only at the final location: Windows may retain executable handles
+        // after a successful probe and prevent renaming its containing directory.
+        // Missing metadata keeps the candidate unusable, even when repairing a
+        // missing version that selection.json already references.
         await renameNative(staging, target);
-      } finally { await rm(staging, { recursive: true, force: true }); }
+        moved = true;
+        const finalEntry = await realpath(resolve(target, entry));
+        if (!finalEntry.startsWith(await realpath(target) + sep) || !(await lstat(finalEntry)).isFile()) throw problem('Downloaded CLI entry escapes its version directory.');
+        await ops.verify(provider, version, commandForEntry(finalEntry), cleanEnv);
+        const metadata: Metadata = { format: 1, provider, version, platform: process.platform, arch: process.arch, entry };
+        await writeFile(join(target, 'metadata.json'), JSON.stringify(metadata), { mode: 0o600, flag: 'wx' });
+        verified = true;
+      } finally {
+        // Only remove the newly created, unverified candidate. Existing versions
+        // and the current/previous selection remain untouched on failure.
+        if (moved && !verified) {
+          try { await rm(target, { recursive: true, force: true, maxRetries: 6, retryDelay: 100 }); }
+          catch {
+            throw problem(`Could not finish verifying ${provider} ${version} or remove its unverified files. The current selection was not changed. Stop all ModelRudder sessions, move aside only the version directory ${JSON.stringify(target)}, then run smart-${provider} native install ${version}.`);
+          }
+        }
+        await rm(staging, { recursive: true, force: true, maxRetries: 6, retryDelay: 100 });
+      }
     }
     if (previous?.current !== version) await activate(root, { format: 1, current: version, previous: previous?.current ?? null });
     return version;
