@@ -27,7 +27,7 @@ Claude's native fallback or an incoming model change during the tool loop takes 
 ## Requirements and installation
 
 - Node.js 24+ for ModelRudder
-- A managed official Claude Code **2.1.300** installation via `smart-claude native install`, requiring npm/network access once. The managed launcher disables native auto-updates for its child process; plain Claude remains independent.
+- A managed official Claude Code installation (the current source candidate records **2.1.303**) via `smart-claude native install`, requiring npm/network access once. The managed launcher disables native auto-updates for its child process; plain Claude remains independent.
 - A separately installed official Claude CLI for native login; use `claude auth login` with a `claude.ai` account yourself if needed. This login is reused by the managed CLI; the plain CLI can update independently
 - For observe/auto: your own direct Jev credentials and explicit classification consent
 - A published release explicitly containing Jev-only support, or a separately requested, reviewed source build
@@ -106,8 +106,8 @@ See the [live qualification procedure and current evidence](CLAUDE_LIVE_QUALIFIC
 - An isolated native-provider wire probe verified that full-ID rewrites reach the synthetic local provider, while a Sonnet-only native model allowlist overrides disallowed Haiku/Opus rewrites. This used a fake key and entirely synthetic responses, not real Anthropic inference. Family aliases alone failed this check and are not used on `turn.step`.
 - Dual-launcher release/install/rollback/uninstall tests pass, including Windows bootstrap fixtures. Full authenticated Claude terminal journeys remain unqualified.
 - On October 9, 2026, the full suite passed on macOS with Node 24 and 26: 165 passed, one Windows-only skip. The earlier Codex Unix-socket `listen EPERM` was a sandbox restriction; the local run passed with socket access.
-- Normal PR CI now includes pinned Claude 2.1.295 Mods fixtures and the synthetic provider-wire probe on macOS, Ubuntu and Windows with Node 24/26. Scheduled upstream checks already exercised Claude; the added checks close the ordinary PR coverage gap. Check the actual run associated with the source revision before treating platform results as passed.
-- `npm run eval:routing` runs 74 synthetic lifecycle checks for both adapters. Its [predefined criteria](../.codex/evals/routing.md) distinguish routing regressions from live task-quality evaluation.
+- Normal PR CI includes Mods fixtures and the synthetic provider-wire probe using the release-recorded Claude baseline on macOS, Ubuntu and Windows with Node 24/26. Scheduled upstream checks already exercised Claude; the added checks close the ordinary PR coverage gap. Check the actual run associated with the source revision before treating platform results as passed.
+- `npm run eval:routing` runs the synthetic lifecycle checks for both adapters. Its [predefined criteria](../.codex/evals/routing.md) distinguish routing regressions from live task-quality evaluation.
 - Authenticated live Claude conversations, model availability, actual plan allowance impact, quality outcomes and full TUI behavior remain **unverified**. No user credentials, real provider inference, paid tests, publication or account changes were used for these checks.
 - Newer/older supported-line builds may differ; the shipped compatibility data identifies recorded module/wire checks. Unrecorded stable candidates must pass local synthetic probes before managed activation and launch. Full-ID defaults will need review when models change, and other trusted mods or managed policy can replace a requested route. Observe and validate before using auto on important work. Model-switch-hook interactions are not certified; this adapter rewrites a request and does not run `/model` or change the saved session default.
 
