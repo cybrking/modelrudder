@@ -361,7 +361,7 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
     });
   } finally {
     await relay?.close(); await rm(directory, { recursive: true, force: true });
-    await learning.flush();
+    await learning.close();
     usage.finish(); publish();
     log.close();
     process.stderr.write(`${formatSessionUsage(usage.snapshot(), {
@@ -390,3 +390,4 @@ if (import.meta.main) {
     process.stderr.write(`${message}\n`); process.exitCode = 1;
   }
 }
+
