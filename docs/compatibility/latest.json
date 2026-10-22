@@ -1,13 +1,13 @@
 {
-  "sourceSha": "6d5fb95d1207427564f889de0758aee76d8bf681",
+  "sourceSha": "8291ebe063c55b597d70329cf1df47e867c88f79",
   "evidence": [
     {
       "provider": "claude",
-      "version": "2.1.303",
+      "version": "2.1.304",
       "os": "macos-latest",
-      "sourceSha": "6d5fb95d1207427564f889de0758aee76d8bf681",
+      "sourceSha": "8291ebe063c55b597d70329cf1df47e867c88f79",
       "native": {
-        "version": "2.1.303 (Claude Code)",
+        "version": "2.1.304 (Claude Code)",
         "provider": "synthetic loopback only",
         "realAuthentication": false,
         "paidInference": false,
@@ -48,11 +48,11 @@
     },
     {
       "provider": "claude",
-      "version": "2.1.303",
+      "version": "2.1.304",
       "os": "ubuntu-latest",
-      "sourceSha": "6d5fb95d1207427564f889de0758aee76d8bf681",
+      "sourceSha": "8291ebe063c55b597d70329cf1df47e867c88f79",
       "native": {
-        "version": "2.1.303 (Claude Code)",
+        "version": "2.1.304 (Claude Code)",
         "provider": "synthetic loopback only",
         "realAuthentication": false,
         "paidInference": false,
@@ -93,11 +93,11 @@
     },
     {
       "provider": "claude",
-      "version": "2.1.303",
+      "version": "2.1.304",
       "os": "windows-latest",
-      "sourceSha": "6d5fb95d1207427564f889de0758aee76d8bf681",
+      "sourceSha": "8291ebe063c55b597d70329cf1df47e867c88f79",
       "native": {
-        "version": "2.1.303 (Claude Code)",
+        "version": "2.1.304 (Claude Code)",
         "provider": "synthetic loopback only",
         "realAuthentication": false,
         "paidInference": false,
@@ -134,66 +134,6 @@
             "emitted": "claude-sonnet-5-5"
           }
         ]
-      }
-    },
-    {
-      "provider": "codex",
-      "version": "0.163.0",
-      "os": "macos-latest",
-      "sourceSha": "6d5fb95d1207427564f889de0758aee76d8bf681",
-      "native": {
-        "ok": true,
-        "version": "0.163.0",
-        "checks": [
-          "remote-capability",
-          "stdio-capability",
-          "stdio-initialize",
-          "fresh-thread-start",
-          "model-setting",
-          "read-only-permissions"
-        ],
-        "inferenceCalls": 0,
-        "nativeTuiCertified": false
-      }
-    },
-    {
-      "provider": "codex",
-      "version": "0.163.0",
-      "os": "ubuntu-latest",
-      "sourceSha": "6d5fb95d1207427564f889de0758aee76d8bf681",
-      "native": {
-        "ok": true,
-        "version": "0.163.0",
-        "checks": [
-          "remote-capability",
-          "stdio-capability",
-          "stdio-initialize",
-          "fresh-thread-start",
-          "model-setting",
-          "read-only-permissions"
-        ],
-        "inferenceCalls": 0,
-        "nativeTuiCertified": false
-      }
-    },
-    {
-      "provider": "codex",
-      "version": "0.163.0",
-      "os": "windows-latest",
-      "sourceSha": "6d5fb95d1207427564f889de0758aee76d8bf681",
-      "native": {
-        "ok": true,
-        "version": "0.163.0",
-        "checks": [
-          "remote-capability",
-          "stdio-capability",
-          "stdio-initialize",
-          "fresh-thread-start",
-          "model-setting",
-          "read-only-permissions"
-        ],
-        "inferenceCalls": 0,
-        "nativeTuiCertified": false
       }
     }
   ]

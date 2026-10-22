@@ -15,11 +15,12 @@ export const cliCompatibilityData = {
   },
   "claude": {
     "minimum": "2.1.293",
-    "latestRecorded": "2.1.303",
+    "latestRecorded": "2.1.304",
     "tested": [
       "2.1.295",
       "2.1.300",
-      "2.1.303"
+      "2.1.303",
+      "2.1.304"
     ],
     "blocked": []
   }
