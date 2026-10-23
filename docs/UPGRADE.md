@@ -8,7 +8,7 @@ Upgrades preserve the existing private key file and local state. You do not need
 
 If you originally used `--root`, `--bin-dir`, or `--env-file`, repeat those same flags on every installer and maintenance command below. Use your installation's existing paths, rather than creating a second default installation.
 
-Preview.14 is an unreleased Jev-only source candidate. As checked October 19, 2026 at 13:02 UTC, its GitHub release is a draft with no assets; the newest published release is [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), which still includes Tev. A Jev-only release upgrade is blocked until a qualifying release is published with its installer and checksum.
+Preview.14 is an unreleased Jev-only source candidate. As checked October 23, 2026 at 02:34 UTC, its GitHub draft contains a verified installer and checksum, but those assets are not publicly released; the newest published release is [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), which still includes Tev. A Jev-only release upgrade is blocked until a qualifying release is published with its installer and checksum. See [release readiness](RELEASE_READINESS.md) for the candidate evidence and remaining gates.
 
 ## Normal release upgrade
 
