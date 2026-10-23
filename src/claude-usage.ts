@@ -52,7 +52,7 @@ export function createClaudeUsage(directory?: string) {
 }
 
 export function formatClaudeUsage(s: ReturnType<ReturnType<typeof createClaudeUsage>['snapshot']>) {
-  return `Claude routing: ${s.routes} decisions, ${s.classifications} classifications. Native completion reports: ${s.completed}; native abort signals: ${s.aborted}.\n` +
+  return `Claude routing: ${s.routes} decisions. Jev attempts: ${s.classifications}. Native completion reports: ${s.completed}; native abort signals: ${s.aborted}.\n` +
     `Reported tokens: ${s.tokens.input_tokens} input + ${s.tokens.cache_read_input_tokens} cache read + ${s.tokens.cache_creation_input_tokens} cache write; ${s.tokens.output_tokens} output.\n` +
     `Classifier reported tokens: ${s.jevInput} input, ${s.jevOutput} output. Usage may be partial (${s.unknownUsage} turns without counts, ${Math.max(0, s.routes - s.completed)} without completion reports); no quota/savings estimate.\n`;
 }

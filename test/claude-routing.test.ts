@@ -184,7 +184,7 @@ test('private Claude usage contains metadata only and reports native token field
     assert.doesNotMatch(text, /PRIVATE TASK|session1|turn1/);
     assert.equal(log.snapshot().tokens.input_tokens, 4);
     let output = ''; assert.equal(runClaudeReport([], directory, text => { output += text; }), 0);
-    assert.match(output, /1 decisions, 1 classifications/); assert.match(output, /no quota\/savings estimate/);
+    assert.match(output, /1 decisions\. Jev attempts: 1/); assert.match(output, /no quota\/savings estimate/);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
@@ -194,4 +194,14 @@ test('Claude usage labels native completion events without claiming task success
   const report = formatClaudeUsage(usage.snapshot());
   assert.match(report, /Native completion reports: 1; native abort signals: 0/);
   assert.doesNotMatch(report, /completed turns|interrupted/);
+});
+
+test('Claude usage counts a failed Jev call as an attempt, not a classification', async () => {
+  const usage = createClaudeUsage();
+  const router = createClaudeRouter({ mode: 'auto', model: 'sonnet', classifier: async () => { throw new Error('unavailable'); }, onRoute: usage.route });
+  await router.route(task());
+  const report = formatClaudeUsage(usage.snapshot());
+  assert.match(report, /Jev attempts: 1/);
+  assert.doesNotMatch(report, /classifications/);
+  router.close();
 });
