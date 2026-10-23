@@ -71,7 +71,7 @@ smart-codex outcome --result accepted
 smart-codex logs cleanup --older-than-days 30
 ```
 
-Outcome markers and cleanup are Codex-specific commands. Outcome markers are your own assessment, not independent validation. Cleanup is a preview unless `--apply` is supplied. Claude reports separate native token counts; Codex includes reference-price estimates. Neither report establishes savings on a subscription bill or verified task quality.
+Outcome markers and cleanup are Codex-specific commands. Outcome markers are your own assessment, not independent validation. Cleanup is a preview unless `--apply` is supplied. Claude reports separate native token counts and native completion/abort signals; a denied permission can produce a completion signal without a native abort flag, so these counts do not establish task success or every user-visible interruption. Codex includes reference-price estimates. Neither report establishes savings on a subscription bill or verified task quality.
 
 ## Data and privacy
 

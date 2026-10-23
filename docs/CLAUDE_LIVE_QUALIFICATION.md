@@ -16,7 +16,7 @@ Use at most eight coding prompts and ten minutes of model execution for the firs
 | Resume | Exit normally and resume the disposable session. Restored/opaque context must not authorize an unsafe downgrade; native session continuity is retained. |
 | Compaction | Use native compaction on the test conversation. Verify the router treats the changed context conservatively, then use a fresh clear/new conversation to restore eligibility. Do not manufacture a large token bill just to fill context. |
 | Classifier failure and recovery | With an isolated test configuration, exercise a bounded Jev failure and verify native fallback without changing permissions. Restore the valid configuration in a new session and verify routing recovers. Do not alter shared credentials or services. |
-| Exit and reports | Normal exit restores terminal state. Metadata reports agree with observed routes, completions and available usage. No keys, task text or private transcript content appear in default reports. |
+| Exit and reports | Normal exit restores terminal state. Metadata reports agree with observed routes, native completion events and available usage. A completion event is not proof of task success: native permission denial may appear as an interrupted turn in the UI while the Mods event reports a normal completion. Check the task outcome separately. No keys, task text or private transcript content appear in default reports. |
 
 Run the routing journeys with Jev and existing explicit classification consent. Test native effort preservation separately from Codex's effort selection. Add Linux/Windows desktop checks before claiming cross-platform live qualification. Task quality requires frozen executable acceptance tests and held-out comparisons beyond this smoke pass.
 

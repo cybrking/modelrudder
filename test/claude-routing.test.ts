@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { createClaudeRouter, parseClaudeTask, startClaudeBridge, claudeRoutes, readClaudeModelIds } from '../src/claude-routing.ts';
 import { claudeJevInput, createClaudeClassifier } from '../src/claude-classifier.ts';
 import { createJevClassifier, jevInput } from '../src/adapters/jev.ts';
-import { createClaudeUsage, runClaudeReport } from '../src/claude-usage.ts';
+import { createClaudeUsage, formatClaudeUsage, runClaudeReport } from '../src/claude-usage.ts';
 import { protectPrivatePathSync } from '../src/private-files.ts';
 
 const task = (turnId = 'turn1', text = 'Fix the typo', sessionId = 'session1') => ({ turnId, sessionId, task: text, contextReason: null });
@@ -186,4 +186,12 @@ test('private Claude usage contains metadata only and reports native token field
     let output = ''; assert.equal(runClaudeReport([], directory, text => { output += text; }), 0);
     assert.match(output, /1 decisions, 1 classifications/); assert.match(output, /no quota\/savings estimate/);
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('Claude usage labels native completion events without claiming task success', () => {
+  const usage = createClaudeUsage();
+  usage.complete({ isAborted: false });
+  const report = formatClaudeUsage(usage.snapshot());
+  assert.match(report, /Native completion reports: 1; native abort signals: 0/);
+  assert.doesNotMatch(report, /completed turns|interrupted/);
 });
