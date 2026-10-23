@@ -262,6 +262,38 @@ rl.on('line', line => { const message = JSON.parse(line);
   } finally { ws?.terminate(); await server?.close(); await rm(directory, { recursive: true, force: true }); }
 });
 
+test('slow native client does not disconnect while backend output drains', { timeout: 30_000 }, async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'smart-relay-backpressure-'));
+  const socketPath = join(directory, 'relay.sock'); const binary = join(directory, 'fake-codex.cjs');
+  await writeFile(binary, `
+const { once } = require('node:events');
+const rl = require('node:readline').createInterface({ input: process.stdin });
+rl.on('line', async () => {
+  const frame = JSON.stringify({ method: 'test/bulk', params: { payload: 'x'.repeat(1024 * 1024) } }) + '\\n';
+  for (let i = 0; i < 80; i++) if (!process.stdout.write(frame)) await once(process.stdout, 'drain');
+});
+`, { mode: 0o700 });
+  let server: Awaited<ReturnType<typeof startSmartRelay>> | undefined; let ws: WebSocket | undefined;
+  const failures: string[] = []; let received = 0;
+  try {
+    const token = 'a'.repeat(64);
+    server = await startSmartRelay({ ...(process.platform === 'win32' ? { localToken: token } : { socketPath }),
+      cwd: directory, env: process.env, command: { file: process.execPath, args: ['--', binary] },
+      mode: 'pinned', model: 'gpt-6.1-sol', onFailure: reason => failures.push(reason) });
+    ws = process.platform === 'win32' ? new WebSocket(server.endpoint, { headers: { Authorization: `Bearer ${token}` } }) : new WebSocket(`ws+unix://${socketPath}:/`);
+    await once(ws, 'open');
+    ws.on('message', () => { received++; });
+    (ws as any)._socket.pause();
+    ws.send(JSON.stringify({ id: 1, method: 'test/start', params: {} }));
+    await new Promise(done => setTimeout(done, 1000));
+    assert.deepEqual(failures, []);
+    (ws as any)._socket.resume();
+    const deadline = Date.now() + 15_000;
+    while (received < 80 && failures.length === 0 && Date.now() < deadline) await new Promise(done => setTimeout(done, 10));
+    assert.equal(received, 80);
+    assert.deepEqual(failures, []);
+  } finally { ws?.terminate(); await server?.close(); await rm(directory, { recursive: true, force: true }); }
+});
 
 test('Windows child environment strips every case variant without removing tool authentication', () => {
   const source = { typesafe_api_key: 'fixture', Typesafe_Api_Key: 'fixture', openai_api_key: 'fixture',

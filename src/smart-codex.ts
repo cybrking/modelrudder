@@ -163,6 +163,8 @@ export async function startSmartRelay(options: {
   const runtimePolicy = createRuntimePolicy(options.runtimePolicy ?? { mode: options.mode, model: options.model });
   const http = createServer((_request, response) => { response.writeHead(404).end(); });
   const maxFrameBytes = 64 * 1024 * 1024;
+  const highWaterBytes = maxFrameBytes / 2;
+  const lowWaterBytes = highWaterBytes / 2;
   const wss = new WebSocketServer({ noServer: true, maxPayload: maxFrameBytes, perMessageDeflate: false });
   const sessions = new Set<() => Promise<void>>();
   let closing = false;
@@ -184,10 +186,20 @@ export async function startSmartRelay(options: {
     let stopped = false;
     let stopping: Promise<void> | undefined;
     let input = '';
+    let clientPaused = false;
     const send = (message: Record<string, unknown>) => {
       if (ws.readyState !== WebSocket.OPEN) return;
-      if (ws.bufferedAmount > maxFrameBytes) { void stop('client_backpressure'); return; }
-      ws.send(JSON.stringify(message));
+      ws.send(JSON.stringify(message), error => {
+        if (error && !stopped) { void stop('client_socket'); return; }
+        if (clientPaused && ws.bufferedAmount <= lowWaterBytes) {
+          clientPaused = false;
+          child.stdout.resume();
+        }
+      });
+      if (!clientPaused && ws.bufferedAmount > highWaterBytes) {
+        clientPaused = true;
+        child.stdout.pause();
+      }
     };
     const relay = createTurnRelay({ mode: runtimePolicy.mode, model: runtimePolicy.model, runtimePolicy, classifier: options.classifier, onThread: options.onThread,
       onRoute: options.onRoute, downstream: send, upstream(message) {
