@@ -6,6 +6,8 @@ Preview.14 is an unreleased source candidate. As checked October 21, 2026 at 22:
 
 Current-source setup and launchers support Jev only. The recorded native defaults are Codex **0.163.0** and Claude Code **2.1.303**. Earlier Tev validation below is historical evidence and does not describe current functionality or qualify this candidate. See [Jev setup](CLASSIFIER_CHOICES.md) for migration and [native version policy](NATIVE_VERSIONS.md) for compatibility limits.
 
+On October 22, an authenticated macOS Codex observe-mode coding task exposed a relay backpressure disconnect in an earlier draft installer. [PR #37](https://github.com/cybrking/modelrudder/pull/37) fixed it; the same task and a separate automatic-routing coding task then completed with the rebuilt installer. An authenticated Claude 2.1.303 observe-mode edit and automatic-routing edit completed in a disposable repository under native manual permissions, with independent tests passing. A denied file creation did not occur. These are bounded smoke tests, not full interactive or cross-platform qualification. Native Claude reported a normal Mods completion event after the denied request despite showing an interrupted turn in its UI; the report now names completion events and abort signals rather than implying task success.
+
 ### October 21 correctness integration
 
 - [Classification disablement persistence (#30)](https://github.com/cybrking/modelrudder/pull/30): setup saves a setup-only `ALLOW_CLASSIFICATION=false` and never clears saved disablement. Fresh-process regressions cover both launchers with absent, enabled and disabled saved flags, synthetic credentials and mocked classification.
