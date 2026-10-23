@@ -2,7 +2,7 @@
 
 Use the copy-and-paste prompt for [Codex](../README.md#install-with-codex) or [Claude Code](../README.md#install-with-claude-code). Use this guide for manual installation or as the detailed procedure for your coding agent. It covers prerequisites, release installation, private configuration, authentication and removal.
 
-This guide describes the Jev-only preview.14 source candidate. As checked October 19, 2026 at 13:02 UTC, preview.14 is an unpublished draft with no release assets. The newest published release, [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), still includes Tev. For a Jev-only release installation, stop until a published release's notes and assets confirm that behavior; do not silently install preview.13 or build from source. See [Jev setup](CLASSIFIER_CHOICES.md) for the candidate's shared configuration and migration.
+This guide describes the Jev-only preview.14 source candidate. As checked October 23, 2026 at 02:34 UTC, preview.14 is an unpublished draft containing a verified installer and checksum. The newest published release, [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), still includes Tev. For a Jev-only release installation, stop until a published release's notes and assets confirm that behavior; do not silently install preview.13 or build from source. See [Jev setup](CLASSIFIER_CHOICES.md) for the candidate's shared configuration and migration.
 
 ## Jev setup for agent-assisted installs
 
