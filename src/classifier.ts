@@ -26,7 +26,7 @@ export function classificationEnabled(env: Record<string, string | undefined>): 
 }
 
 export function classifierNotice(env: Record<string, string | undefined>) {
-  return 'Routing provider: Jev. Eligible task text and up to two earlier excerpts are sent to TypeSafe' + (env.SMART_CODEX_CLASSIFIER === 'hosted' ? ' through your configured gateway.' : '.');
+  return 'Recommendation provider: Jev. Only the current eligible task text is sent to TypeSafe' + (env.SMART_CODEX_CLASSIFIER === 'hosted' ? ' through your configured gateway.' : '.');
 }
 
 export function createConfiguredClassifier(env: Record<string, string | undefined>, timeoutMs?: number,

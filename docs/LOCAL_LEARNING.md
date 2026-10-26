@@ -1,5 +1,7 @@
 # Local Codex learning capture
 
+> **Historical scope:** This is historical documentation for the automatic-routing capture experiment. Advisory sessions do not capture tasks or use SMART_CODEX_LEARNING_DIR. Existing captured files are preserved. See [current behavior](ADVISORY.md).
+
 This optional experiment collects review candidates from your own usage. It does not change model selection, upload feedback, or train a model. Claude capture is not implemented; the existing local training rubric is Codex-specific.
 
 Set `SMART_CODEX_LEARNING_DIR` to a private directory before launching this source version of `smart-codex`. Unset it to disable capture. Startup and exit messages report capture status. The feature is off by default.

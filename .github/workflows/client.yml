@@ -23,6 +23,12 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm test
+      - name: Advisory behavior evaluation
+        run: npm run eval:advisory
+      - name: Install isolated Codex for advisory hook qualification
+        run: npm install --prefix "${{ runner.temp }}/modelrudder-advisory-codex" --ignore-scripts --no-audit --no-fund @openai/codex@0.164.0
+      - name: Native advisory hook discovery and note (synthetic, no inference)
+        run: npm run test:advisory-native -- "${{ runner.temp }}/modelrudder-advisory-codex/node_modules/@openai/codex/bin/codex.js"
       - name: Install and verify managed Codex (no inference)
         run: node --input-type=module -e "import { launchSmartCodex } from './src/smart-codex.ts'; process.exitCode = await launchSmartCodex(['native', 'install']);"
       - run: node src/smart-codex.ts native status

@@ -1,8 +1,8 @@
 # Installing ModelRudder
 
-Use the copy-and-paste prompt for [Codex](../README.md#install-with-codex) or [Claude Code](../README.md#install-with-claude-code). Use this guide for manual installation or as the detailed procedure for your coding agent. It covers prerequisites, release installation, private configuration, authentication and removal.
+This guide describes the **unpublished `0.1.0-preview.15` advisory candidate**. Existing preview.14 draft installers and previous releases contain the older automatic-routing behavior. A source version or successful test run is not a published release. Use documentation at the exact revision being installed.
 
-This guide describes the Jev-only preview.14 source candidate. As checked October 23, 2026 at 02:34 UTC, preview.14 is an unpublished draft containing a verified installer and checksum. The newest published release, [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), still includes Tev. For a Jev-only release installation, stop until a published release's notes and assets confirm that behavior; do not silently install preview.13 or build from source. See [Jev setup](CLASSIFIER_CHOICES.md) for the candidate's shared configuration and migration.
+Both launchers run the native CLI on PATH. They need no managed-native installation, routing bridge or execution relay. Jev setup is optional for launching the native tool and required for recommendations.
 
 ## Jev setup for agent-assisted installs
 
@@ -11,43 +11,23 @@ This guide describes the Jev-only preview.14 source candidate. As checked Octobe
 | Codex | `smart-codex setup --classifier jev` | `smart-codex classifier status`, then `smart-codex doctor` |
 | Claude Code | `smart-claude setup --classifier jev` | `smart-claude classifier status`, then `smart-claude doctor` |
 
-Install and check the managed native runtime for the selected tool before Jev setup. Both launchers share the private configuration. Private key entry and explicit consent remain user actions. If setup opens an editor or preserves a retired selection pending Jev credentials, wait for private entry, rerun the explicit Jev setup command, and check status in a fresh process. An editor launch alone does not establish readiness.
-
-Do not mark installation ready if native login, private key entry, consent, the classification kill switch or a conflicting environment override remains unresolved. Keep existing credentials and unrelated settings. Status and doctor do not submit inference; passing them does not establish live qualification.
+Preserve existing private settings, native credentials and the classification kill switch. Missing credentials and consent must be entered privately by the user. Opening an editor alone does not establish readiness. Status and doctor do not submit inference or qualify a live native session.
 
 ## Claude Code release installation
 
-A published standalone installer bundles both `smart-codex` and `smart-claude`, despite its `smart-codex-...-install.mjs` filename. No checkout or source build is required. Older Codex-only installers do not include Claude support.
-
-1. Check Node.js 24+, npm/network access for a managed native installation, and a separately installed official Claude CLI for `claude auth login`. Codex is not required for `smart-claude`. Use [Claude Code's official setup instructions](https://code.claude.com/docs/en/setup) for missing prerequisites. Preserve any existing plain Claude installation. On Windows/WSL, keep Node, Claude and ModelRudder in the same environment.
-2. Follow [Download and verify a release](#2-download-and-verify-a-release) using a release whose notes explicitly confirm Jev-only support. Verify the checksum, run the standalone installer and preserve existing user PATH entries. Verify `smart-claude --help` (`smart-claude.cmd` on Windows), then run `smart-claude native install` and `smart-claude native status`. This installs and checks the Claude version recorded by that release separately from plain Claude; the current source candidate records 2.1.303.
-3. Follow [Jev setup](#jev-setup-for-agent-assisted-installs) and [private configuration](#3-configure-jev) below using `smart-claude`. Run `smart-claude setup --classifier jev`. Do not read credentials, grant consent or make inference requests on the user's behalf. Preserve unrelated settings and native credentials.
-
-4. Check native login with `claude auth status`; guide the user through `claude auth login` if needed. Preserve existing credentials and explain conflicting authentication without replacing it. Run `smart-claude classifier status` to confirm the chosen provider is enabled, then `smart-claude doctor` for version, plugin and native-login checks without submitting a model request.
-5. Give the user `smart-claude --routing observe` to run in a fresh terminal after private setup. Native plugin trust and organization policy remain authoritative; do not bypass them. After observing results, the user can try `smart-claude --routing auto`. Pinned mode (`smart-claude --model sonnet`) needs no Jev key or consent. All actual Claude tasks, including pinned turns, consume the user's Claude allowance.
-6. Report the OS, Node/Claude versions, release ID, checksum result, installed paths, PATH readiness and doctor findings. Identify private setup and interactive checks still left for the user. Follow the shared [recovery instructions](#5-report-and-retain-recovery-options) below.
-
-Both launchers use the existing private `SMART_CODEX_ENV_FILE` configuration and managed installation paths. Installing does not replace plain `claude`, log in, create API keys, or enable Jev consent. Existing configuration and state survive upgrades and uninstall; rollback to a Codex-only release removes the managed Claude launcher until a dual-launcher release is activated again.
-
-Recorded compatibility evidence includes Claude Code 2.1.295, 2.1.300 and 2.1.303; they do not establish live TUI behavior or routing quality. See [Claude support and verification limits](CLAUDE_CODE.md).
-
-The remaining prerequisite, setup and login examples use Codex. Release verification, installation paths and recovery are shared by both launchers.
+Follow the shared steps below with `smart-claude` and an official `claude` on PATH. Codex is not required. A dual-launcher installer includes both launchers despite its `smart-codex-...-install.mjs` filename. After setup, use `smart-claude` normally or request explicit advice with `smart-claude recommend --current-model sonnet -- "TASK"`. No routing mod is loaded. See [Claude support](CLAUDE_CODE.md).
 
 ## 1. Inspect the machine
 
-Run `node --version` and `npm --version`. ModelRudder requires **Node.js 24 or newer** and npm/network access to install its separate native CLI. Install missing Node/npm from [Node.js](https://nodejs.org/en/download). A separately installed official Codex CLI is required for the `codex login` flow. Install it if missing using [OpenAI’s official instructions](https://github.com/openai/codex#quickstart). Preserve any existing plain Codex installation; its version no longer determines ModelRudder compatibility.
+Check Node.js 24+ and the official CLI the user intends to use. Preserve existing native installation, login, authentication environment, settings and permissions. Install missing native tools using their official instructions only within the user's authorized scope. A separate managed CLI is not required.
 
-After installing the ModelRudder release, run `smart-codex native install` and `smart-codex native status`. The default is the version recorded by the installed release; the current source candidate records Codex **0.163.0**. Recorded history and explicit blocks are in `src/cli-compatibility-data.ts`. Explicit stable candidates within the supported major must pass checks before activation; unsupported or known-broken builds are rejected before download. See [managed native versions](NATIVE_VERSIONS.md) for migration and rollback. On macOS/Linux inspect Node/npm with `command -v`; on Windows use `Get-Command node,npm`.
-
-**Windows:** use Windows 11 and a real PowerShell terminal. OpenAI supports a native Windows sandbox, which may require its own administrator-approved setup; ModelRudder's installation is per user. Follow [OpenAI's Windows sandbox instructions](https://learn.chatgpt.com/docs/windows/windows-sandbox). Native ModelRudder transport and installer support do not certify the complete interactive Windows TUI.
-
-**WSL:** follow [OpenAI's WSL guidance](https://learn.chatgpt.com/docs/windows/wsl) if the user's tools already run in WSL or native Windows fails. Install Linux Node, Linux Codex and ModelRudder **inside the same WSL distribution**. Run Linux `codex login` there. Windows and WSL have separate home directories, credential/configuration stores and PATHs; do not copy or overwrite credentials to bridge them. Keep the repository in the filesystem used by that environment.
+On Windows/WSL, keep Node, the native tool and ModelRudder in the same environment. Windows and WSL have separate home directories, credentials and PATHs; do not copy credentials between them. Do not claim interactive Windows qualification from checks on another platform.
 
 ## 2. Download and verify a release
 
-Select the newest published release by publication date on [github.com/cybrking/modelrudder/releases](https://github.com/cybrking/modelrudder/releases), including previews and excluding drafts, whose notes explicitly confirm Jev-only support. Stop if no such release exists or its installer or `SHA256SUMS` is missing. A source version, draft release, tag or CI artifact alone does not establish publication. Do not use GitHub's `/releases/latest` shortcut, which excludes prereleases.
+For a release installation, select a published release on the [official releases page](https://github.com/cybrking/modelrudder/releases) whose notes explicitly include advisory behavior. Include previews, exclude drafts and select by publication date. If no such release or its installer/checksum is available, report that; do not substitute an automatic-routing release or source build. GitHub's `/releases/latest` shortcut excludes prereleases.
 
-Resolve the release once and read the README and this guide at that exact tag. Download its `smart-codex-RELEASE_ID-install.mjs` and `SHA256SUMS` into the same directory using the exact published filenames. Replace `RELEASE_ID` with the actual release filename; do not execute this placeholder. Keep the documentation and both downloads tied to that same release. Confirm the publisher and release page before running downloaded code. Do not run a script piped from a URL directly into a shell.
+Resolve the release once and read its tagged README and installation guide. Download its standalone installer and `SHA256SUMS` into one directory using the exact asset filenames. The following uses `RELEASE_ID` as a placeholder; replace it with the actual downloaded filename.
 
 On macOS:
 
@@ -56,36 +36,28 @@ shasum -a 256 -c SHA256SUMS
 node -- ./smart-codex-RELEASE_ID-install.mjs
 ```
 
-On Linux/WSL, use `sha256sum -c SHA256SUMS` before the same `node` command. On Windows PowerShell:
+On Linux/WSL use `sha256sum -c SHA256SUMS`. On Windows PowerShell:
 
 ```powershell
 Get-FileHash .\smart-codex-RELEASE_ID-install.mjs -Algorithm SHA256
 Get-Content .\SHA256SUMS
-# Compare the hash to the line for the exact installer filename before continuing.
+# Compare the hash with the exact installer entry before running it.
 node -- .\smart-codex-RELEASE_ID-install.mjs
 ```
 
-Do not run the installer if the checksum differs, the filename has no matching checksum entry, or the origin is untrusted. A checksum downloaded beside a file protects integrity, not publisher identity by itself.
+Stop on a checksum mismatch, missing entry or untrusted origin. Keep documentation, installer and checksums tied to one release. Do not pipe a downloaded script directly into a shell.
 
-The standalone installer contains the runtime and its dependency; it needs no repository checkout or npm dependency download. Defaults on macOS/Linux are `~/.local/share/smart-codex` for runtime, `~/.local/bin` for the launcher, and `~/.config/smart-codex/env` for configuration. Windows defaults are `%LOCALAPPDATA%\ModelRudder\runtime`, `%LOCALAPPDATA%\ModelRudder\bin` and `%LOCALAPPDATA%\ModelRudder\config\env`; if `LOCALAPPDATA` is absent, the base is the user's `AppData\Local`. The Windows launcher is `smart-codex.cmd`; installation does not require administrator rights or symlinks.
-
-Use the paths printed by the installer as authoritative. Add only the printed launcher directory to the user's PATH, preserving existing entries. Open a fresh terminal and verify `smart-codex --help`. Do not replace plain `codex`, overwrite an unmanaged launcher, or modify machine-wide PATH.
+The standalone installer contains runtime dependencies. Unix defaults are `~/.local/share/smart-codex` for runtime, `~/.local/bin` for launchers and `~/.config/smart-codex/env` for configuration. Windows defaults are `%LOCALAPPDATA%\ModelRudder\runtime`, `bin` and `config\env`; use the printed paths as authoritative. Add only the printed launcher directory to user PATH, preserving existing entries. Do not overwrite unmanaged launchers or native CLIs.
 
 ## 3. Configure Jev
 
-Run explicit Jev setup for either launcher. `setup --no-open` alone preserves existing settings or creates a disabled template. For a retired local configuration, follow [migration](CLASSIFIER_CHOICES.md#migrate-a-retired-local-configuration).
-
 ```sh
 smart-codex setup --classifier jev
-```
-
-Ready Jev credentials and consent are reused. Otherwise setup prints the private configuration path and requests a local editor. If migrating from a retired selection or a gateway without ready direct Jev credentials/consent, setup retains the previous provider until the user completes private entry; rerun the command afterward. To prepare a disabled template or print its path without opening an editor:
-
-```sh
+# Or prepare a disabled template without opening an editor:
 smart-codex setup --no-open
 ```
 
-This creates a minimal disabled configuration only if absent; an existing file is retained. If no editor window appears after interactive setup, open the printed path manually; a successful launch request does not establish that a window opened. The user enters credentials in their local editor. Do not read the file into agent context. The template includes these settings:
+Use `smart-claude` for Claude. Existing ready configuration is reused. Otherwise enter the key privately in the local editor and grant consent after reviewing the data flow. If no editor appears, open the printed path manually. Never read the key file into agent context, print it, paste a key into chat or store keys in shell history.
 
 ```dotenv
 TYPESAFE_API_KEY=
@@ -93,44 +65,35 @@ ALLOW_JEV_CLASSIFICATION=false
 SMART_CODEX_CLASSIFIER=direct
 ```
 
-`SMART_CODEX_CLASSIFIER`, `SMART_CODEX_ENV_FILE` and the macOS/Linux `~/.config/smart-codex/env` path are shared legacy names used by **both** launchers. Keep these names as written. Direct Jev accepts `SMART_CODEX_CLASSIFIER=direct` or `jev`. Claude requires direct Jev; the existing hosted gateway is Codex-only. `ALLOW_CLASSIFICATION=false` disables classification even with Jev consent. Leaving `ALLOW_JEV_CLASSIFICATION=false` keeps Jev disabled; pinned mode remains available.
+The user explicitly sets `ALLOW_JEV_CLASSIFICATION=true` when ready. `ALLOW_CLASSIFICATION=false` remains a global kill switch. Existing `SMART_CODEX_ENV_FILE`, classifier and configuration-path names apply to both launchers for compatibility. Direct Jev accepts `direct` or `jev`; the existing hosted gateway is Codex-only. [Jev setup](CLASSIFIER_CHOICES.md) explains retired local configurations.
 
-The [official Jev quickstart](https://docs.typesafe.ai/introduction/quickstart) links to the [TypeSafe key dashboard](https://console.typesafe.ai/keys), which offers account login/signup if needed. Provider fees are separate from the free client and the user's Codex subscription. The user enters their own key and explicitly changes `ALLOW_JEV_CLASSIFICATION` to `true`. Consent enables sending eligible task text and bounded earlier excerpts to TypeSafe as described in the README. Do not enable consent on their behalf, store keys in shell history or a repository, or automatically submit a classification request to check the key. Existing exported environment variables take precedence; do not print them when diagnosing configuration.
+Recommendations send only the current eligible task text to TypeSafe, including anything pasted into that text. No previous task excerpts or repository files are added. Provider fees are separate from native task execution. Setup never submits inference to test a key. Protect the configuration with private user permissions/ACLs.
 
-On Unix, keep the configuration private to the user. On Windows, keep it under the user's profile and avoid shared directories; Unix mode bits do not establish Windows ACL protection. If the profile/directory is shared, have the user review access permissions.
+Codex automatic notes require saved configuration; the hook reads it without passing the key into native tools. Source commands normally use `.env.local`; set `SMART_CODEX_ENV_FILE` to the intended private file when using a different path. Installed bootstraps use the configured installation path. Automatic hooks require the effective classifier settings to match the saved file. Explicit environment-only credentials or differing environment overrides can support `recommend`, but do not enable automatic hook notes.
 
 ## 4. Authenticate and check readiness
 
-Use `codex login status` to check native login. If a ChatGPT login is missing, help the user run `codex login` and complete OpenAI's own flow. Do not read or modify native `auth.json`, extract tokens, or change forced-login settings. If an existing API login conflicts with this community preview's ChatGPT requirement, explain the conflict before any login change.
-
-Run:
+Let the native CLI manage its own login. Preserve working subscription/API/custom-provider settings rather than rewriting them. Use native `codex login status` or `claude auth status` if a login check is needed; do not read credential files or extract tokens.
 
 ```sh
+smart-codex --help
 smart-codex classifier status
 smart-codex doctor
 ```
 
-Confirm that classifier status names Jev and reports classification enabled. Status checks configured credentials/consent without verifying the key remotely. Doctor is a prerequisite/protocol check, not proof of task quality, paid-access eligibility or full TUI operation. Give the user this command to run interactively after they finish Jev setup:
+Doctor checks native executable startup and classifier configuration without inference; it does not verify model availability, account entitlement, task quality or visible hook notes. Launch normally with `smart-codex` or `smart-claude`. Native options pass through, including `--model` and resume.
 
-```sh
-smart-codex --routing observe --effort-mode fixed
-```
-
-Observe mode calls Jev for recommendations while Sol executes the task. This consumes Jev usage and the user's OpenAI allowance, so it is a **user-run** test. Have the user inspect tools/approvals, interruption and normal task completion before considering experimental auto mode. Pinned mode needs no classifier: `smart-codex --routing pinned --model gpt-6.1-sol`; submitting a pinned task still uses the user's OpenAI allowance.
-
-Resume an existing thread with `smart-codex resume THREAD_ID`. Codex 0.160.1 rejects permission overrides such as `--sandbox` and `--ask-for-approval` when resuming a remote task; use the thread’s retained permissions. Plain Codex updates do not change the managed pin. A missing or invalid pin produces an actionable `native install` instruction.
+Codex's native hook trust remains authoritative. Do not bypass trust or enable disabled hooks on the user's behalf. The explicit `recommend --current-model MODEL -- "TASK"` command is available for both tools if automatic notes are unavailable. See [advisory behavior](ADVISORY.md).
 
 ## 5. Report and retain recovery options
 
-Report the OS, Node/Codex versions, release ID, checksum result, installed paths, PATH readiness and doctor findings. Report whether private setup remains for the user without inspecting its contents. State which interactive checks remain unperformed. Do not include secrets or claim Windows TUI validation from another platform.
+Report the selected revision/release ID, checksum result where applicable, paths, native executable and diagnostic results. State any private setup or interactive checks still pending. No live inference is needed merely to install.
 
-On macOS/Linux, run the installed `current/src/install-cli.ts` with Node using the runtime root printed during installation. On Windows, retain and reuse the verified downloaded installer, for example `node -- .\smart-codex-RELEASE_ID-install.mjs --list`; Windows `current` is a pointer file, not a directory. Both maintenance paths support `--list`, `--rollback RELEASE_ID` and `--uninstall`. Repeat any custom install-path flags originally used. Upgrades, rollback and uninstall preserve private configuration and local state; deleting those is a separate explicit user choice. Restart active launchers after changing releases.
-
-Native CLI rollback is separate from ModelRudder release rollback: `smart-codex native rollback` or `smart-claude native rollback` rechecks the previous managed version before selecting it. Report both `native status` and the ModelRudder release ID. See [native version management](NATIVE_VERSIONS.md).
+Keep the prior verified installer/release ID. Installed maintenance supports `--list`, `--rollback RELEASE_ID` and `--uninstall`; repeat original custom `--root`, `--bin-dir` and `--env-file` options. On Unix use the installed `current/src/install-cli.ts`; on Windows reuse the retained standalone installer because `current` is a pointer file. Configuration and state survive these operations. Native maintenance remains for retained managed installs but does not select the executable used by advisory launches. See [recovery](UPGRADE.md#roll-back).
 
 ## Source installation
 
-Source installation is a separate developer choice, not a fallback for an unavailable published release. Proceed only if the user explicitly requests a source build and has reviewed the trusted revision being installed. Record its commit ID and use its matching documentation; preview.14 source and local packaging do not establish a published release. With Node.js 24+:
+Only install an unreleased source revision deliberately; it is not a substitute for a requested published release. Record the trusted commit and use its matching documentation. From that checkout:
 
 ```sh
 npm ci --ignore-scripts
@@ -139,4 +102,4 @@ npm run typecheck
 node -- src/install-cli.ts
 ```
 
-Then follow the private configuration, native installation and login steps above for your tool. See [development instructions](../CONTRIBUTING.md#development) for CI and native checks.
+Record the current installed release ID first if upgrading, and preserve original installation-path options. Pulling or editing source alone does not update an installed runtime. Configure Jev privately after installation if recommendations are wanted. This development task does not itself publish or install the change.

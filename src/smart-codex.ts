@@ -1,67 +1,29 @@
-import { checkCodexCompatibility } from './codex-protocol-probe.ts';
-import { codexCompatibility } from './compatibility.ts';
-import { spawn, execFile } from 'node:child_process';
+import { advisoryHelp, launchAdvisory } from './advisory-launcher.ts';
+import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { chmod, mkdtemp, rm } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
-import { tmpdir } from 'node:os';
+import { timingSafeEqual } from 'node:crypto';
+import { chmod } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { WebSocketServer, WebSocket } from 'ws';
-import { createConfiguredClassifier, readClassifierConfig, classificationEnabled, classifierNotice, classifierOverride } from './classifier.ts';
+import { classifierOverride } from './classifier.ts';
 import { routes } from './config.ts';
 import { createTurnRelay } from './turn-relay.ts';
 import type { RoutingMode } from './turn-relay.ts';
 import { effortModes } from './types.ts';
 import type { Classifier, EffortMode } from './types.ts';
-import { createSessionUsage, formatSessionUsage } from './session-usage.ts';
-import { createUsageLog, monitorUsage, runLogCleanup } from './usage-log.ts';
-import { parseDecision } from './policy.ts';
+import { monitorUsage, runLogCleanup } from './usage-log.ts';
 import { runUsageReport } from './usage-report.ts';
 import { createRuntimePolicy, routerVersion } from './runtime-policy.ts';
 import type { RuntimePolicy } from './runtime-policy.ts';
-import { runDoctor } from './doctor.ts';
 import { accountStatus } from './account-status.ts';
 import { runOutcomeCommand } from './outcome.ts';
-import { createLocalLearning, type LearningTask } from './local-learning.ts';
+import { type LearningTask } from './local-learning.ts';
 import { codexCommand } from './native-command.ts';
 import type { NativeCommand } from './native-command.ts';
 import { runSetup, classifierStatus } from './setup.ts';
-import { requireManagedNative, runNativeManagement } from './native-runtime.ts';
+import { runNativeManagement } from './native-runtime.ts';
 
-export const smartCodexHelp = `Usage: smart-codex [--routing auto|observe|pinned] [--effort-mode fixed|observe|auto] [Codex options] [PROMPT]
-       smart-codex resume --last
-       smart-codex monitor
-       smart-codex report [--format markdown|json] [--decisions] [--output FILE]
-       smart-codex doctor
-       smart-codex native install [VERSION]
-       smart-codex native status
-       smart-codex native rollback
-       smart-codex setup [--classifier jev] [--no-open]
-       smart-codex account
-       smart-codex outcome --result accepted|rejected [--review-minutes N] [--file SESSION.jsonl]
-       smart-codex logs cleanup --older-than-days DAYS [--apply]
-
-Opens the native interactive Codex CLI with a private local routing relay.
-Install an isolated verified CLI first: smart-codex native install.
-Regular CLI updates do not change the selected ModelRudder native version.
-auto (default): experimental model selection at each new user turn.
-observe: the selected classifier recommends; GPT-6.1 Sol executes every turn.
-pinned: no classifier calls; use --model gpt-6-luna, gpt-6.1-sol, or gpt-6-astra.
-An explicit --model/-m selects pinned mode unless --routing is supplied.
---effort-mode fixed: always medium effort.
---effort-mode observe: record proposed effort, execute medium.
---effort-mode auto (default): experimental FAST Luna/low; other profiles medium.
-Model observe, pinned and fallback turns stay medium. Selection is fixed per turn.
-Auto overrides the /model picker at new turns.
-Choose --classifier jev for one session; classifier status checks configuration.
-Run smart-codex setup to configure Jev for both launchers.
-Plain codex is unchanged. The selected classifier receives each task and up to two earlier task
-excerpts from this launcher; images, files, and assistant output are not sent.
-Requires Codex CLI with --remote support, ChatGPT login, Node 24+, and configured
-Jev consent and credentials. Run setup --classifier jev.
-Use --help for this help; other interactive Codex options pass through.
-Usage appears on exit; monitor shows live metadata in a second terminal.
-`;
+export const smartCodexHelp = advisoryHelp('codex');
 
 export function smartCodexChildEnv(source: NodeJS.ProcessEnv, platform: NodeJS.Platform = process.platform) {
   const env = { ...source };
@@ -282,109 +244,14 @@ export async function launchSmartCodex(args: string[], env = process.env): Promi
     process.stdout.write(`${JSON.stringify(await accountStatus(process.env), null, 2)}\n`);
     return 0;
   }
-  if (args[0] === 'doctor') {
-    const { runtimePolicy } = parseSmartCodexArgs(args.slice(1), process.cwd());
-    const result = await runDoctor(env, undefined, runtimePolicy);
-    process.stdout.write(result.text); return result.ok ? 0 : 1;
-  }
   if (args[0] === 'report') return runUsageReport(args.slice(1));
   if (args[0] === 'monitor') { await monitorUsage(args[1]); return 0; }
-  const separator = args.indexOf('--');
-  const optionArgs = separator < 0 ? args : args.slice(0, separator);
-  if (optionArgs.includes('--help') || optionArgs.includes('-h')) { process.stdout.write(smartCodexHelp); return 0; }
-  if (optionArgs.includes('--version') || optionArgs.includes('-V')) {
+  if (args.length === 1 && ['--help', '-h'].includes(args[0])) { process.stdout.write(smartCodexHelp); return 0; }
+  if (args.length === 1 && ['--version', '-V'].includes(args[0])) {
     process.stdout.write(`smart-codex ${routerVersion}\n`);
     return 0;
   }
-  const parsed = parseSmartCodexArgs(args, process.cwd());
-  if (!process.stdin.isTTY || !process.stdout.isTTY) throw new Error('smart-codex requires an interactive terminal; use smart-code for scripts');
-  if (parsed.runtimePolicy.policy.allowClassification) {
-    if (!classificationEnabled(env)) throw new Error('Configure ALLOW_JEV_CLASSIFICATION=true for Jev using setup --classifier jev, or use --routing pinned');
-    readClassifierConfig(env);
-  }
-  const command = await requireManagedNative('codex', env);
-  const compatibility = await new Promise<ReturnType<typeof codexCompatibility>>((done, reject) => {
-    execFile(command.file, [...command.args, '--version'], { env: smartCodexChildEnv(env), timeout: 15_000, maxBuffer: 16_384 }, (error, stdout) => {
-      const result = codexCompatibility(stdout);
-      if (error || !result.eligible) reject(new Error('Unsupported Codex CLI version; install a stable supported build or use plain codex.'));
-      else done(result);
-    });
-  });
-  await checkCodexCompatibility(`codex-cli ${compatibility.version}`, smartCodexChildEnv(env));
-  if (!compatibility.protocolTested) {
-    process.stderr.write(`Codex ${compatibility.version}: local protocol probe passed; release/TUI qualification remains pending.\n`);
-  }
-  await new Promise<void>((done, reject) => {
-    execFile(command.file, [...command.args, 'login', 'status'],
-      { env: smartCodexChildEnv(env), timeout: 10_000, maxBuffer: 64 * 1024 }, (error, stdout, stderr) => {
-        if (error || !`${stdout}\n${stderr}`.includes('Logged in using ChatGPT')) reject(new Error('ChatGPT subscription login required; run codex login'));
-        else done();
-      });
-  });
-  const directory = await mkdtemp(join(tmpdir(), 'smart-codex-'));
-  let relay: Awaited<ReturnType<typeof startSmartRelay>> | undefined;
-  let threadId: string | undefined;
-  const usage = createSessionUsage();
-  const log = createUsageLog();
-  const learning = createLocalLearning(env.SMART_CODEX_LEARNING_DIR);
-  const publish = () => log.write(usage.snapshot());
-  publish();
-  const jev = parsed.runtimePolicy.policy.allowClassification
-    ? createConfiguredClassifier(env, parsed.runtimePolicy.classificationTimeoutMs) : undefined;
-  const classifier: Classifier | undefined = jev ? async (request, signal) => {
-    const call = usage.classificationStarted(); publish();
-    try {
-      const result = await jev(request, signal);
-      usage.classificationFinished(call, parseDecision(result).usage); publish();
-      return result;
-    } catch (error) { usage.classificationFinished(call); publish(); throw error; }
-  } : undefined;
-  if (classifier && jev) classifier.metadata = jev.metadata;
-  try {
-    await chmod(directory, 0o700);
-    const socketPath = join(directory, 'relay.sock');
-    const localToken = process.platform === 'win32' ? randomBytes(32).toString('hex') : undefined;
-    relay = await startSmartRelay({ ...(localToken ? { localToken } : { socketPath }), command, cwd: parsed.directory, env, serverArgs: parsed.server,
-      mode: parsed.mode, model: parsed.model, runtimePolicy: parsed.runtimePolicy,
-      onClient: message => { if (usage.client(message)) publish(); },
-      onServer: message => { if (usage.server(message)) publish(); },
-      onRoute: (metadata, task) => {
-        usage.route(metadata); publish();
-        learning.write(task, usage.snapshot().latestRoute);
-      },
-      onThread: id => { if (/^[a-zA-Z0-9-]+$/.test(id)) threadId = id; },
-      onFailure: reason => { process.stderr.write(`smart-codex: relay disconnected (${reason}); no turn is retried.\n`); },
-      classifier });
-    process.stderr.write(`smart-codex: ${parsed.mode} routing; effort mode ${parsed.runtimePolicy.effortMode}; baseline medium. Plain codex is unchanged.\n`);
-    process.stderr.write(`Policy ${parsed.runtimePolicy.version} (${parsed.runtimePolicy.hash.slice(0, 12)}); selection ${parsed.runtimePolicy.selectionRule}; reported confidence is informational.\n`);
-    if (log.path) process.stderr.write(`Live usage in another terminal: smart-codex monitor ${log.path}\n`);
-    if (learning.enabled) process.stderr.write('Local learning capture enabled: user task text is saved on this machine for review. No learning upload or automatic training.\n');
-    if (parsed.mode !== 'pinned') process.stderr.write(`${classifierNotice(env)}\n`);
-    return await new Promise<number>(done => {
-      const child = spawn(command.file, [...command.args, ...nativeRemoteTuiArgs(parsed.tui, relay!.endpoint, parsed.model,
-        localToken ? 'MODEL_RUDDER_RELAY_TOKEN' : undefined)],
-        { cwd: process.cwd(), env: { ...smartCodexChildEnv(env), ...(localToken ? { MODEL_RUDDER_RELAY_TOKEN: localToken } : {}) }, stdio: 'inherit' });
-      const signals = ['SIGINT', 'SIGTERM', 'SIGHUP'] as const;
-      const handlers = signals.map(signal => () => { child.kill(signal); });
-      signals.forEach((signal, i) => process.on(signal, handlers[i]));
-      const finish = (code: number) => { signals.forEach((signal, i) => process.off(signal, handlers[i])); done(code); };
-      child.once('error', () => finish(1));
-      child.once('exit', (code, signal) => finish(code ?? (signal === 'SIGINT' ? 130 : 1)));
-    });
-  } finally {
-    await relay?.close(); await rm(directory, { recursive: true, force: true });
-    await learning.close();
-    usage.finish(); publish();
-    log.close();
-    process.stderr.write(`${formatSessionUsage(usage.snapshot(), {
-      emphasis: Boolean(process.stderr.isTTY && !('NO_COLOR' in env) && env.TERM !== 'dumb'),
-    })}\n\n`);
-    if (threadId) process.stderr.write(`  Resume      smart-codex resume ${threadId}\n`);
-    if (log.path) process.stderr.write('  Details     smart-codex report\n');
-    if (log.failed) process.stderr.write('  Usage log unavailable.\n');
-    if (learning.enabled) process.stderr.write(`  Local learning: ${learning.saved} examples saved for review.${learning.failed ? ' Some captures failed.' : ''}\n`);
-    process.stderr.write('\n');
-  }
+  return launchAdvisory('codex', args, env);
 }
 
 if (import.meta.main) {
@@ -393,7 +260,7 @@ if (import.meta.main) {
     // Only messages deliberately constructed here are actionable; never print
     // subprocess, filesystem, or provider diagnostics containing user content.
     const message = error instanceof Error && [
-      'ModelRudder native:', 'Access token', 'Account status requires', 'Account status is unavailable',
+      'ModelRudder:', 'ModelRudder native:', 'Access token', 'Account status requires', 'Account status is unavailable',
       'Native protocol smoke failed', 'Unsupported Codex CLI version', 'smart-codex requires', 'Configure ALLOW_', 'ChatGPT subscription', 'Invalid --routing', 'Invalid --effort-mode',
       'Model must', 'Use plain codex', 'Provider/authentication',
       'Setup accepts', 'Setup blocked', 'Setup cannot', 'Setup choice', 'Invalid --classifier', 'Usage: classifier', 'Existing configuration must', 'Configuration directory must',
