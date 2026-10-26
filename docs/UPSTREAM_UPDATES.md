@@ -1,5 +1,7 @@
 # Managed CLI updates
 
+> **Historical scope:** This workflow documentation describes the retained automatic-routing compatibility pipeline. Advisory launches use PATH and do not perform these relay/Mods probes. Existing workflow results do not qualify the advisory hook or visible note behavior; see [current behavior](ADVISORY.md).
+
 The daily workflow checks official stable Codex and Claude Code releases at 13:17 UTC. GitHub may delay scheduled runs. Run it manually with `include_recorded` to include already-recorded baselines. Discovery excludes drafts/prereleases and uses fixed official GitHub and npm endpoints. Discovery failures fail the run rather than reporting no updates.
 
 ## One runtime policy

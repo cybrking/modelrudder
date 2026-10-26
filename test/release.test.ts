@@ -7,7 +7,7 @@ import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildRelease, digest, legacyReleaseFiles, managedNativeReleaseFiles, releaseFiles, validateRelease } from '../scripts/release.ts';
+import { buildRelease, digest, legacyReleaseFiles, managedNativeReleaseFiles, previousRoutingReleaseFiles, previousTevReleaseFiles, releaseFiles, validateRelease } from '../scripts/release.ts';
 import { installRelease, rollbackRelease, uninstallRelease, defaultInstallOptions } from '../src/install-cli.ts';
 const run = promisify(execFile);
 const project = fileURLToPath(new URL('../', import.meta.url));
@@ -39,7 +39,7 @@ test('standalone pilot installer needs no checkout or downloads and supports ins
     await run(process.execPath, ['--', join(output, filename), '--root', options.root, '--bin-dir', options.binDirectory,
       '--env-file', options.envFile], { cwd: temp });
     const help = await installedRun(options, ['--help'], temp);
-    assert.match(help.stdout, /smart-codex account/);
+    assert.match(help.stdout, /smart-codex recommend/);
     assert.match((await installedRun(options, ['--help'], temp, 'smart-claude')).stdout, /smart-claude/);
     if (isWindows) {
       const script = '& $env:MODEL_RUDDER_TEST_LAUNCHER --help; exit $LASTEXITCODE';
@@ -47,7 +47,7 @@ test('standalone pilot installer needs no checkout or downloads and supports ins
         '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], {
         cwd: temp, env: { ...process.env, MODEL_RUDDER_TEST_LAUNCHER: target(options) },
       });
-      assert.match(nativeHelp.stdout, /smart-codex account/);
+      assert.match(nativeHelp.stdout, /smart-codex recommend/);
     }
     const list = await run(process.execPath, ['--', join(output, filename), '--list', '--root', options.root,
       '--bin-dir', options.binDirectory, '--env-file', options.envFile], { cwd: temp });
@@ -61,6 +61,7 @@ test('release is reproducible, has exact allowlist, and rejects traversal/tamper
   assert.deepEqual(Object.keys(a.files), releaseFiles);
   assert.ok(!Object.keys(a.files).some(path => /(?:^|\/)tev(?:\.|\/)/i.test(path)));
   const removedProvider = structuredClone(a);
+  removedProvider.files = Object.fromEntries(previousRoutingReleaseFiles.map(path => [path, a.files[path]]));
   removedProvider.files['src/adapters/tev.ts'] = '// obsolete provider';
   removedProvider.files = Object.fromEntries(Object.keys(removedProvider.files).sort().map(path => [path, removedProvider.files[path]]));
   assert.doesNotThrow(() => validateRelease(sealRelease(removedProvider)));
@@ -84,7 +85,9 @@ test('Jev-only upgrades retain explicit rollback to the previous provider manife
     const current = await buildRelease(project);
     const previous = structuredClone(current);
     previous.files['src/adapters/tev.ts'] = '// Historical release fixture; never included in current builds.\n';
-    previous.files = Object.fromEntries(Object.keys(previous.files).sort().map(path => [path, previous.files[path]]));
+    previous.files = Object.fromEntries(previousTevReleaseFiles.map(path => [path, previous.files[path]]));
+    // Historical launchers do not import the new advisory modules.
+    for (const name of launcherNames) previous.files[`src/${name}.ts`] = `console.log('Usage: ${name}');\n`;
     sealRelease(previous);
     await writeFile(options.envFile, 'RELEASE_SMOKE_CONFIG=preserved\n', { mode: 0o600 });
     await installRelease(previous, options);

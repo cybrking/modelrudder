@@ -1,5 +1,7 @@
 # Live Claude qualification
 
+> **Historical scope:** This procedure and its recorded results apply to the previous Claude Mods routing adapter. Advisory smart-claude uses the native CLI on PATH and explicit recommendations without loading that mod. These results do not qualify the new advisory path; see [current Claude support](CLAUDE_CODE.md).
+
 Use the installed `smart-claude` in a real terminal with the user's native Claude subscription login and a disposable repository. Synthetic bridge checks and successful classifier responses are prerequisites, not substitutes for this exercise. Never copy credentials, disable permissions or bypass plugin/organization trust.
 
 ## Bounded first pass

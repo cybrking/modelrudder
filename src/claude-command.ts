@@ -6,8 +6,8 @@ import { delimiter, join } from 'node:path';
 import type { NativeCommand } from './native-command.ts';
 
 // Invoke the native program without a shell; never evaluate an npm .cmd shim.
-export async function claudeCommand(env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform): Promise<NativeCommand> {
-  const managed = await managedNativeCommand('claude', env);
+export async function claudeCommand(env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform, useManaged = true): Promise<NativeCommand> {
+  const managed = useManaged ? await managedNativeCommand('claude', env) : undefined;
   if (managed) return managed;
   if (platform !== 'win32') return { file: 'claude', args: [] };
   const path = Object.entries(env).find(([key]) => key.toLowerCase() === 'path')?.[1] ?? '';

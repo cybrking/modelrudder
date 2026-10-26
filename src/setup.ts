@@ -158,8 +158,8 @@ export async function classifierStatus(env: NodeJS.ProcessEnv): Promise<{ ok: bo
     readClassifierConfig(env);
     const enabled = classificationEnabled(env);
     const detail = 'Credentials configured; not tested remotely.';
-    return { ok: enabled, text: `${classifierNotice(env)}\nClassification: ${enabled ? 'enabled' : 'disabled; complete setup or use pinned mode'}.\n${detail}\nSelection uses the effective environment (explicit exports override the shared file); --classifier overrides one session. No inference submitted.\n` };
+    return { ok: enabled, text: `${classifierNotice(env)}\nClassification: ${enabled ? 'enabled' : 'disabled; native launching remains available'}.\n${detail}\nSelection uses the effective environment (explicit exports override the shared file); --classifier overrides one session. No inference submitted.\n` };
   } catch {
-    return { ok: false, text: 'Routing provider configuration is invalid or incomplete. Run setup --classifier jev. Pinned mode remains available.\n' };
+    return { ok: false, text: 'Routing provider configuration is invalid or incomplete. Run setup --classifier jev. Native launching remains available.\n' };
   }
 }

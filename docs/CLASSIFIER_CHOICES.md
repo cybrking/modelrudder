@@ -1,10 +1,8 @@
-# Jev routing setup
+# Jev recommendation setup
 
-Jev is the only routing classifier in the preview.14 source candidate. This is not yet a published Jev-only release; see [release installation status](AGENT_INSTALL.md). Use documentation at the exact installed release tag for older builds, including preview.13's Tev-capable runtime. Both current-source launchers support direct Jev with their own tool-specific rubric. Codex also retains its existing hosted Jev gateway protocol; Claude requires direct Jev. Native execution still uses your own Claude or Codex account, approvals and workspace permissions.
+The unreleased advisory source uses Jev for model recommendations. Both launchers support direct Jev with separate Codex/Claude rubrics. Codex also retains the existing hosted Jev gateway protocol; Claude requires direct Jev. Native execution uses the user's existing tool configuration.
 
 ## Private configuration
-
-Follow [installation and private configuration](AGENT_INSTALL.md), then run the launcher for your native tool:
 
 ```sh
 smart-codex setup --classifier jev
@@ -12,37 +10,25 @@ smart-codex classifier status
 smart-codex doctor
 ```
 
-Use `smart-claude` in place of `smart-codex` for Claude. Enter your own `TYPESAFE_API_KEY` in the local editor and explicitly enable `ALLOW_JEV_CLASSIFICATION=true` after reviewing the data flow. Never paste the key into chat or command arguments. Direct Jev accepts `SMART_CODEX_CLASSIFIER=direct` or `jev`. `ALLOW_CLASSIFICATION=false` is a global kill switch: it disables classification even when Jev consent is present. Setting it to `true` does not replace Jev consent.
+Use `smart-claude` for Claude. Both share private configuration. Enter `TYPESAFE_API_KEY` in the local editor and explicitly set `ALLOW_JEV_CLASSIFICATION=true` after reviewing the data flow. Direct Jev accepts `SMART_CODEX_CLASSIFIER=direct` or `jev`. `ALLOW_CLASSIFICATION=false` disables classification even with consent; setting it true does not replace consent.
 
-Both launchers share the saved configuration. Restart existing sessions to apply changes. Explicit environment exports override the saved file; `--classifier jev` selects direct Jev for one session but does not grant consent. Unset conflicting exported classifier settings before setup. `setup --no-open` preserves existing configuration or creates a disabled template without opening an editor.
-
-When `setup --classifier jev` saves the provider choice, it also saves `ALLOW_CLASSIFICATION=false` if supplied only in the setup process environment. The disablement therefore survives a fresh session. Setup never replaces a saved `false` with `true`; change the saved setting explicitly when you intend to enable classification.
-
-Setup, classifier status and doctor do not submit classification requests. They check configuration and prerequisites, not paid-access eligibility, service availability or task quality. When ready, start with recommendations:
+Setup preserves existing configuration or creates a disabled template with `setup --no-open`. When saving a provider choice, a setup-only `ALLOW_CLASSIFICATION=false` is persisted; setup never clears a saved kill switch. Native launching needs no classifier credentials. Setup, status and doctor do not send inference requests or prove service availability.
 
 ```sh
-smart-codex --routing observe
-# Or:
-smart-claude --routing observe
+smart-codex recommend --current-model gpt-6.1-sol -- "TASK"
+smart-claude recommend --current-model sonnet -- "TASK"
 ```
 
-Observe and auto send eligible task text and up to two bounded earlier task excerpts to TypeSafe and consume provider usage. Anything pasted into that text, including code or secrets, is included. Native task execution separately consumes your native provider's allowance. To use an explicit model without classification:
+Only the quoted task is sent, with no prior excerpts or file/transcript reads. Anything pasted into it is included. Classifier calls can consume Jev usage; these explicit commands do not execute the task with a native model. Disabled, failed or invalid classification produces no note and leaves the current model unchanged.
 
-```sh
-smart-codex --routing pinned --model gpt-6.1-sol
-smart-claude --model sonnet
-```
+Explicit environment settings override saved configuration for commands. Codex automatic notes require the saved private file because the native child does not inherit the Jev key; see [advisory behavior](ADVISORY.md). Restart sessions after changing configuration. `--classifier jev` chooses direct Jev for the command but grants no consent.
 
 ## Migrate a retired local configuration
 
-Tev support has been removed. An old `SMART_CODEX_CLASSIFIER=tev` configuration is rejected with migration instructions; it never silently enables hosted transmission. Run `smart-codex setup --classifier jev` or `smart-claude setup --classifier jev`, enter your Jev key privately, and explicitly grant Jev classification consent. Setup requires both before replacing the retired selection. Existing native credentials and unrelated configuration are retained. Remove any exported retired classifier selection so it does not override the saved file.
+Tev is no longer supported. Run either launcher's `setup --classifier jev`, enter a Jev key privately and explicitly grant Jev classification consent. Setup requires both before replacing a retired selection; old local activation never authorizes hosted transmission. Preserve unrelated configuration and native credentials. Remove conflicting exported retired settings without printing secrets.
 
-The shared `ALLOW_CLASSIFICATION=false` kill switch remains effective after migration. Change it only when you intend to permit classification. A Jev request that fails or times out uses the existing native-tool fallback policy; it does not select another classifier.
+The kill switch remains effective. Historical Tev report files are retained but are not reinterpreted as Jev usage. Retained old releases remain available for explicit rollback.
 
-Historical Tev report files are preserved but unsupported by current report commands. They are not reinterpreted as Jev usage or charged at Jev prices.
+## Evidence and limits
 
-## Qualification and historical evidence
-
-Jev-only setup is a product decision, not a universal reliability or savings claim. Historical benchmark records remain in the local evaluation workspace; they are not installation instructions or supported classifier choices, and raw traces are not included in public releases.
-
-Full native TUI behavior, representative task quality and production qualification remain subject to [release evidence](RELEASE_EVIDENCE.md) and [release readiness](RELEASE_READINESS.md). Offline checks and synthetic protocol coverage do not establish those results. Use the [setup contract](CLASSIFIER_EXPERIENCE.md) for the expected user flow.
+The profile mapping is experimental guidance, not a measured probability of coding success or subscription savings. Previous routing benchmarks and native relay/Mods checks are historical and do not qualify this advisory integration. See [advisory limits](ADVISORY.md#verification-scope) and the [setup contract](CLASSIFIER_EXPERIENCE.md).

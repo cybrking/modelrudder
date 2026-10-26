@@ -1,25 +1,13 @@
 # Jev setup contract
 
-This contract describes the unreleased preview.14 source candidate, where Jev is the sole routing classifier. It does not describe published preview.13's Tev-capable runtime; check [release installation status](AGENT_INSTALL.md) before selecting an artifact. Both current-source launchers share private configuration and retain native tool login, permissions and approvals. Current setup and migration commands are documented in [Jev setup](CLASSIFIER_CHOICES.md).
+This contract describes the unreleased advisory source. Both launchers share private configuration and preserve native login, permissions and model choice. See [Jev setup](CLASSIFIER_CHOICES.md).
 
-## Setup and consent
+1. Preserve existing configuration, credentials and classification disablement. Upgrades do not grant hosted-transmission consent.
+2. Open missing credential entry locally. Explain that Jev receives only the current supplied task. Require the user's own key and explicit `ALLOW_JEV_CLASSIFICATION=true`; a key alone is not consent.
+3. Keep new configuration disabled until private setup is completed. `setup --no-open` creates a disabled template if absent or preserves existing settings.
+4. Run `classifier status` and `doctor` without inference or displaying private configuration. Native launch readiness and recommendation readiness are distinct; launching needs no classifier key.
+5. Explain the explicit `recommend --current-model MODEL -- "TASK"` command. Codex can also show native hook notes with saved configuration and native trust; Claude uses explicit advice. Neither changes the native model.
 
-1. Preserve existing configuration and native credentials. An upgrade must not enable hosted classification silently.
-2. Open private credential entry locally. Explain that Jev receives eligible task text and bounded earlier task excerpts. Require the user's own TypeSafe key and explicit `ALLOW_JEV_CLASSIFICATION=true`; the presence of a key alone is not consent.
-3. Leave new configuration disabled until the user completes private setup. `setup --no-open` creates a disabled template if absent and retains existing configuration.
-4. Show readiness using `classifier status` and `doctor` without submitting inference or displaying private configuration. Explain failures and private setup still needed.
-5. Give the user an observe-mode command. Observe submits real Jev requests; both bare launchers default to auto. Pinned mode remains available without classification.
+Retired local-provider migration requires a Jev key and consent before changing selection. Preserve `ALLOW_CLASSIFICATION=false`, including a setup-only disablement when saving the provider choice. Do not clear saved disablement silently.
 
-Supported setup commands are `smart-codex setup --classifier jev` and `smart-claude setup --classifier jev`. Direct Jev accepts the `direct` and `jev` configuration names. Codex's existing hosted Jev gateway remains an advanced configuration; Claude uses its own direct rubric.
-
-## Compatibility and failure behavior
-
-Retired Tev configurations fail with explicit migration guidance. Migration must require a Jev key and Jev consent before changing the selection; old local activation never authorizes hosted transmission. Keep the global `ALLOW_CLASSIFICATION=false` kill switch effective, including persisting a setup-only disablement when saving the provider choice. Setup must not clear a saved disablement or claim it remains disabled unless the saved configuration supports that claim. Preserve unrelated private settings and native credentials.
-
-Both launchers use the same saved configuration. Exported environment settings take precedence over the file; the launch flag affects that session only. Restart sessions after changing saved settings. Unsupported or malformed configuration fails before inference. Bounded classification failures and cancellation follow each native tool's existing fallback policy and do not change provider or native login.
-
-## Release checks
-
-Verify fresh setup, disabled setup, migration with and without consent, shared configuration, exported overrides, the kill switch and both native launchers. Keep task text and credentials out of default logs and child classifier environments. Preserve native-specific rubrics, per-turn ownership and fallback behavior.
-
-Validate packaged installation and launcher help against the release being shipped. Keep README examples tied to their actual published release. Report native TUI and representative task-quality gaps explicitly; synthetic tests alone do not prove production readiness. Preserve historical experiments as evidence rather than active setup guidance.
+Recommendation failures produce no note and do not affect native execution. Recommendations do not use fallback-model overrides, transmit previous task excerpts or create routing reports. Validate consent, disabled setup, migration, shared configuration, provider rubrics, child credential isolation and packaged help. Keep historical routing evidence separate from advisory verification.

@@ -1,9 +1,17 @@
-# Routing troubleshooting
+# Advisory troubleshooting
 
-## Why Claude uses Sonnet as a fallback
+## No recommendation appears
 
-Claude routes every valid automatic classification regardless of whether reported confidence is low or missing. It uses **Claude Sonnet 5.5** when classification is invalid or unavailable. Confidence remains descriptive metadata, not a measure of answer quality. The next eligible task gets a fresh routing decision.
+Silence can mean a matching model, disabled classification, ineligible input, provider failure or timeout. It does not prove the current model is optimal. Run `classifier status` and `doctor` without exposing the private key. Check consent and `ALLOW_CLASSIFICATION=false`. Explicit recommendations require a current model and one quoted task.
 
-“Native model retained (Unclassified context)” means something different: the adapter cannot safely classify the available context, for example after resuming unobserved history. It leaves the native model unchanged. Observe mode also leaves the native model unchanged, and pinned mode uses your explicit model.
+Codex automatic notes additionally require a saved private configuration and native hook trust. Hooks disabled by native policy stay disabled. Direct command-line hook configuration or feature-toggle options cause the launcher to leave that configuration alone. Use `smart-codex recommend --current-model MODEL -- "TASK"` if automatic notes are unavailable. The same note for the same model is suppressed within a session.
 
-For installation, managed version and readiness problems, follow the [installation guide](AGENT_INSTALL.md) and [native version recovery](NATIVE_VERSIONS.md#state-and-recovery). For Claude eligibility and plugin behavior, see [Claude support](CLAUDE_CODE.md#eligibility-privacy-and-failure-behavior).
+Claude does not automatically inspect prompts. Use `smart-claude recommend --current-model MODEL -- "TASK"`. The quoted task alone may omit important conversation/media context; use your judgment before switching.
+
+## Old commands fail
+
+`--routing` and `--effort-mode` were retired. Remove them and launch normally. Keep native `--model` if wanted. The launcher uses the native executable on PATH, so a managed-native pin is no longer a launch prerequisite. Old reports remain readable but no new routing report is created by advisory sessions.
+
+## Native launch or model selection problems
+
+Check the native CLI on PATH directly. Native authentication, model availability, permissions, resume and provider fallback remain native. ModelRudder does not force Sonnet/Sol on errors. See [installation](AGENT_INSTALL.md) and [runtime rollback](UPGRADE.md#roll-back). Historical managed-native repair instructions apply only when deliberately recovering an older routing release.

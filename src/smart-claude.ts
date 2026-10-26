@@ -1,48 +1,18 @@
-import { cliCompatibilityData } from './cli-compatibility-data.ts';
+import { advisoryHelp, launchAdvisory } from './advisory-launcher.ts';
 import { probeClaudeProtocol } from './claude-protocol-probe.ts';
-import { classifierOverride, classifierNotice } from './classifier.ts';
-import { execFile, spawn } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { classifierOverride } from './classifier.ts';
+import { execFile } from 'node:child_process';
 import { claudeChildEnv, claudeCompatibility, hasNativeClaudeLogin, validateClaudeAuthEnvironment } from './claude-command.ts';
-import { claudeModels, defaultClaudeModelIds, readClaudeModelIds, startClaudeBridge } from './claude-routing.ts';
+import { claudeModels, defaultClaudeModelIds } from './claude-routing.ts';
 import type { ClaudeModel, ClaudeRoutingMode } from './claude-routing.ts';
 import { createClaudeClassifier } from './claude-classifier.ts';
-import { claudeUsageDirectory, createClaudeUsage, formatClaudeUsage, runClaudeReport } from './claude-usage.ts';
+import { claudeUsageDirectory, runClaudeReport } from './claude-usage.ts';
 import { routerVersion } from './runtime-policy.ts';
 import { runSetup, classifierStatus } from './setup.ts';
-import { nativeStatus, requireManagedNative, runNativeManagement } from './native-runtime.ts';
+import { runNativeManagement } from './native-runtime.ts';
 import type { NativeCommand } from './native-command.ts';
 
-export const smartClaudeHelp = `Usage: smart-claude [--routing auto|observe|pinned] [--model haiku|sonnet|opus] [Claude options] [PROMPT]
-       smart-claude doctor
-       smart-claude native install [VERSION]
-       smart-claude native status
-       smart-claude native rollback
-       smart-claude setup [--classifier jev] [--no-open]
-       smart-claude report
-
-Choose a session provider with --classifier jev; inspect it with classifier status.
-Run smart-claude setup to configure Jev for both launchers.
-Runs the native interactive Claude Code CLI with ModelRudder's local Mods adapter.
-Install an isolated verified CLI first: smart-claude native install.
-Regular CLI updates do not change the selected ModelRudder native version.
-auto (default): one experimental routing recommendation per eligible user turn;
-the requested model is held throughout that turn's tool loop.
-observe: get recommendations while starting on Sonnet; native choices remain native.
-pinned: no classifier calls; start on --model (default sonnet).
-An explicit --model selects pinned mode unless --routing is also supplied.
-Claude Code retains tools, streaming, login, approvals and workspace permissions.
-Subagents/helpers remain native. Unknown, resumed or media context is conservative.
-Model aliases: FAST=Haiku; BALANCED/DEEP=Sonnet; MAX=Opus. Effort stays native.
-Requires Node 24+, Claude Code 2.1.293+ (2.1.x), native claude.ai login,
-and Jev configuration for auto/observe. No subscription limit is bypassed.
-Supported native options: --continue/-c, --resume/-r ID, --fork-session,
---add-dir DIR (repeatable), --permission-mode manual|plan|acceptEdits,
---effort low|medium|high|xhigh|max, --verbose.
-Use plain claude for other commands/options. Plain claude is unchanged.
-Shared routing config uses SMART_CODEX_ENV_FILE; no Claude credentials are read/copied.
-`;
+export const smartClaudeHelp = advisoryHelp('claude');
 
 export function parseSmartClaudeArgs(args: string[]) {
   let mode: ClaudeRoutingMode = 'auto', model: ClaudeModel = 'sonnet';
@@ -139,62 +109,13 @@ export async function launchSmartClaude(args: string[], env = process.env): Prom
   if (args[0] === 'report') return runClaudeReport(args.slice(1), claudeUsageDirectory(env));
   if (args.length === 1 && ['--help', '-h'].includes(args[0])) { process.stdout.write(smartClaudeHelp); return 0; }
   if (args.length === 1 && ['--version', '-V'].includes(args[0])) { process.stdout.write(`smart-claude ${routerVersion}\n`); return 0; }
-  const doctor = args[0] === 'doctor';
-  if (doctor && args.length !== 1) throw new Error('Claude doctor accepts no options.');
-  const parsed = parseSmartClaudeArgs(doctor ? [] : args);
-  const modelIds = readClaudeModelIds(env);
-  const pluginDirectory = fileURLToPath(new URL('../plugins/claude', import.meta.url));
-  if (!doctor && (!process.stdin.isTTY || !process.stdout.isTTY)) throw new Error('smart-claude requires an interactive terminal; print/SDK routing is not supported.');
-  const command = await requireManagedNative('claude', env);
-  const version = await checkClaudeNative(command, env, pluginDirectory);
-  if (doctor) {
-    process.stdout.write(`${await nativeStatus('claude', env)}\n`);
-    process.stdout.write(`Claude ${version.version}: native login and plugin validation passed. No model call was submitted.\n`);
-    const status = await classifierStatus(env); process.stdout.write(status.text);
-    let configured = status.ok;
-    try { createClaudeClassifier(env); } catch { configured = false; process.stdout.write('Claude requires direct Jev; hosted gateway is unsupported.\n'); }
-    process.stdout.write(`Offline Mods fixture coverage: ${version.offlineTested ? 'this version' : 'local synthetic probe passed; release qualification pending'}. Full live TUI and quality validation remain pending.\n`);
-    process.stdout.write(`Compatibility minimum: ${cliCompatibilityData.claude.minimum}; latest recorded evidence: ${cliCompatibilityData.claude.latestRecorded}.\n`);
-    return configured ? 0 : 1;
-  }
-  const classifier = parsed.mode === 'pinned' ? undefined : createClaudeClassifier(env);
-  const usage = createClaudeUsage(claudeUsageDirectory(env));
-  const token = randomBytes(32).toString('hex');
-  let ready = false;
-  let bridge: Awaited<ReturnType<typeof startClaudeBridge>> | undefined;
-  try {
-    bridge = await startClaudeBridge({ mode: parsed.mode, model: parsed.model, modelIds, classifier, token,
-      onReady() { ready = true; }, onRoute: usage.route, onComplete: usage.complete });
-    process.stderr.write(`smart-claude: ${parsed.mode} per-turn routing via native Mods. Claude retains tools, approvals and login.\n`);
-    if (classifier) process.stderr.write(`${classifierNotice(env)}\n`);
-    process.stderr.write('Native effort is preserved. Model availability, provider limits and other trusted mods can affect the actual model.\n');
-    if (!version.offlineTested) process.stderr.write(`Claude ${version.version} passed local synthetic checks; release qualification remains pending.\n`);
-    return await new Promise<number>(done => {
-      const child = spawn(command.file, [...command.args, ...nativeClaudeArgs(parsed, pluginDirectory, modelIds)], { stdio: 'inherit', shell: false,
-        env: { ...claudeChildEnv(env), MODEL_RUDDER_CLAUDE_ENDPOINT: bridge!.endpoint, MODEL_RUDDER_CLAUDE_TOKEN: token,
-          MODEL_RUDDER_CLAUDE_MODE: parsed.mode, MODEL_RUDDER_CLAUDE_MODEL: parsed.model,
-          MODEL_RUDDER_CLAUDE_HAIKU_MODEL: modelIds.haiku, MODEL_RUDDER_CLAUDE_SONNET_MODEL: modelIds.sonnet,
-          MODEL_RUDDER_CLAUDE_OPUS_MODEL: modelIds.opus } });
-      const signals = ['SIGINT', 'SIGTERM', 'SIGHUP'] as const;
-      const handlers = signals.map(signal => () => { child.kill(signal); });
-      signals.forEach((signal, i) => process.on(signal, handlers[i]));
-      let finished = false;
-      const finish = (code: number) => { if (finished) return; finished = true; signals.forEach((signal, i) => process.off(signal, handlers[i])); done(code); };
-      child.once('error', () => finish(1));
-      child.once('exit', (code, signal) => finish(code ?? (signal === 'SIGINT' ? 130 : 1)));
-    });
-  } finally {
-    await bridge?.close(); usage.close();
-    if (!ready) process.stderr.write('smart-claude: routing plugin did not report ready; do not assume routing was active. Check Claude plugin trust and managed policy.\n');
-    process.stderr.write(formatClaudeUsage(usage.snapshot()));
-    if (usage.path) process.stderr.write('Latest metadata: smart-claude report\n');
-  }
+  return launchAdvisory('claude', args, env);
 }
 
 if (import.meta.main) {
   try { process.exitCode = await launchSmartClaude(process.argv.slice(2)); }
   catch (error) {
-    const message = error instanceof Error && /^(ModelRudder native:|Claude |Invalid Claude |Unsupported Claude |Use plain claude |smart-claude requires |Configure ALLOW_|Setup |Existing configuration|Configuration directory|Could not start editor|Invalid --classifier|Usage: classifier)/.test(error.message)
+    const message = error instanceof Error && /^(ModelRudder:|Invalid --routing|ModelRudder native:|Claude |Invalid Claude |Unsupported Claude |Use plain claude |smart-claude requires |Configure ALLOW_|Setup |Existing configuration|Configuration directory|Could not start editor|Invalid --classifier|Usage: classifier)/.test(error.message)
       ? error.message : 'Could not launch smart-claude; check native Claude installation, login, options and routing-provider setup.';
     process.stderr.write(`${message}\n`); process.exitCode = 1;
   }

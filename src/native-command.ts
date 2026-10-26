@@ -6,8 +6,8 @@ export type NativeCommand = { file: string; args: string[] };
 
 // Node cannot exec a Windows npm .cmd shim without a shell. Invoke its JS
 // entry point with Node instead, preserving argument boundaries and approvals.
-export async function codexCommand(env: NodeJS.ProcessEnv = process.env): Promise<NativeCommand> {
-  const managed = await managedNativeCommand('codex', env);
+export async function codexCommand(env: NodeJS.ProcessEnv = process.env, useManaged = true): Promise<NativeCommand> {
+  const managed = useManaged ? await managedNativeCommand('codex', env) : undefined;
   if (managed) return managed;
   if (process.platform !== 'win32') return { file: 'codex', args: [] };
   const path = Object.entries(env).find(([key]) => key.toLowerCase() === 'path')?.[1] ?? '';

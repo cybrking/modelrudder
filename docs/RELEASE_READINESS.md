@@ -1,5 +1,37 @@
 # Community release readiness evaluation
 
+## Advisory candidate — not published
+
+The unpublished `0.1.0-preview.15` advisory candidate replaces automatic model switching in normal launches with user-controlled recommendations. The [release plan](ADVISORY_RELEASE_PLAN.md) defines the acceptance criteria and preparation sequence. Version assignment and successful packaging do not establish publication or general platform qualification.
+
+### Evidence already observed
+
+- Advisory evaluation passed **38/38** checks; type checking passed and the production dependency audit reported **0 vulnerabilities**. The final local full suite completed **267 tests: 264 passed, 3 Windows-only skips, 0 failures**. Rebuilding the final runtime retained artifact ID `9f558d2ff6245bb1`; exact source revision and remote CI identifiers must be recorded separately.
+- On macOS with Codex 0.164.0, normal native hook review/trust displayed a live Jev Luna suggestion, returned `4`, and retained GPT-6.1-Sol medium. Repeating the arithmetic task returned `4` without repeating the note. The existing user hook remained active; the installed ModelRudder was not replaced.
+- Live explicit advice suggested Haiku for Claude and produced no output when Codex's supplied current model already matched Luna.
+- Additional live macOS Codex 0.164.0 checks changed the model with `/model gpt-6-luna`, retained Luna medium while returning `4`, interrupted a longer no-tools task with Escape and the native “Conversation interrupted” message, and exited with code 0. Resuming the same session through the normal directory picker retained Luna medium; a fresh `3 + 3` task returned `6` and exited with code 0. No tools were used; the native account and installed ModelRudder were unchanged.
+- The reproducible `npm run test:advisory-native` smoke passed locally on macOS with Codex 0.164.0: existing-hook preservation, native trust requirement, scoped fixture trust, warning event, retained model and read-only permissions. It used an isolated Codex home, a static note and an unreachable loopback provider; no Jev/account credentials or model inference were used. This is RPC evidence, not terminal certification. Final-revision results must be recorded separately.
+
+### Candidate artifact and recovery evidence
+
+The locally built artifact is `0.1.0-preview.15-9f558d2ff6245bb1`. Its installer is `smart-codex-0.1.0-preview.15-9f558d2ff6245bb1-install.mjs`, with verified SHA-256 `c48d62de635f7d08c212f2d24c5cc26a206abd40a72a437d949ce554b8231135`. The installer and matching `SHA256SUMS` are in local `dist/preview15`; this does not establish upload or publication.
+
+A downloaded published preview.13 installer was verified against SHA-256 `6b49b55a50bb2e01a2c82090274c9983f9d4024a3b2eb195b2a2dabb18608865`. In disposable paths, preview.13 installation → upgrade to the exact preview.15 artifact → both launcher help commands → rollback to preview.13 → both launcher version commands → preview.15 reactivation passed. Fixture configuration and state remained byte-for-byte unchanged; the fixture was removed. The user's active installation was not replaced.
+
+### Remaining advisory release gates
+
+1. Record the immutable source revision; repeat any affected checks if runtime code changes after the evidence above.
+2. Run all six macOS/Linux/Windows × Node 24/26 CI jobs for that revision, including advisory-native checks. The draft PR and CI results remain pending; a retained legacy relay/Mods probe does not qualify the advisory path.
+3. Bind the verified artifact to the final release revision. Rebuild and reverify after any payload change; never reuse the historical preview.14 hash.
+4. Complete approval acceptance/denial and compaction journeys, plus applicable Linux/Windows terminal qualification. The recorded macOS manual-switch, interruption and resume checks do not qualify other platforms.
+5. Keep the PR/candidate unpublished while any required gate remains open. Any future publication must use the verified revision and matching assets.
+
+Recommendations do not establish general task-quality improvement, calibrated confidence or savings. See [advisory verification scope](ADVISORY.md#verification-scope).
+
+## Historical automatic-routing evidence
+
+The records below describe earlier automatic-routing revisions, including the preview.14 draft. They remain for provenance and recovery, and do not qualify advisory assets.
+
 ## Preview.14 Jev-only routing
 
 Preview.14 is an unreleased source candidate. As checked October 23, 2026 at 02:34 UTC through the [GitHub releases API](https://api.github.com/repos/cybrking/modelrudder/releases), its release is a draft containing the verified installer and checksum described below, with no publication date. The newest published release is [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13), which still includes Tev. A package version or successful CI run is not evidence that an installer has been published.

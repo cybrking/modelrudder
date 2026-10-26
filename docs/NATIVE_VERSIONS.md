@@ -1,5 +1,7 @@
 # Managed native CLI versions
 
+> **Historical scope:** This document describes retained managed-native commands and the previous automatic-routing launch path. Advisory launches use the native executable on PATH, ignore managed pins and do not require native install. These commands remain for explicit recovery of older releases; their protocol checks do not qualify advisory hooks. See [current behavior](ADVISORY.md).
+
 Starting in preview.9, ModelRudder launches its own selected Codex or Claude Code installation. Updating plain `codex` or `claude` on PATH does not replace that installation. Both fresh installs and upgrades from preview.8 or earlier need one setup step for each launcher used:
 
 ```sh

@@ -1,5 +1,17 @@
 # Community preview evidence
 
+## Advisory candidate
+
+This change is prepared as the unpublished `0.1.0-preview.15` advisory candidate. The [active release gates](RELEASE_READINESS.md#advisory-candidate--not-published) and [preparation plan](ADVISORY_RELEASE_PLAN.md) distinguish candidate work from publication. Final revision and CI identifiers must come from the candidate's own verification outputs. The verified local artifact is `0.1.0-preview.15-9f558d2ff6245bb1`; installer SHA-256 is `c48d62de635f7d08c212f2d24c5cc26a206abd40a72a437d949ce554b8231135`. It has not been published.
+
+The bounded live macOS results are recorded in [advisory verification scope](ADVISORY.md#verification-scope): Codex displayed a suggestion while retaining the native model, suppressed a repeated note, and exited normally; explicit Codex/Claude advice also worked. Additional macOS Codex 0.164.0 checks preserved a manual switch to Luna medium, handled an Escape interruption, resumed the same session with Luna medium and returned `6` for a fresh arithmetic task. These checks do not certify native Linux/Windows, approval acceptance/denial or compaction. Automated and synthetic-native checks have a separate scope from live task execution.
+
+The final local full suite completed 267 tests: 264 passed, 3 Windows-only skips, zero failures. Advisory evaluation passed 38/38; typecheck passed and production dependency audit reported zero vulnerabilities. Rebuilding the final runtime retained artifact ID `9f558d2ff6245bb1`. Exact-artifact preview.13 → preview.15 upgrade, rollback and reactivation passed in disposable paths, preserving configuration/state bytes. See the [candidate artifact and recovery evidence](RELEASE_READINESS.md#candidate-artifact-and-recovery-evidence). The immutable source revision and remote CI results remain to be recorded.
+
+## Historical automatic-routing evidence
+
+The records below do not qualify the advisory candidate. Existing preview.14 artifacts contain older routing behavior; the dated release-status statements below are historical observations, not a current release lookup.
+
 Preview.14 is an unreleased Jev-only source candidate. As checked October 23, 2026 at 02:34 UTC, its GitHub draft contains a verified installer and checksum, but those assets are not publicly released; [preview.13](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.13) remains the newest published release and includes Tev. Earlier records below describe historical functionality and do not certify the current change or establish publication. Current-source instructions are [Jev-only](CLASSIFIER_CHOICES.md); candidate evidence and limits are in [release readiness](RELEASE_READINESS.md#preview14-jev-only-routing).
 
 Preview.13 gives Codex Tev a separate rubric that distinguishes mechanical work, bounded implementation, investigation and broad discovery. It preserves Jev/Claude behavior and records the new rubric version in reports. Local verification passed 212 tests with one Windows-only skip and type checking. The exploratory routing comparison and bounded task-outcome evidence are described in [release readiness](RELEASE_READINESS.md#preview13-codex-tev-rubric-historical); they do not establish general task-quality improvement or savings.
