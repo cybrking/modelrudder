@@ -6,12 +6,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { advisoryHook, advisoryHookArgs, runAdvisoryHook } from '../src/advisory-hook.ts';
-import { protectPrivatePathSync } from '../src/private-files.ts';
+import { isPrivatePath, protectPrivatePathSync } from '../src/private-files.ts';
 
 const event = { hook_event_name: 'UserPromptSubmit', session_id: 'session-1', model: 'gpt-6-luna', prompt: 'Review this architecture' };
 const note = 'Model Rudder suggests gpt-6-astra. Your current model is unchanged.';
 
-test('hook process exits successfully before native timeout when stdin never ends', { timeout: 6000 }, async () => fixture(async directory => {
+// Windows ACL fixture creation starts several PowerShell processes before the hook starts.
+test('hook process exits successfully within its bounded process watchdog when stdin never ends', { timeout: 30_000 }, async () => fixture(async directory => {
   const config = join(directory, 'classifier.env');
   writeFileSync(config, 'ALLOW_CLASSIFICATION=false\n', { mode: 0o600 });
   protectPrivatePathSync(config);
@@ -39,11 +40,14 @@ async function fixture(work: (directory: string) => Promise<void>) {
 
 test('only systemMessage is emitted and repeated notes are suppressed without storing prompts', async () => fixture(async directory => {
   assert.deepEqual(await advisoryHook(event, directory, async () => note), { systemMessage: note });
+  const state = join(directory, readdirSync(directory)[0]);
+  assert.equal(await isPrivatePath(state), true, 'new state must pass the same privacy check used on the next prompt');
   assert.equal(await advisoryHook(event, directory, async () => note), null);
   assert.equal(await advisoryHook(event, directory, async () => null), null);
   assert.equal(await advisoryHook(event, directory, async () => note), null);
   assert.deepEqual(JSON.parse(readFileSync(join(directory, readdirSync(directory)[0]), 'utf8')), { model: event.model, note });
   assert.equal(await advisoryHook({ ...event, model: 'gpt-6-astra' }, directory, async () => null), null);
+  assert.deepEqual(JSON.parse(readFileSync(state, 'utf8')), { model: 'gpt-6-astra', note: null });
   assert.deepEqual(await advisoryHook(event, directory, async () => note), { systemMessage: note });
 }));
 

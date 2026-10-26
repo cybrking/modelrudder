@@ -5,11 +5,11 @@ import { promisify } from 'node:util';
 import { mkdtemp, mkdir, writeFile, readFile, readdir, rm, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { advisoryChildEnv, canAttachAdvisoryHook, parseRecommendation } from '../src/advisory-launcher.ts';
 
 const exec = promisify(execFile);
-const modulePath = fileURLToPath(new URL('../src/advisory-launcher.ts', import.meta.url));
+const moduleUrl = new URL('../src/advisory-launcher.ts', import.meta.url).href;
 
 test('Codex hook registration respects explicit hook config and the native argument separator', () => {
   const env = { ALLOW_JEV_CLASSIFICATION: 'true' };
@@ -132,7 +132,7 @@ for (const provider of ['codex', 'claude'] as const) {
     const exportName = provider === 'codex' ? 'launchSmartCodex' : 'launchSmartClaude';
     const program = `
       import assert from 'node:assert/strict';
-      import { ${exportName} as launch } from ${JSON.stringify(entry)};
+      import { ${exportName} as launch } from ${JSON.stringify(pathToFileURL(entry).href)};
       let calls = 0;
       globalThis.fetch = async (_url, options) => {
         calls++;
@@ -162,7 +162,7 @@ for (const provider of ['codex', 'claude'] as const) {
       await writeFile(join(state, 'native', provider, 'selection.json'), 'invalid managed selection');
       await writeFile(join(directory, provider), `#!${process.execPath}\nrequire('node:fs').writeFileSync(process.env.TEST_MARKER, JSON.stringify({args: process.argv.slice(2), env: process.env}));\n`, { mode: 0o700 });
       const args = ['--model', 'my-native-model', '--', 'a task with "quotes" and $(not-a-command)'];
-      const program = `import { launchAdvisory } from ${JSON.stringify(modulePath)}; process.exitCode = await launchAdvisory(${JSON.stringify(provider)}, ${JSON.stringify(args)}, process.env);`;
+      const program = `import { launchAdvisory } from ${JSON.stringify(moduleUrl)}; process.exitCode = await launchAdvisory(${JSON.stringify(provider)}, ${JSON.stringify(args)}, process.env);`;
       const result = await exec(process.execPath, ['--input-type=module', '-e', program], { env: {
         PATH: directory, TEST_MARKER: marker, SMART_CODEX_STATE_DIR: state,
         TYPESAFE_API_KEY: 'synthetic-router-secret', ALLOW_JEV_CLASSIFICATION: 'true', ALLOW_CLASSIFICATION: 'false',
@@ -194,7 +194,7 @@ for (const provider of ['codex', 'claude'] as const) {
 
   test(`${provider} retired routing flags fail clearly before resolving the native CLI`, async () => {
     for (const args of [['--routing', 'auto'], ['--routing=observe'], ['--effort-mode', 'auto']]) {
-      const program = `import { launchAdvisory } from ${JSON.stringify(modulePath)}; await launchAdvisory(${JSON.stringify(provider)}, ${JSON.stringify(args)}, process.env);`;
+      const program = `import { launchAdvisory } from ${JSON.stringify(moduleUrl)}; await launchAdvisory(${JSON.stringify(provider)}, ${JSON.stringify(args)}, process.env);`;
       await assert.rejects(exec(process.execPath, ['--input-type=module', '-e', program], { env: { PATH: '' }, timeout: 10000 }),
         (error: any) => /automatic routing is retired/.test(error.stderr) && /Native model and effort are unchanged/.test(error.stderr));
     }

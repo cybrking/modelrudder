@@ -1,10 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { lstatSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { lstatSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
 import { recommend } from './advisory.ts';
-import { isPrivatePath } from './private-files.ts';
+import { isPrivatePath, protectPrivatePath } from './private-files.ts';
 import { withDeadline } from './classifier-contract.ts';
 
 // Hooks are discovered per config layer; session flags do not replace user/project hooks.
@@ -49,7 +49,12 @@ export async function advisoryHook(raw: unknown, directory: string,
     // Only model and note persist, in the launcher's private temporary directory.
     const temporary = `${path}.${randomUUID()}`;
     writeFileSync(temporary, current, { mode: 0o600, flag: 'wx' });
-    renameSync(temporary, path);
+    try {
+      // Windows can assign a new file the Administrators owner despite a private parent ACL.
+      await protectPrivatePath(temporary, false, signal);
+      signal?.throwIfAborted();
+      renameSync(temporary, path);
+    } finally { rmSync(temporary, { force: true }); }
     return note ? { systemMessage: note } : null;
   } catch { return null; }
 }
