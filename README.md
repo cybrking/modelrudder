@@ -4,9 +4,11 @@
 
 Get a note when a different model may fit your task. You decide whether to switch; your coding tool keeps control of the model, effort, tools, approvals and login.
 
-**0.1.0-preview.15 advisory candidate · Unpublished · MIT licensed**
+**0.1.0-preview.15 · macOS advisory preview · MIT licensed**
 
-This preview.15 candidate changes ModelRudder from automatic routing to advice. Existing preview.14 draft artifacts and earlier releases do not contain this change. Follow documentation at the exact revision you use; the [release evidence](docs/RELEASE_EVIDENCE.md) separates advisory checks from historical routing results. See the [remaining release gates](docs/RELEASE_READINESS.md#advisory-candidate--not-published).
+**Linux and Windows: coming soon.** This release is for macOS only.
+
+This preview.15 release changes ModelRudder from automatic routing to advice. Existing preview.14 draft artifacts and earlier releases do not contain this change. Follow documentation at the exact revision you use; the [release evidence](docs/RELEASE_EVIDENCE.md) separates advisory checks from historical routing results. See the [macOS release evidence](docs/RELEASE_READINESS.md#macos-advisory-preview15).
 
 | Native tool | Launcher | Advice |
 | --- | --- | --- |
@@ -40,7 +42,8 @@ Codex can show the same kind of note through its native `UserPromptSubmit` hook.
 
 ## Requirements and Jev setup
 
-- Node.js 24+ and your official Codex or Claude Code CLI on PATH.
+- macOS and Node.js 24+, with your official Codex or Claude Code CLI on PATH.
+- Codex native-hook journeys were verified on macOS 26.6.2 with Codex 0.164.0. Other native versions are not qualified by those checks.
 - Your normal native account/configuration. ModelRudder preserves native authentication and permissions.
 - For recommendations: your own [TypeSafe Jev key](https://console.typesafe.ai/keys) and explicit classification consent. Native launching itself needs no classifier key.
 
@@ -54,10 +57,10 @@ Use `smart-claude` for Claude. Both share private configuration. Enter your key 
 
 ## Install with Codex
 
-The advisory change is not published. Use the [source installation procedure](docs/AGENT_INSTALL.md#source-installation) only when deliberately installing this reviewed revision. For a future published advisory release, give your coding agent this instruction:
+Download the [macOS advisory preview.15 release](https://github.com/cybrking/modelrudder/releases/tag/v0.1.0-preview.15), or give your coding agent this instruction:
 
 ```text
-Install ModelRudder's advisory version for Codex from the official releases at
+Install ModelRudder's macOS advisory version for Codex from the official releases at
 https://github.com/cybrking/modelrudder/releases. Include previews, exclude drafts,
 and require release notes that explicitly include advisory behavior. If none
 exists, report that rather than installing an automatic-routing release.
@@ -82,7 +85,7 @@ See [manual installation](docs/AGENT_INSTALL.md) for checksum verification, conf
 
 ### Upgrade with Claude Code or Codex
 
-Ask your coding agent to select a published release explicitly containing advisory behavior, verify its installer/checksum at one exact tag, record the current release ID and upgrade using your existing paths. The advisory source change must not be represented as a published upgrade. Preserve keys, configuration, local state and retained releases; do not install or replace the native CLI. See [upgrade and rollback](docs/UPGRADE.md).
+Ask your coding agent to select a published release explicitly containing advisory behavior, verify its installer/checksum at one exact tag, record the current release ID and upgrade using your existing paths. Preserve keys, configuration, local state and retained releases; do not install or replace the native CLI. See [upgrade and rollback](docs/UPGRADE.md).
 
 Remove old `--routing` and `--effort-mode` options from saved commands. They now fail with migration guidance. An ordinary `--model` option passes directly to the native tool. Old reports and managed-native maintenance commands remain available for recovery; advisory sessions do not produce routing usage reports or local learning captures.
 

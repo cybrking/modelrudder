@@ -1,35 +1,25 @@
 # Community release readiness evaluation
 
-## Advisory candidate — not published
+## macOS advisory preview.15
 
-The unpublished `0.1.0-preview.15` advisory candidate replaces automatic model switching in normal launches with user-controlled recommendations. The [release plan](ADVISORY_RELEASE_PLAN.md) defines the acceptance criteria and preparation sequence. Version assignment and successful packaging do not establish publication or general platform qualification.
+The `0.1.0-preview.15` advisory preview is released for **macOS only**. Linux and Windows are coming soon. On October 26 the maintainer explicitly narrowed this release to macOS; unperformed Linux/Windows terminal journeys remain gates for future platform releases, not this macOS preview.
 
-### Evidence already observed
+### Verified payload and evidence
 
-- After the Windows correction, advisory evaluation passed **38/38**, the full local suite completed **267 tests: 264 passed, 3 Windows-only skips, 0 failures**, type checking passed, and the actual Codex 0.164.0 native smoke passed again. The production audit reported **0 vulnerabilities**. Review of the corrected state permissions passed. [Draft PR #41](https://github.com/cybrking/modelrudder/pull/41) tracks the final runtime revision and CI result.
-- [Initial CI 40417206131](https://github.com/cybrking/modelrudder/actions/runs/40417206131) passed four macOS/Linux jobs and failed Windows. The follow-up corrects Windows newly written state-file ownership handling and launcher fixture file-URL imports. All six jobs must pass for the corrected revision.
-- On macOS with Codex 0.164.0, normal native hook review/trust displayed a live Jev Luna suggestion, returned `4`, and retained GPT-6.1-Sol medium. Repeating the arithmetic task returned `4` without repeating the note. The existing user hook remained active; the installed ModelRudder was not replaced.
-- Live explicit advice suggested Haiku for Claude and produced no output when Codex's supplied current model already matched Luna.
-- Additional live macOS Codex 0.164.0 checks changed the model with `/model gpt-6-luna`, retained Luna medium while returning `4`, interrupted a longer no-tools task with Escape and the native “Conversation interrupted” message, and exited with code 0. Resuming the same session through the normal directory picker retained Luna medium; a fresh `3 + 3` task returned `6` and exited with code 0. No tools were used; the native account and installed ModelRudder were unchanged.
-- The reproducible `npm run test:advisory-native` smoke passed locally on macOS with Codex 0.164.0: existing-hook preservation, native trust requirement, scoped fixture trust, warning event, retained model and read-only permissions. It used an isolated Codex home, a static note and an unreachable loopback provider; no Jev/account credentials or model inference were used. This is RPC evidence, not terminal certification. Final-revision results must be recorded separately.
+- Runtime ID: `0.1.0-preview.15-b89f18c2ce4c307f`.
+- Installer: `smart-codex-0.1.0-preview.15-b89f18c2ce4c307f-install.mjs`.
+- Installer SHA-256: `fd7e8cd17886c1a1c9d65ae9d365d1e70890e3d1e03aaee5b3cc40a7d97b07b7`.
+- Runtime source merged in PR #41 at `b0e1b64992455c3ea0b888d50c32c8d2b6e217a6`. Subsequent release documentation changes do not change the packaged payload.
+- All six macOS/Linux/Windows × Node 24/26 jobs passed in [post-merge CI 40419251270](https://github.com/cybrking/modelrudder/actions/runs/40419251270). Their installers matched byte-for-byte. Only the macOS-tested installer and its checksum are distributed for this release; CI on other platforms does not imply platform support.
+- Local candidate checks: 267 tests, 264 passed and 3 Windows-only skips; advisory evaluation 38/38; typecheck and production audit passed (zero reported vulnerabilities).
+- The exact installer passed disposable preview.13 upgrade, rollback and reactivation while preserving fixture configuration/state bytes. The user's active installation was not replaced during qualification.
+- [Final-payload live macOS qualification](ADVISORY_LIVE_QUALIFICATION.md) passed native hook trust, advice, unchanged model/effort, duplicate suppression, manual switch, compaction, interruption, resume, manual approval denial/acceptance and normal exit. Marker outcomes were independently verified. Explicit Codex and Claude advice passed.
 
-The live terminal checks above used the earlier runtime. Native UI behavior is unchanged by the Windows state-permission correction, but those checks do not establish final-revision live qualification. Slow Windows ACL checks can exhaust the unchanged 2,500 ms advisory budget (inside the native 3-second hook timeout), suppressing the note while native work continues.
+### Scope and remaining limitations
 
-### Candidate artifact and recovery evidence
+Native Codex journeys used macOS 26.6.2, Node 26.8.1 and Codex 0.164.0. Claude evidence for this advisory release is limited to explicit recommendation checks and unchanged native launching; no Claude automatic hook is claimed. These bounded checks establish neither general task-quality improvement nor savings.
 
-The earlier artifact `0.1.0-preview.15-9f558d2ff6245bb1` is superseded by the Windows correction. The locally built replacement artifact is `0.1.0-preview.15-b89f18c2ce4c307f`. Its installer is `smart-codex-0.1.0-preview.15-b89f18c2ce4c307f-install.mjs`, with verified SHA-256 `fd7e8cd17886c1a1c9d65ae9d365d1e70890e3d1e03aaee5b3cc40a7d97b07b7`. The installer and matching `SHA256SUMS` are in local `dist/preview15-final`; this does not establish upload or publication.
-
-A downloaded published preview.13 installer was verified against SHA-256 `6b49b55a50bb2e01a2c82090274c9983f9d4024a3b2eb195b2a2dabb18608865`. Reverified against this replacement artifact in disposable paths, preview.13 installation → upgrade to the exact preview.15 artifact → both launcher help commands → rollback to preview.13 → both launcher version commands → preview.15 reactivation passed. Fixture configuration and state remained byte-for-byte unchanged; the fixture was removed. The user's active installation was not replaced.
-
-### Remaining advisory release gates
-
-1. Record the immutable source revision; repeat any affected checks if runtime code changes after the evidence above.
-2. Run all six macOS/Linux/Windows × Node 24/26 CI jobs for that revision, including advisory-native checks. Draft PR #41 is open. Initial CI passed macOS/Linux and exposed a Windows runtime defect and fixture failures; the final revision must pass all six jobs before publication; a retained legacy relay/Mods probe does not qualify the advisory path.
-3. Bind the verified artifact to the final release revision. Rebuild and reverify after any payload change; never reuse the historical preview.14 hash.
-4. Complete approval acceptance/denial and compaction journeys, plus applicable Linux/Windows terminal qualification. The recorded macOS manual-switch, interruption and resume checks do not qualify other platforms.
-5. Keep the PR/candidate unpublished while any required gate remains open. Any future publication must use the verified revision and matching assets.
-
-Recommendations do not establish general task-quality improvement, calibrated confidence or savings. See [advisory verification scope](ADVISORY.md#verification-scope).
+Linux and Windows authenticated terminal qualification is still unperformed. Those platforms are excluded from this release, including current installation instructions. Retained historical implementation and CI are not support commitments. The release assets must continue to match the verified payload; repeat affected checks if runtime payload changes.
 
 ## Historical automatic-routing evidence
 

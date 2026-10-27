@@ -1,6 +1,6 @@
 # Claude Code advisory support
 
-This unreleased source change replaces automatic Claude routing with explicit recommendations. `smart-claude` runs the official `claude` executable on PATH without a routing bridge, Mods plugin or forced model/effort. Native authentication, options, tools, approvals, resume and fallback remain native.
+This macOS-only advisory preview replaces automatic Claude routing with explicit recommendations. `smart-claude` runs the official `claude` executable on PATH without a routing bridge, Mods plugin or forced model/effort. Native authentication, options, tools, approvals, resume and fallback remain native.
 
 ## Setup and commands
 

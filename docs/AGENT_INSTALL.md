@@ -1,6 +1,6 @@
 # Installing ModelRudder
 
-This guide describes the **unpublished `0.1.0-preview.15` advisory candidate**. Existing preview.14 draft installers and previous releases contain the older automatic-routing behavior. A source version or successful test run is not a published release. Use documentation at the exact revision being installed.
+This guide covers **0.1.0-preview.15 for macOS only**. Linux and Windows are coming soon and are not supported by this release. Older releases and preview.14 draft artifacts contain automatic-routing behavior; use the documentation at the exact advisory release tag.
 
 Both launchers run the native CLI on PATH. They need no managed-native installation, routing bridge or execution relay. Jev setup is optional for launching the native tool and required for recommendations.
 
@@ -21,8 +21,6 @@ Follow the shared steps below with `smart-claude` and an official `claude` on PA
 
 Check Node.js 24+ and the official CLI the user intends to use. Preserve existing native installation, login, authentication environment, settings and permissions. Install missing native tools using their official instructions only within the user's authorized scope. A separate managed CLI is not required.
 
-On Windows/WSL, keep Node, the native tool and ModelRudder in the same environment. Windows and WSL have separate home directories, credentials and PATHs; do not copy credentials between them. Do not claim interactive Windows qualification from checks on another platform.
-
 ## 2. Download and verify a release
 
 For a release installation, select a published release on the [official releases page](https://github.com/cybrking/modelrudder/releases) whose notes explicitly include advisory behavior. Include previews, exclude drafts and select by publication date. If no such release or its installer/checksum is available, report that; do not substitute an automatic-routing release or source build. GitHub's `/releases/latest` shortcut excludes prereleases.
@@ -36,18 +34,9 @@ shasum -a 256 -c SHA256SUMS
 node -- ./smart-codex-RELEASE_ID-install.mjs
 ```
 
-On Linux/WSL use `sha256sum -c SHA256SUMS`. On Windows PowerShell:
-
-```powershell
-Get-FileHash .\smart-codex-RELEASE_ID-install.mjs -Algorithm SHA256
-Get-Content .\SHA256SUMS
-# Compare the hash with the exact installer entry before running it.
-node -- .\smart-codex-RELEASE_ID-install.mjs
-```
-
 Stop on a checksum mismatch, missing entry or untrusted origin. Keep documentation, installer and checksums tied to one release. Do not pipe a downloaded script directly into a shell.
 
-The standalone installer contains runtime dependencies. Unix defaults are `~/.local/share/smart-codex` for runtime, `~/.local/bin` for launchers and `~/.config/smart-codex/env` for configuration. Windows defaults are `%LOCALAPPDATA%\ModelRudder\runtime`, `bin` and `config\env`; use the printed paths as authoritative. Add only the printed launcher directory to user PATH, preserving existing entries. Do not overwrite unmanaged launchers or native CLIs.
+The standalone installer contains runtime dependencies. macOS defaults are `~/.local/share/smart-codex` for runtime, `~/.local/bin` for launchers and `~/.config/smart-codex/env` for configuration. Use the printed paths as authoritative. Add only the printed launcher directory to user PATH, preserving existing entries. Do not overwrite unmanaged launchers or native CLIs.
 
 ## 3. Configure Jev
 
@@ -89,7 +78,7 @@ Codex's native hook trust remains authoritative. Do not bypass trust or enable d
 
 Report the selected revision/release ID, checksum result where applicable, paths, native executable and diagnostic results. State any private setup or interactive checks still pending. No live inference is needed merely to install.
 
-Keep the prior verified installer/release ID. Installed maintenance supports `--list`, `--rollback RELEASE_ID` and `--uninstall`; repeat original custom `--root`, `--bin-dir` and `--env-file` options. On Unix use the installed `current/src/install-cli.ts`; on Windows reuse the retained standalone installer because `current` is a pointer file. Configuration and state survive these operations. Native maintenance remains for retained managed installs but does not select the executable used by advisory launches. See [recovery](UPGRADE.md#roll-back).
+Keep the prior verified installer/release ID. Installed maintenance supports `--list`, `--rollback RELEASE_ID` and `--uninstall`; repeat original custom `--root`, `--bin-dir` and `--env-file` options. On macOS use the installed `current/src/install-cli.ts` or the retained verified standalone installer. Configuration and state survive these operations. Native maintenance remains for retained managed installs but does not select the executable used by advisory launches. See [recovery](UPGRADE.md#roll-back).
 
 ## Source installation
 

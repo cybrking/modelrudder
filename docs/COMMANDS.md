@@ -1,6 +1,6 @@
 # ModelRudder command reference
 
-The current source is the unpublished `0.1.0-preview.15` advisory candidate. Normal launches use the native CLI on PATH; model, effort, login, permissions and tool execution stay native.
+The `0.1.0-preview.15` advisory preview is for macOS only; Linux and Windows are coming soon. Normal launches use the native CLI on PATH; model, effort, login, permissions and tool execution stay native.
 
 ## Launch and recommend
 
@@ -46,7 +46,7 @@ npm run test:advisory-native -- /PATH/TO/OFFICIAL/CODEX/ENTRY
 
 The npm doctor commands use the same advisory diagnostics as the launchers. `eval:advisory` runs deterministic advisory tests. `test:advisory-native` uses an isolated Codex home, a static synthetic note and an unreachable loopback provider to check hook discovery, trust, warning delivery, retained model and read-only permissions without Jev credentials or model inference. It does not certify the interactive terminal. The optional entry argument can identify an official executable or npm JavaScript entry; omitting it uses `codex` on PATH.
 
-`eval:routing`, `test:native-protocol` and `test:claude-native` are retained historical routing/recovery checks. They do not substitute for advisory evaluation. See the [advisory evaluation contract](../.codex/evals/advisory.md) and [release gates](RELEASE_READINESS.md#advisory-candidate--not-published).
+`eval:routing`, `test:native-protocol` and `test:claude-native` are retained historical routing/recovery checks. They do not substitute for advisory evaluation. See the [advisory evaluation contract](../.codex/evals/advisory.md) and [release gates](RELEASE_READINESS.md#macos-advisory-preview15).
 
 ## Reports
 
