@@ -35,7 +35,12 @@ test('standalone pilot installer needs no checkout or downloads and supports ins
     const output = join(temp, 'delivery');
     await run(process.execPath, ['--', join(project, 'scripts/package-pilot.ts'), output]);
     const filename = (await readdir(output)).find(name => name.endsWith('.mjs'))!;
-    assert.equal(await readFile(join(output, 'SHA256SUMS'), 'utf8'), `${digest(await readFile(join(output, filename), 'utf8'))}  ${filename}\n`);
+    const skillName = 'modelrudder-model-choice.SKILL.md';
+    const skill = await readFile(join(output, skillName), 'utf8');
+    assert.equal(skill, await readFile(join(project, 'skills/modelrudder-model-choice/SKILL.md'), 'utf8'));
+    assert.equal(await readFile(join(output, 'SHA256SUMS'), 'utf8'),
+      `${digest(await readFile(join(output, filename), 'utf8'))}  ${filename}\n`);
+    assert.equal(await readFile(join(output, 'MODEL_CHOICE_SHA256SUMS'), 'utf8'), `${digest(skill)}  ${skillName}\n`);
     await run(process.execPath, ['--', join(output, filename), '--root', options.root, '--bin-dir', options.binDirectory,
       '--env-file', options.envFile], { cwd: temp });
     const help = await installedRun(options, ['--help'], temp);

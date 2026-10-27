@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildRelease, digest } from './release.ts';
@@ -28,5 +28,9 @@ try {
 `;
 const filename = `smart-codex-${release.id}-install.mjs`;
 await writeFile(resolve(directory, filename), installer, { mode: 0o600, flag: 'wx' });
+const skillName = 'modelrudder-model-choice.SKILL.md';
+const skill = await readFile(new URL('../skills/modelrudder-model-choice/SKILL.md', import.meta.url), 'utf8');
+await writeFile(resolve(directory, skillName), skill, { mode: 0o600, flag: 'wx' });
 await writeFile(resolve(directory, 'SHA256SUMS'), `${digest(installer)}  ${filename}\n`, { mode: 0o600, flag: 'wx' });
+await writeFile(resolve(directory, 'MODEL_CHOICE_SHA256SUMS'), `${digest(skill)}  ${skillName}\n`, { mode: 0o600, flag: 'wx' });
 console.log(`Packaged ${release.id}: ${filename}`);

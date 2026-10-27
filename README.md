@@ -6,6 +6,8 @@ Get a note when a different model may fit your task. You decide whether to switc
 
 **0.1.0-preview.15 · macOS advisory preview · MIT licensed**
 
+Want to decide before the agent starts substantive work? The optional [model choice skill](docs/MODEL_CHOICE_SKILL.md) offers four choices and keeps your task in the current conversation. It uses the existing recommendation command; switching stays in the native model picker. The skill is a separate release candidate, not an update to the installed runtime.
+
 **Linux and Windows: coming soon.** This release is for macOS only.
 
 This preview.15 release changes ModelRudder from automatic routing to advice. Existing preview.14 draft artifacts and earlier releases do not contain this change. Follow documentation at the exact revision you use; the [release evidence](docs/RELEASE_EVIDENCE.md) separates advisory checks from historical routing results. See the [macOS release evidence](docs/RELEASE_READINESS.md#macos-advisory-preview15).
