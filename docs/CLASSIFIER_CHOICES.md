@@ -1,6 +1,6 @@
 # Jev recommendation setup
 
-The unreleased advisory source uses Jev for model recommendations. Both launchers support direct Jev with separate Codex/Claude rubrics. Codex also retains the existing hosted Jev gateway protocol; Claude requires direct Jev. Native execution uses the user's existing tool configuration.
+The macOS advisory preview uses Jev for model recommendations. Both launchers support direct Jev with separate Codex/Claude rubrics. Codex also retains the existing hosted Jev gateway protocol; Claude requires direct Jev. Native execution uses the user's existing tool configuration.
 
 ## Private configuration
 

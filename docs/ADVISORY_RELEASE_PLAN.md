@@ -1,6 +1,6 @@
-# Advisory release candidate plan
+# Advisory release plan
 
-Prepare the `0.1.0-preview.15` advisory candidate and draft PR without publishing or replacing an installed runtime. The release version, final source revision, artifact ID/checksum and CI run must be recorded from actual outputs before a release is considered qualified.
+Release `0.1.0-preview.15` for macOS only. On October 26 the maintainer authorized publication with Linux and Windows excluded and marked coming soon. Preserve the verified runtime payload, native trust, private configuration and recovery paths.
 
 ## Acceptance criteria
 
@@ -19,9 +19,9 @@ Prepare the `0.1.0-preview.15` advisory candidate and draft PR without publishin
 | Evaluate | `test/advisory*.test.ts`, advisory eval contract and native smoke script | Deterministic recommendation, failure, consent, deduplication, model-change, session and interruption checks; isolate synthetic native-provider work from paid inference |
 | Align entrypoints and CI | `package.json`, lockfile, `.github/workflows/client.yml` | Advisory diagnostic/evaluation commands; six OS/Node jobs; native hook discovery/warning smoke; retain recovery coverage |
 | Prepare candidate | Version metadata, `scripts/release.ts`, installer tests | Exact allowlist, reproducible build, checksum, isolated upgrade/rollback and preserved fixture state |
-| Document and hand off | README, command/install/upgrade guides, release evidence | Current claims match code; draft PR links evidence and blockers; no publication |
+| Document and hand off | README, command/install/upgrade guides, release evidence | Current claims match code; release notes link evidence and accurately limit support to macOS |
 
-## Draft release notes
+## Release notes
 
 ModelRudder now recommends model changes and leaves switching to the user. Codex can show a native prompt-time note; both tools offer `recommend --current-model MODEL -- "TASK"`. Claude uses explicit recommendations because its prompt-hook input does not reliably expose the current model.
 
@@ -29,8 +29,8 @@ Normal launches no longer require a managed native CLI or start ModelRudder's ex
 
 Recommendations are prompt-only, can miss conversation/media context, and do not establish task quality or savings. Codex automatic notes need private saved configuration, classification consent and native hook trust. Unsupported environments retain explicit advice as a fallback. See [advisory behavior](ADVISORY.md) and [migration](UPGRADE.md).
 
-## Publication blockers
+## Publication scope
 
-[Draft PR #41](https://github.com/cybrking/modelrudder/pull/41) tracks the corrected Windows runtime and fixture portability fixes after the initial CI failure; final six-job CI must pass. The draft PR and local candidate may be prepared before every release gate clears. Publication remains blocked until the final-revision automated checks and exact artifact verification pass and the applicable interactive qualification is recorded. Known missing native journeys include compaction and approval acceptance/denial, plus Linux/Windows terminal qualification. MacOS Codex 0.164.0 arithmetic, manual-switch, interruption and resume checks are recorded in [release readiness](RELEASE_READINESS.md#advisory-candidate--not-published); they and synthetic RPC smoke remain bounded evidence, not substitutes for the missing journeys.
+The macOS gates passed for the exact payload: [live qualification](ADVISORY_LIVE_QUALIFICATION.md) and [release readiness](RELEASE_READINESS.md#macos-advisory-preview15) record the results. Publish the existing verified installer and checksum with macOS-only notes and tagged documentation. Documentation-only edits must reproduce the same installer hash.
 
-No merge, release publication, installed-runtime replacement or credential migration is part of this preparation task.
+Linux/Windows live terminal qualification is deferred to future releases. Do not publish installation instructions or claim support for those platforms in this release. Existing automated development coverage is retained.

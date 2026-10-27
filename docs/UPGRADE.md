@@ -1,6 +1,6 @@
 # Upgrading to advisory ModelRudder
 
-The advisory change is the **unpublished `0.1.0-preview.15` candidate**. Existing preview.14 draft artifacts and older published releases do not include it. Use the exact revision's documentation. A local test, package version or draft installer does not establish publication.
+The **0.1.0-preview.15 advisory preview is for macOS only**. Linux and Windows are coming soon. Existing preview.14 draft artifacts and older published releases contain automatic routing; use the exact advisory release tag and matching assets.
 
 ## What changes
 
@@ -14,11 +14,11 @@ Stop active ModelRudder sessions before changing installed releases, then start 
 
 ## Normal release upgrade
 
-When an advisory release is published, select it from the [official releases list](https://github.com/cybrking/modelrudder/releases), including previews and excluding drafts. Require release notes explicitly confirming advisory behavior. If none exists or installer/checksum assets are missing, report that instead of substituting an automatic-routing release. Resolve one exact tag and use its matching documentation, installer and `SHA256SUMS` throughout.
+Select a macOS advisory release from the [official releases list](https://github.com/cybrking/modelrudder/releases), including previews and excluding drafts. Require release notes explicitly confirming advisory behavior. If none exists or installer/checksum assets are missing, report that instead of substituting an automatic-routing release. Resolve one exact tag and use its matching documentation, installer and `SHA256SUMS` throughout.
 
 Record the current content-based release ID with `--list` and retain the verified prior installer for rollback. Follow [checksum verification](AGENT_INSTALL.md#2-download-and-verify-a-release). Repeat existing custom `--root`, `--bin-dir` and `--env-file` options so the upgrade uses the same installation.
 
-On macOS/Linux, using the existing runtime root:
+On macOS, using the existing runtime root:
 
 ```sh
 node -- ~/.local/share/smart-codex/current/src/install-cli.ts --list
@@ -26,7 +26,7 @@ shasum -a 256 -c SHA256SUMS
 node -- ./smart-codex-RELEASE_ID-install.mjs
 ```
 
-Use `sha256sum` on Linux/WSL. On Windows, use the retained verified installer for `--list`, compare the new installer's `Get-FileHash` against its exact entry in `SHA256SUMS`, then run it. Replace filename placeholders with the actual release asset names.
+Replace filename placeholders with the actual release asset names.
 
 Only use [source installation](AGENT_INSTALL.md#source-installation) when deliberately installing a reviewed source revision. Preserve configuration and native login. Do not install or replace native CLIs as part of this advisory migration.
 
@@ -56,20 +56,20 @@ Use the exact retained release ID and original installation-path flags:
 node -- src/install-cli.ts --rollback PREVIOUS_RELEASE_ID
 ```
 
-For an installed Unix runtime, use its `current/src/install-cli.ts`. On Windows use the retained verified installer with `--rollback PREVIOUS_RELEASE_ID`. Restart launchers afterward. Rollback retains private configuration and state but restores the selected release's behavior, including automatic routing or Tev if that release supported it. Follow that release's documentation and managed-native prerequisites.
+For an installed macOS runtime, use its `current/src/install-cli.ts` or the retained verified standalone installer with `--rollback PREVIOUS_RELEASE_ID`. Restart launchers afterward. Rollback retains private configuration and state but restores the selected release's behavior, including automatic routing or Tev if that release supported it. Follow that release's documentation and managed-native prerequisites.
 
 `smart-codex native rollback` and `smart-claude native rollback` still manage retained native pins. They do not change the PATH executable used by advisory launches. Runtime rollback and native-pin rollback are separate actions.
 
 ## Uninstall and maintenance
 
-Installed maintenance supports `--list`, `--rollback RELEASE_ID` and `--uninstall`. On Unix:
+Installed maintenance supports `--list`, `--rollback RELEASE_ID` and `--uninstall`. On macOS:
 
 ```sh
 node -- ~/.local/share/smart-codex/current/src/install-cli.ts --list
 node -- ~/.local/share/smart-codex/current/src/install-cli.ts --uninstall
 ```
 
-On Windows use the retained verified standalone installer. Repeat custom path options. Uninstall preserves private configuration and local state; deleting them is a separate explicit choice. The advisory migration itself deletes none of these.
+Repeat custom path options. Uninstall preserves private configuration and local state; deleting them is a separate explicit choice. The advisory migration itself deletes none of these.
 
 ## Updates
 

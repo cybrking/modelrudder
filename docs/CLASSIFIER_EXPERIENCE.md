@@ -1,6 +1,6 @@
 # Jev setup contract
 
-This contract describes the unreleased advisory source. Both launchers share private configuration and preserve native login, permissions and model choice. See [Jev setup](CLASSIFIER_CHOICES.md).
+This contract describes the macOS advisory preview. Both launchers share private configuration and preserve native login, permissions and model choice. See [Jev setup](CLASSIFIER_CHOICES.md).
 
 1. Preserve existing configuration, credentials and classification disablement. Upgrades do not grant hosted-transmission consent.
 2. Open missing credential entry locally. Explain that Jev receives only the current supplied task. Require the user's own key and explicit `ALLOW_JEV_CLASSIFICATION=true`; a key alone is not consent.
