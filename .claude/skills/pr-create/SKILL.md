@@ -4,7 +4,7 @@ description: Use when opening a pull request, running gh pr create, or asked to 
 ---
 
 1. Read the diff against the base branch (`git diff <base>...HEAD`) and the commit messages.
-2. Self-review first: review the diff for bugs and fix blocking findings before continuing.
+2. Run the ship-check skill. Stop on NO-GO; on GO, reuse its evidence lines below.
 3. Propose a risk tier from what the change touches. The change sets the tier, not the author.
    - high: auth, secrets, data migrations, infra/CI, public API or protocol contracts.
    - medium: runtime behavior changes, including concurrency and flow control, covered by tests.

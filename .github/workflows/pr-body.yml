@@ -1,0 +1,17 @@
+name: PR body
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required sections
+        env:
+          BODY: ${{ github.event.pull_request.body }}  # via env, never inlined into the script
+        run: |
+          printf '%s' "$BODY" > "$RUNNER_TEMP/body.md"
+          .github/scripts/check-pr-body.sh "$RUNNER_TEMP/body.md"
