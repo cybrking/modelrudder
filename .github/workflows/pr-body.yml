@@ -8,10 +8,19 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      # Run the checker from the base branch so a PR can't weaken the check that judges it.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
       - name: Check required sections
         env:
           BODY: ${{ github.event.pull_request.body }}  # via env, never inlined into the script
         run: |
           printf '%s' "$BODY" > "$RUNNER_TEMP/body.md"
-          .github/scripts/check-pr-body.sh "$RUNNER_TEMP/body.md"
+          if [ -f .github/scripts/check-pr-body.sh ]; then
+            bash .github/scripts/check-pr-body.sh "$RUNNER_TEMP/body.md"
+          else
+            # ponytail: bootstrap for the PR that adds the checker; drop once it is on main
+            git fetch -q origin "${{ github.event.pull_request.head.sha }}"
+            git show FETCH_HEAD:.github/scripts/check-pr-body.sh | bash -s "$RUNNER_TEMP/body.md"
+          fi

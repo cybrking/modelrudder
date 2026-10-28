@@ -10,8 +10,8 @@ description: Use when opening a pull request, running gh pr create, or asked to 
    - medium: runtime behavior changes, including concurrency and flow control, covered by tests.
    - low: docs, tests, or refactors with no behavior change.
    If you argue for a different tier, say why in the Risk section.
-4. Write the body to `"$(git rev-parse --absolute-git-dir)/PR_BODY.md"` (works in worktrees, where `.git` is a file) using `.github/pull_request_template.md`:
+4. Get the body path with `echo "$(git rev-parse --absolute-git-dir)/PR_BODY.md"` (works in worktrees, where `.git` is a file) and write the body there using `.github/pull_request_template.md`:
    Why · What changed · Risk · Evidence · Rollback · Review focus.
    Label every evidence line reproduced / reasoned / unverified. Never call a reasoned claim confirmed.
 5. If a section can't be filled honestly, stop and ask instead of padding it.
-6. `gh pr create --title "<imperative, <70 chars>" --body-file "$(git rev-parse --absolute-git-dir)/PR_BODY.md"`
+6. `gh pr create --title "<imperative, <70 chars>" --body-file <that literal absolute path>`. The PR gate can't expand `$(...)`, so don't put one in the command.
